@@ -1,0 +1,10 @@
+This is Debian GNU/Linux's prepackaged version of the bmap-tools
+
+This package was put together by Ed Bartosh <eduard.bartosh@intel.com>
+on Sun Oct 27 22:32:19 EEST 2012
+
+Copyright (c) 2012 Intel, Inc.
+
+License: GPLv2
+
+Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>

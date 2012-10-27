@@ -1,0 +1,14 @@
+Source: bmap-tools
+Maintainer: Ed Bartosh <eduard.bartosh@intel.com>
+Section: python
+Priority: optional
+Build-Depends: debhelper (>= 7)
+Standards-Version: 3.8.4
+XS-Python-Version: current
+
+Package: bmap-tools
+Architecture: all
+Depends: ${misc:Depends}, ${python:Depends}
+XB-Python-Version: ${python:Versions}
+Description: Bmap tools
+ Bmap-flasher - Flash an image file to a block device using the block map (bmap) 
