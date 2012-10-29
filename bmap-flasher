@@ -8,8 +8,11 @@
 Write raw image file to the target block device using the block map file.
 The block map file contains the list of blocks which have to be written.
 
-TODO:   switch to using the logger
-        implement --quiet option
+TODO: 1 switch to using the logger
+      2 implement --quiet option
+      3 print flashing speed as well, not only time
+      4 split to cmdl tool and API module - these are really 2 separate things
+      5 flashing without bmap is 2 times slower than dd does when file is .bz2
 """
 
 import argparse
