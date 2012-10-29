@@ -93,6 +93,19 @@ def human_size(size):
 
     return "%.1f %s" % (size, 'EiB')
 
+def human_time(seconds):
+    """ Transform time in seconds to the HH:MM:SS format. """
+    (minutes, seconds) = divmod(seconds, 60)
+    (hours, minutes) = divmod(minutes, 60)
+
+    result = ""
+    if hours:
+        result = "%dh " % hours
+    if minutes:
+        result += "%dm " % minutes
+
+    return result + "%.1fs" % seconds
+
 def check_bmap_version(version):
     """ Check the bmap file format version and if it is incompatible, refuse
         the bmap file. Also, check if we can verify data checksum with this
@@ -327,7 +340,7 @@ def main():
         f_bdev.flush()
         os.fsync(f_bdev.fileno()),
 
-    message("flashing time: %.1f seconds" % (time.time() - start_time))
+    message("flashing time: %s" % human_time(time.time() - start_time))
     f_image.close()
     f_bdev.close()
 
