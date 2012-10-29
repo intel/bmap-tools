@@ -178,7 +178,12 @@ def write_with_bmap(image, f_image, bdev, f_bdev, bmap, f_bmap, verify):
 
     from xml.etree import ElementTree
 
-    xml = ElementTree.parse(f_bmap)
+    try:
+        xml = ElementTree.parse(f_bmap)
+    except  ElementTree.ParseError as err:
+        raise FlasherException("cannot parse the bmap file '%s' which should " \
+                               "be a proper XML file: %s" \
+                               % (bmap, err))
 
     version = xml.getroot().attrib.get('version')
     check_bmap_version(version)
