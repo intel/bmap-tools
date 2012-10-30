@@ -8,9 +8,7 @@
 Write raw image file to the target block device using the block map file.
 The block map file contains the list of blocks which have to be written.
 
-TODO: 1 switch to using the logger
-      2 implement --quiet option
-      3 print flashing speed as well, not only time
+TODO: 3 print flashing speed as well, not only time
       4 split to cmdl tool and API module - these are really 2 separate things
       5 flashing without bmap is 2 times slower than dd does when file is .bz2
       6 Implement --version option
@@ -21,6 +19,7 @@ import os
 import sys
 import stat
 import time
+import logging
 
 class FlasherException(Exception): pass
 
@@ -70,22 +69,11 @@ def parse_arguments():
            "manually before you unplug it). "
     parser.add_argument("--no-sync", action="store_true", help = text)
 
+    # The --quiet option
+    text = "Be quiet"
+    parser.add_argument("-q", "--quiet", action="store_true", help = text)
+
     return parser.parse_args()
-
-def message(msg, stream = sys.stdout):
-    """ Just a simple wrapper to print a message prefixed with the program
-        name. The 'stream' argument may be used to redirect the output to,
-        say, stderr. """
-
-    program_name = "bmap-flasher"
-    print >> stream, "%s: %s" % (program_name, msg)
-
-def fatal(msg):
-    """ Called when a fatal error happens - prints the error message 'msg'
-        and terminates the script. """
-
-    message("fatal error: " + msg, sys.stderr)
-    raise SystemExit(1)
 
 def human_size(size):
     """ Transform size in bytes into a human-readable form. """
@@ -180,7 +168,7 @@ def copy_data(image, f_image, bdev, f_bdev, first, last, block_size, sha1):
                                "calculated %s, should be %s" \
                                % (first, last, hash_obj.hexdigest(), sha1))
 
-def write_with_bmap(image, f_image, bdev, f_bdev, bmap, f_bmap, verify):
+def write_with_bmap(image, f_image, bdev, f_bdev, bmap, f_bmap, verify, log):
     """ Write the image to the block device using the block map.
 
         'image', 'bdev', 'bmap' - file names for the image, block device, and
@@ -191,6 +179,8 @@ def write_with_bmap(image, f_image, bdev, f_bdev, bmap, f_bmap, verify):
 
         If the 'verify' argument is True, this function also verifies the
         the checksum for all the data.
+
+        The 'log' argument is the python logger object to use for looging
         """
 
     from xml.etree import ElementTree
@@ -214,11 +204,11 @@ def write_with_bmap(image, f_image, bdev, f_bdev, bmap, f_bmap, verify):
 
     xml_bmap = xml.find("BlockMap")
 
-    message("block map format version %s" % version)
-    message("%d blocks of size %d (%s), mapped %d blocks (%s or %.1f%%)" \
-            % (blocks_cnt, block_size, human_size(total_size), mapped_cnt,
-               human_size(mapped_size), (mapped_cnt * 100.0) / blocks_cnt))
-    message("writing the image to '%s' using bmap file '%s'" % (bdev, bmap))
+    log.info("block map format version %s" % version)
+    log.info("%d blocks of size %d (%s), mapped %d blocks (%s or %.1f%%)" \
+             % (blocks_cnt, block_size, human_size(total_size), mapped_cnt,
+                human_size(mapped_size), (mapped_cnt * 100.0) / blocks_cnt))
+    log.info("writing the image to '%s' using bmap file '%s'" % (bdev, bmap))
 
     # Write the mapped blocks to the block device
     blocks_written = 0
@@ -281,70 +271,106 @@ def open_image_file(image):
     except IOError as err:
         raise FlasherException("cannot open image file '%s': %s" % (image, err))
 
+def setup_logger(loglevel):
+    """ A helper function for 'main()' to which sets up and configures the
+        logger. The log level is initialized to 'loglevel'. Returns the logger
+        object. """
+
+    # Rename log level names to something less nicer than the default
+    # all-capital 'INFO' etc.
+    logging.addLevelName(logging.ERROR, "error!")
+    logging.addLevelName(logging.WARNING, "warning!")
+    logging.addLevelName(logging.DEBUG, "debug")
+    logging.addLevelName(logging.INFO, "info")
+
+    log = logging.getLogger('bmap-flasher-logger')
+    log.setLevel(loglevel)
+    formatter = logging.Formatter("bmap-flasher: %(levelname)s: %(message)s")
+    where = logging.StreamHandler()
+    where.setFormatter(formatter)
+    log.addHandler(where)
+
+    return log
+
 def main():
     """ Script entry point. """
 
     args = parse_arguments()
+
+    if args.quiet:
+        log = setup_logger(logging.ERROR)
+    else:
+        log = setup_logger(logging.INFO)
 
     # Open the block device in exclusive mode - this will fail if the block
     # device is used by someone, e.g., mounted.
     try:
         f_bdev_raw = os.open(args.bdev, os.O_RDWR | os.O_EXCL)
     except OSError as err:
-        fatal("cannot open block device '%s': %s" % (args.bdev, err.strerror))
+        log.error("cannot open block device '%s': %s" \
+                   % (args.bdev, err.strerror))
+        raise SystemExit(1)
 
     try:
         is_block_device = stat.S_ISBLK(os.fstat(f_bdev_raw).st_mode)
     except OSError as err:
-        fatal("cannot access block device '%s': %s" \
-              % (args.bdev, err.strerror))
+        log.error("cannot access block device '%s': %s" \
+                  % (args.bdev, err.strerror))
+        raise SystemExit(1)
 
     if not is_block_device:
-        message("warning!: '%s' is not a block device!" % args.bdev)
+        log.warning("'%s' is not a block device!" % args.bdev)
 
     # Turn the block device file descriptor into a file object
     try:
         f_bdev = os.fdopen(f_bdev_raw, "wb")
     except IOError as err:
-        fatal("cannot open block device '%s': %s" % (args.bdev, err.strerror))
+        log.error("cannot open block device '%s': %s" \
+                  % (args.bdev, err.strerror))
+        raise SystemExit(1)
 
     try:
         f_image = open_image_file(args.image)
     except FlasherException as err:
-        fatal(str(err))
+        log.error(str(err))
+        raise SystemExit(1)
 
     start_time = time.time()
     if not args.bmap:
         import shutil
 
-        message("no block map given (see the --bmap option")
-        message("falling-back to writing entire image to '%s'" % args.bdev)
+        log.info("no block map given (see the --bmap option")
+        log.info("falling-back to writing entire image to '%s'" % args.bdev)
         try:
             shutil.copyfileobj(f_image, f_bdev)
         except IOError as err:
-            fatal("error while copying '%s' to '%s': %s" \
-                  % (args.image, args.bdev, err))
+            log.error("error while copying '%s' to '%s': %s" \
+                      % (args.image, args.bdev, err))
+            raise SystemExit(1)
     else:
         try:
             f_bmap = open(args.bmap, 'r')
         except IOError as err:
-            fatal("cannot open bmap file '%s': %s" % (args.bmap, err.strerror))
+            log.error("cannot open bmap file '%s': %s" \
+                      % (args.bmap, err.strerror))
+            raise SystemExit(1)
 
         try:
             write_with_bmap(args.image, f_image, args.bdev, f_bdev,
-                            args.bmap, f_bmap, not args.no_verify)
+                            args.bmap, f_bmap, not args.no_verify, log)
         except FlasherException as err:
-            fatal(str(err))
+            log.error(str(err))
+            raise SystemExit(1)
 
         f_bmap.close()
 
     # Synchronize the block device
     if not args.no_sync:
-        message("synchronizing block device '%s'" % args.bdev)
+        log.info("synchronizing block device '%s'" % args.bdev)
         f_bdev.flush()
         os.fsync(f_bdev.fileno()),
 
-    message("flashing time: %s" % human_time(time.time() - start_time))
+    log.info("flashing time: %s" % human_time(time.time() - start_time))
     f_image.close()
     f_bdev.close()
 
