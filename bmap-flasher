@@ -13,6 +13,7 @@ TODO: 1 switch to using the logger
       3 print flashing speed as well, not only time
       4 split to cmdl tool and API module - these are really 2 separate things
       5 flashing without bmap is 2 times slower than dd does when file is .bz2
+      6 Implement --version option
 """
 
 import argparse
