@@ -1,3 +1,14 @@
+"""
+This module implements flashing with block map (AKA bmap) and provides flashing
+API (in form of the 'BmapFlasher' class).
+
+The bmap contains list of blocks which have to be read from the image file and
+then written to the block device. The rest of the blocks are not required to be
+copied. And usually image files have a lot of useless blocks (i.e., the blocks
+which are not used in the internal file-system of the image), so flashing with
+bmap is usually much faster than copying entire image to the block device.
+"""
+
 import os
 import hashlib
 from xml.etree import ElementTree

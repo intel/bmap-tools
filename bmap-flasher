@@ -5,8 +5,13 @@
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 """
-Write raw image file to the target block device using the block map file.
-The block map file contains the list of blocks which have to be written.
+Write raw image file to the target block device using the block map file (AKA
+bmap). The bmap contains list of blocks which have to be read from the image
+file and then written to the block device. The rest of the blocks are not
+required to be copied. And usually image files have a lot of useless blocks
+(i.e., the blocks which are not used in the internal file-system of the image),
+so flashing with bmap is usually much faster than copying entire image to the
+block device.
 """
 
 VERSION = "0.1.0"
@@ -20,7 +25,7 @@ import logging
 import BmapFlasher
 
 def parse_arguments():
-    """ A helper function for 'main()' which parses the input arguments. """
+    """ A helper function which parses the input arguments. """
 
     # The program description
     text = "Flash an image file to a block device using the block map "       \
@@ -100,9 +105,8 @@ def human_time(seconds):
     return result + "%.1fs" % seconds
 
 def setup_logger(loglevel):
-    """ A helper function for 'main()' to which sets up and configures the
-        logger. The log level is initialized to 'loglevel'. Returns the logger
-        object. """
+    """ A helper function which sets up and configures the logger. The log
+        level is initialized to 'loglevel'. Returns the logger object. """
 
     # Change log level names to something less nicer than the default
     # all-capital 'INFO' etc.
