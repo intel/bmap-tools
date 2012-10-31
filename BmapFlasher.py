@@ -20,10 +20,52 @@ supported_image_formats = ('bz2', 'gz', 'tar.gz', 'tgz', 'tar.bz2')
 supported_bmap_version = 1
 
 class Error(Exception):
-    """ A class for exceptions of BmapFlasher. """
+    """ A class for exceptions of BmapFlasher. We currently support only one
+        type of exceptions, and we basically throw human-readable problem
+        description in case of errors. """
     pass
 
 class BmapFlasher:
+    """ This class implemends all the bmap flashing functionality. To flash an
+        image to a block device you should create an instance of this class and
+        provide the following:
+        * full path to the image to flash
+        * full path to the block device to flash the image to (normally this is
+          a block device node, but may also be a regular file)
+        * optional full path to the bmap file
+
+        Although the main purpose of this class is to flash using bmap, it may
+        also just copy the entire image to the block device if the bmap file is
+        not provided.
+
+        The image file may either be an uncompressed raw image or a comressed
+        image. Compression type is defined by the image file extention.
+        Supported types are listed by 'supported_image_formats'.
+
+        Once an instance of 'BmapFlasher' is created, all the 'bmap_*'
+        attributes are initialized and available. They are read from the bmap.
+        However, in case of bmap-less flashing, some of them (all the image
+        size-related) are available only after writing the image, but not after
+        creating the instance. The reason for this is that when bmap is absent,
+        'BmapFlasher' uses sensible fall-back values for 'bmap_*' attributes
+        assuming the entire image is "mapped". And if the image is compressed,
+        we cannot easily get the image size unless we decompress it, which is
+        too time-consuming to do in '__init__()'. However, after the 'write()'
+        method finishes, all the 'bmap_*' attributes are initialized.
+
+        To write the image to the block device, use the 'write()' method. You
+        may choose whether to verify the SHA1 checksum while writing or not.
+        Note, this is done only in case of bmap flashing and only if the bmap
+        contains SHA1 checksums (e.g., bmap version 1.0 did not have SHA1
+        checksums). You may choose whether to synchonize the block device after
+        writing or not.
+
+        To explicitely synchronize the block device, use the 'sync()' method.
+
+        This module supports all the bmap format versions up version
+        'supported_bmap_version'. """
+
+
     def _parse_bmap(self):
         """ This is an internal helper function which parses the bmap file and
             initializes bmap-related variables like 'block_size', 'mapped_cnt',
