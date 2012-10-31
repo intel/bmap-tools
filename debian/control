@@ -1,5 +1,5 @@
 Source: bmap-tools
-Maintainer: Ed Bartosh <eduard.bartosh@intel.com>
+Maintainer: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 Section: python
 Priority: optional
 Build-Depends: debhelper (>= 7), python-all, python-distribute
