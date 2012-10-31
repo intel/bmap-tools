@@ -123,7 +123,7 @@ class BmapFlasher:
                 self._f_bmap = open(bmap_path, 'r')
             except IOError as err:
                 raise Error("cannot open bmap file '%s': %s" \
-                            % (args.bmap, err.strerror))
+                            % (bmap_path, err.strerror))
             self._parse_bmap()
         else:
             # There is no bmap. Initialize user-visible variables to something
