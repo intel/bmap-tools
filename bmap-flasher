@@ -8,8 +8,7 @@
 Write raw image file to the target block device using the block map file.
 The block map file contains the list of blocks which have to be written.
 
-TODO: 3 print flashing speed as well, not only time
-      6 Implement --version option
+TODO: 6 Implement --version option
 """
 
 import argparse
@@ -172,7 +171,10 @@ def main():
             log.error(str(err))
             raise SystemExit(1)
 
-    log.info("flashing time: %s" % human_time(time.time() - start_time))
+    flashing_time = time.time() - start_time
+    flashing_speed = flasher.bmap_total_size / flashing_time
+    log.info("flashing time: %s, flashing speed %s/sec" \
+             % (human_time(flashing_time), human_size(flashing_speed)))
 
 if __name__ == "__main__":
     sys.exit(main())
