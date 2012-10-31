@@ -7,9 +7,9 @@
 """
 Write raw image file to the target block device using the block map file.
 The block map file contains the list of blocks which have to be written.
-
-TODO: 6 Implement --version option
 """
+
+VERSION = "0.1.0"
 
 import argparse
 import os
@@ -40,7 +40,7 @@ def parse_arguments():
            "block device. There are also nice commentaries which make it "    \
            "easy to understand the bmap file contents."
 
-    parser = argparse.ArgumentParser(description = text)
+    parser = argparse.ArgumentParser(description = text, prog = 'bmap-flasher')
 
     # The first command-line argument - block device node
     text = "The block device node to flash the image to."
@@ -69,6 +69,10 @@ def parse_arguments():
     text = "Be quiet"
     parser.add_argument("-q", "--quiet", action="store_true", help = text)
 
+    # The --version option
+    parser.add_argument("--version", action="version", \
+                        version="%(prog)s " + "%s" % VERSION)
+
     return parser.parse_args()
 
 def human_size(size):
@@ -83,6 +87,7 @@ def human_size(size):
 
 def human_time(seconds):
     """ Transform time in seconds to the HH:MM:SS format. """
+
     (minutes, seconds) = divmod(seconds, 60)
     (hours, minutes) = divmod(minutes, 60)
 
