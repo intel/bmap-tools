@@ -32,7 +32,7 @@ import sys
 import stat
 import time
 import logging
-import BmapFlasher
+from bmaptools import BmapFlasher
 
 def parse_arguments():
     """ A helper function which parses the input arguments. """
