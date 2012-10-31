@@ -7,6 +7,15 @@ then written to the block device. The rest of the blocks are not required to be
 copied. And usually image files have a lot of useless blocks (i.e., the blocks
 which are not used in the internal file-system of the image), so flashing with
 bmap is usually much faster than copying entire image to the block device.
+
+For example, you may have a 4GiB image file, which contains only 100MiB of user
+data. In this case, with the bmap file you will write only a little bit more
+than 100MiB of data from the image file to the block device. This is a lot
+faster than writing the entire 4GiB image. We say that it is a bit more than
+100MiB because there are also file-system meta-data, partition table, etc. The
+bmap fail is quite human-readable and contains a lot of commentaries. But
+essentially, it is an XML document which contains list of blocks in the image
+file which have to be copied to the block device.
 """
 
 import os
