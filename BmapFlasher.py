@@ -13,6 +13,9 @@ import os
 import hashlib
 from xml.etree import ElementTree
 
+# A list of supported image formats
+supported_image_formats = ('bz2', 'gz', 'tar.gz', 'tgz', 'tar.bz2')
+
 # The highest supported bmap format version
 supported_bmap_version = 1
 
@@ -54,7 +57,7 @@ class BmapFlasher:
     def _open_image_file(self):
         """ Open the image The image file may be uncompressed or compressed.
             The compression type is recognized by the file extention. Supported
-            types are: .tar.gz, .tar.bz2, .tgz, .gz, and .bz2. """
+            types are defined by 'supported_image_formats' """
 
         try:
             if self._image_path.endswith('.tar.gz') \

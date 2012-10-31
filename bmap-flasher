@@ -52,8 +52,8 @@ def parse_arguments():
     parser.add_argument("bdev", help = text)
 
     # The second command-line argument - image file
-    text = "The image file to flash. Supported formats: uncompressed, " \
-           ".tar.bz2, .tar.gz, .bz2, .gz."
+    text = "The image file to flash. Supported formats: uncompressed, " + \
+           ", ".join(BmapFlasher.supported_image_formats)
     parser.add_argument("image", help = text)
 
     # The --bmap option
