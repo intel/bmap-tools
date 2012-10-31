@@ -13,6 +13,9 @@ import os
 import hashlib
 from xml.etree import ElementTree
 
+# The highest supported bmap format version
+supported_bmap_version = 1
+
 class Error(Exception):
     """ A class for exceptions of BmapFlasher. """
     pass
@@ -34,10 +37,10 @@ class BmapFlasher:
 
         # Make sure we support this version
         major = int(self.bmap_version.split('.', 1)[0])
-        if major > self.bmap_max_version:
+        if major > supported_bmap_version:
             raise Error("only bmap format version up to %d is supported, " \
                         "version %d is not supported" \
-                        % (self.bmap_max_version, major))
+                        % (supported_bmap_version, major))
 
         # Fetch interesting data from the bmap XML file
         self.bmap_block_size = int(xml.find("BlockSize").text.strip())
@@ -117,7 +120,6 @@ class BmapFlasher:
         self._f_bmap  = None
 
         self._xml = None
-        self.bmap_max_version = 1
         self.bmap_version = None
         self.bmap_block_size = None
         self.bmap_blocks_cnt = None
