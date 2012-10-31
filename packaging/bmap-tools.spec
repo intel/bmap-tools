@@ -8,7 +8,7 @@ BuildArch:  noarch
 URL:        http://otctools.jf.intel.com
 Source0:    %{name}_%{version}.tar.gz
 
-Requires:   python-distribute
+BuildRequires:  python-distribute
 
 %description
 Bmap-flasher - Flash an image file to a block device using the block map (bmap).
@@ -21,11 +21,13 @@ Bmap-flasher - Flash an image file to a block device using the block map (bmap).
 %install
 rm -rf $RPM_BUILD_ROOT
 
-install -d $RPM_BUILD_ROOT/%{_bindir}
-install -m 755 bmap-flasher $RPM_BUILD_ROOT/%{_bindir}
+python setup.py install --prefix=%{_prefix} --root=%{buildroot}
 
 %files
 %defattr(-,root,root,-)
+%dir /usr/lib/python*/site-packages/bmaptools
+/usr/lib/python*/site-packages/bmap_tools*
+/usr/lib/python*/site-packages/bmaptools/*
 %{_bindir}/*
 
 %changelog
