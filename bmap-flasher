@@ -41,30 +41,30 @@ def parse_arguments():
                                      prog = 'bmap-flasher')
 
     # The first command-line argument - block device node
-    text = "The block device node to flash the image to."
+    text = "the block device node to flash the image to"
     parser.add_argument("bdev", help = text)
 
     # The second command-line argument - image file
-    text = "The image file to flash. Supported formats: uncompressed, " + \
+    text = "the image file to flash. Supported formats: uncompressed, " + \
            ", ".join(BmapFlasher.supported_image_formats)
     parser.add_argument("image", help = text)
 
     # The --bmap option
-    text = "The block map file for the image."
+    text = "the block map file for the image"
     parser.add_argument("--bmap", help = text)
 
     # The --no-verify option
-    text = "Do not verify the data checksum while writing."
+    text = "do not verify the data checksum while writing"
     parser.add_argument("--no-verify", action="store_true", help = text)
 
     # The --no-sync option
-    text = "Do not synchronize the block device after flashing (use "  \
+    text = "do not synchronize the block device after flashing (use "  \
            "carefully and make sure you synchronize the block device " \
-           "manually before you unplug it). "
+           "manually before you unplug it)"
     parser.add_argument("--no-sync", action="store_true", help = text)
 
     # The --quiet option
-    text = "Be quiet"
+    text = "be quiet"
     parser.add_argument("-q", "--quiet", action="store_true", help = text)
 
     # The --version option
