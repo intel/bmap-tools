@@ -127,7 +127,7 @@ def main():
         log.info("block map format version %s" % flasher.bmap_version)
         log.info("%d blocks of size %d (%s), mapped %d blocks (%s or %.1f%%)" \
                  % (flasher.bmap_blocks_cnt, flasher.bmap_block_size,
-                    flasher.bmap_total_size_human, flasher.bmap_mapped_cnt,
+                    flasher.bmap_image_size_human, flasher.bmap_mapped_cnt,
                     flasher.bmap_mapped_size_human,
                     flasher.bmap_mapped_percent))
         log.info("writing the image to '%s' using bmap file '%s'" \
@@ -149,7 +149,7 @@ def main():
             raise SystemExit(1)
 
     flashing_time = time.time() - start_time
-    flashing_speed = flasher.bmap_total_size / flashing_time
+    flashing_speed = flasher.bmap_image_size / flashing_time
     log.info("flashing time: %s, flashing speed %s/sec" \
              % (BmapHelpers.human_time(flashing_time), \
                 BmapHelpers.human_size(flashing_speed)))

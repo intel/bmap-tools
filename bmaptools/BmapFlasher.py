@@ -101,8 +101,8 @@ class BmapFlasher:
         self.bmap_block_size = int(xml.find("BlockSize").text.strip())
         self.bmap_blocks_cnt = int(xml.find("BlocksCount").text.strip())
         self.bmap_mapped_cnt = int(xml.find("MappedBlocksCount").text.strip())
-        self.bmap_total_size = self.bmap_blocks_cnt * self.bmap_block_size
-        self.bmap_total_size_human = human_size(self.bmap_total_size)
+        self.bmap_image_size = self.bmap_blocks_cnt * self.bmap_block_size
+        self.bmap_image_size_human = human_size(self.bmap_image_size)
         self.bmap_mapped_size = self.bmap_mapped_cnt * self.bmap_block_size
         self.bmap_mapped_size_human = human_size(self.bmap_mapped_size)
         self.bmap_mapped_percent = self.bmap_mapped_cnt * 100.0
@@ -181,8 +181,8 @@ class BmapFlasher:
         self.bmap_block_size = None
         self.bmap_blocks_cnt = None
         self.bmap_mapped_cnt = None
-        self.bmap_total_size = None
-        self.bmap_total_size_human = None
+        self.bmap_image_size = None
+        self.bmap_image_size_human = None
         self.bmap_mapped_size = None
         self.bmap_mapped_size_human = None
         self.bmap_mapped_percent = None
@@ -277,7 +277,7 @@ class BmapFlasher:
         self._f_image.seek(0)
         self._f_bdev.seek(0)
         chunk_size = 1024 * 1024
-        total_size = 0
+        image_size = 0
 
         while True:
             try:
@@ -295,16 +295,16 @@ class BmapFlasher:
                 raise Error("cannot write %d bytes to '%s': %s" \
                             % (len(chunk), self._bdev_path, err))
 
-            total_size += len(chunk)
+            image_size += len(chunk)
 
         # Now we finally know the image size, initialize some of the
         # user-visible variables
-        self.bmap_total_size = total_size
-        self.bmap_total_size_human = human_size(total_size)
-        self.bmap_blocks_cnt = self.bmap_total_size / self.bmap_block_size
+        self.bmap_image_size = image_size
+        self.bmap_image_size_human = human_size(image_size)
+        self.bmap_blocks_cnt = self.bmap_image_size / self.bmap_block_size
         self.bmap_mapped_cnt = self.bmap_blocks_cnt
-        self.bmap_mapped_size = self.bmap_total_size
-        self.bmap_mapped_size_human = self.bmap_total_size_human
+        self.bmap_mapped_size = self.bmap_image_size
+        self.bmap_mapped_size_human = self.bmap_image_size_human
 
         if sync:
             self.sync()
