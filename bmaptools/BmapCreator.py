@@ -30,9 +30,10 @@ to FIBMAP if the kernel is too old and does not support FIBMAP).
 import os
 import hashlib
 from fcntl import ioctl
-from struct import pack, unpack
+import struct
 from itertools import groupby
 from bmaptools import BmapHelpers
+import array
 
 # The bmap format version we generate
 bmap_version = "1.2"
@@ -69,6 +70,7 @@ class BmapCreator:
         self._image_path = image_path
         self._output = output
 
+        self.fiemap_supported = None
         self.bmap_image_size = None
         self.bmap_block_size = None
         self.bmap_blocks_cnt = None
@@ -92,8 +94,8 @@ class BmapCreator:
         # Get the block size of the host file-system for the image file by
         # calling the FIGETBSZ ioctl (number 2).
         try:
-            binary_data = ioctl(self._f_image, 2, pack('I', 0))
-            self.bmap_block_size = unpack('I', binary_data)[0]
+            binary_data = ioctl(self._f_image, 2, struct.pack('I', 0))
+            self.bmap_block_size = struct.unpack('I', binary_data)[0]
         except IOError as err:
             raise Error("cannot get block size for '%s': %s" \
                         % (image_path, err), err.errno)
@@ -101,16 +103,32 @@ class BmapCreator:
         self.bmap_blocks_cnt = self.bmap_image_size + self.bmap_block_size - 1
         self.bmap_blocks_cnt /= self.bmap_block_size
 
-        # Make sure we have enough rights for the FIBMAP ioctl
+        # Check if the FIEMAP ioctl is supported or not
         try:
-            self._is_mapped(0)
+            self.fiemap_supported = True
+            self._is_mapped_fiemap(0)
         except Error as err:
-            if err.errno == os.errno.EPERM or err.errno == os.errno.EACCES:
-                raise Error("you do not have permissions to use the FIBMAP " \
-                            "ioctl which requires a 'CAP_SYS_RAWIO' " \
-                            "capability, try to become 'root'", err.errno)
-            else:
+            # ENOTTY means that the FIEMAP ioctl is not supported
+            if err.errno != os.errno.ENOTTY:
                 raise
+            self.fiemap_supported = False
+
+        if not self.fiemap_supported:
+            # FIEMAP is not supported by the running kernel and we need to
+            # fall-back to FIBMAP, which requires root permissions.
+            try:
+                self_is_mapped_fibmap(0)
+            except Error as err:
+                if err.errno == os.errno.EPERM or err.errno == os.errno.EACCES:
+                    raise Error("unfortunatelly your system does not support " \
+                                "the FIEMAP ioctl, and we have to use FIBMAP"  \
+                                "ioctl instead, with requires 'CAP_SYS_RAWIO'" \
+                                " capability, which you do not have; try to"   \
+                                "either become 'root' of upgrade your kernel"  \
+                                "to make it support FIEMAP, which does not"    \
+                                "require 'CAP_SYS_RAWIO'", err.errno)
+                else:
+                    raise
 
     def _bmap_file_start(self):
         """ A helper function which generates the starting contents of the
@@ -159,24 +177,74 @@ class BmapCreator:
 
         self._output.info(xml)
 
-    def _is_mapped(self, block):
+    def _is_mapped_fibmap(self, block):
         """ A helper function which returns True if block number 'block' of the
             image file is mapped and False otherwise.
 
-            Implementation details: this function uses the FIBMAP ioctl (number
-            1) to get detect whether 'block' is mapped to a disk block. The
-            ioctl returns zero if 'block' is not mapped and non-zero disk block
-            number if it is mapped. Unfortunatelly, FIBMAP requires root
-            rights, unlike FIEMAP. """
+            This function uses the FIBMAP ioctl (number 1) to detect whether
+            'block' is mapped to the disk.  The ioctl returns zero if 'block'
+            is not mapped and non-zero disk block number if it is mapped.
+            Unfortunatelly, FIBMAP requires root rights, unlike FIEMAP.
+
+            This function should only be used if the more advanced FIEMAP ioctl
+            is not supported, probably because the Linux kernel is too old. """
 
         try:
-            binary_data = ioctl(self._f_image, 1, pack('I', block))
-            result = unpack('I', binary_data)[0]
+            binary_data = ioctl(self._f_image, 1, struct.pack('I', block))
+            result = struct.unpack('I', binary_data)[0]
         except IOError as err:
             raise Error("the FIBMAP ioctl failed for '%s': %s" \
                         % (self._image_path, err), err.errno)
 
         return result != 0
+
+    def _is_mapped_fiemap(self, block):
+        """ A helper function which returns True if block number 'block' of the
+            image file is mapped and False otherwise.
+
+            This function uses the FIEMAP ioctl to detect whether 'block' is
+            mapped to the disk. However, we do not use all the power of this
+            ioctl: we call it for each and every block, while there is a
+            possibility to call it once for a range of blocks, which is a lot
+            faster when dealing with huge files. """
+
+        # I know that the below cruft is not readable. To understand that, you
+        # need to know the FIEMAP interface, which is documented in the
+        # Documentation/filesystems/fiemap.txt file in the Linux kernel
+        # sources. The ioctl is quite complex and python is not the best tool
+        # for dealing with ioctl's...
+
+        # Prepare a 'struct fiemap' buffer which contains a single
+        # 'struct fiemap_extent' element.
+        struct_fiemap_format = "=QQLLLL"
+        struct_size = struct.calcsize(struct_fiemap_format)
+        buf = struct.pack(struct_fiemap_format,
+                          block * self.bmap_block_size,
+                          self.bmap_block_size, 0, 0, 1, 0)
+        # sizeof(struct fiemap_extent) == 56
+        buf += "\0"*56
+        # Python strings are "immutable", meaning that python will pass a copy
+        # of the string to the ioctl, unless we turn it into an array.
+        buf = array.array('B', buf)
+
+        try:
+            ioctl(self._f_image, 0xC020660B, buf, 1)
+        except IOError as err:
+            raise Error("the FIBMAP ioctl failed for '%s': %s" \
+                        % (self._image_path, err), err.errno)
+
+        res = struct.unpack(struct_fiemap_format, buf[:struct_size])
+        # res[3] is the 'fm_mapped_extents' field of 'struct fiemap'. If it
+        # contains zero, the block is not mapped, otherwise it is mapped.
+        return bool(res[3])
+
+    def _is_mapped(self, block):
+        """ A helper function which returns True if block number 'block' of the
+            image file is mapped and False otherwise. """
+        if self.fiemap_supported:
+            return self._is_mapped_fiemap(block)
+        else:
+            return self._is_mapped_fibmap(block)
 
     def _get_ranges(self):
         """ A helper function which generates ranges of mapped image file
