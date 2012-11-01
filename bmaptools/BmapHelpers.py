@@ -6,6 +6,12 @@ BmapFlasher and BmapCreator or which are useful for users of bmaptools.
 def human_size(size):
     """ Transform size in bytes into a human-readable form. """
 
+    if size == 1:
+        return "1 byte"
+
+    if size < 512:
+        return "%d bytes" % size
+
     for modifier in ["KiB", "MiB", "GiB", "TiB"]:
         size /= 1024.0
         if size < 1024:
