@@ -129,7 +129,11 @@ def main():
         log.error(str(err))
         raise SystemExit(1)
 
-    # TODO: complain if no holes
+    if creator.bmap_mapped_cnt == creator.bmap_blocks_cnt:
+        log.warning("all %s are mapped, no holes in '%s'" \
+                    % (creator.bmap_image_size_human, args.image))
+        log.warning("was the image handled incorrectly and holes " \
+                    "were expanded?")
 
 if __name__ == "__main__":
     sys.exit(main())
