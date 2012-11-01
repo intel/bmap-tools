@@ -239,6 +239,18 @@ class BmapCreator:
         self._bmap_file_start()
         self._f_image.seek(0)
 
+        # Synchronize the image file before starting to generate its block map
+        try:
+            self._f_image.flush()
+        except IOError as err:
+            raise Error("cannot flush image file '%s': %s" \
+                        % (self._image_path, err), err.errno)
+        try:
+            os.fsync(self._f_image.fileno()),
+        except OSError as err:
+            raise Error("cannot synchronize image file '%s': %s " \
+                        % (self._image_path, err.strerror), err.errno)
+
         # Generate the block map and write it to the XML block map
         # file as we go.
         self.bmap_mapped_cnt = 0
