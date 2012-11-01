@@ -21,6 +21,7 @@ file which have to be copied to the block device.
 import os
 import hashlib
 from xml.etree import ElementTree
+from BmapHelpers import human_size
 
 # A list of supported image formats
 supported_image_formats = ('bz2', 'gz', 'tar.gz', 'tgz', 'tar.bz2')
@@ -101,7 +102,9 @@ class BmapFlasher:
         self.bmap_blocks_cnt = int(xml.find("BlocksCount").text.strip())
         self.bmap_mapped_cnt = int(xml.find("MappedBlocksCount").text.strip())
         self.bmap_total_size = self.bmap_blocks_cnt * self.bmap_block_size
+        self.bmap_total_size_human = human_size(self.bmap_total_size)
         self.bmap_mapped_size = self.bmap_mapped_cnt * self.bmap_block_size
+        self.bmap_mapped_size_human = human_size(self.bmap_mapped_size)
         self.bmap_mapped_percent = self.bmap_mapped_cnt * 100.0
         self.bmap_mapped_percent /= self.bmap_blocks_cnt
 
@@ -179,7 +182,9 @@ class BmapFlasher:
         self.bmap_blocks_cnt = None
         self.bmap_mapped_cnt = None
         self.bmap_total_size = None
+        self.bmap_total_size_human = None
         self.bmap_mapped_size = None
+        self.bmap_mapped_size_human = None
         self.bmap_mapped_percent = None
 
         self._open_block_device()
@@ -295,9 +300,11 @@ class BmapFlasher:
         # Now we finally know the image size, initialize some of the
         # user-visible variables
         self.bmap_total_size = total_size
+        self.bmap_total_size_human = human_size(total_size)
         self.bmap_blocks_cnt = self.bmap_total_size / self.bmap_block_size
         self.bmap_mapped_cnt = self.bmap_blocks_cnt
         self.bmap_mapped_size = self.bmap_total_size
+        self.bmap_mapped_size_human = self.bmap_total_size_human
 
         if sync:
             self.sync()

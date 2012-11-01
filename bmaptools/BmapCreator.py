@@ -32,7 +32,7 @@ import hashlib
 from fcntl import ioctl
 import struct
 from itertools import groupby
-from bmaptools import BmapHelpers
+from BmapHelpers import human_size
 import array
 
 # The bmap format version we generate
@@ -72,10 +72,12 @@ class BmapCreator:
 
         self.fiemap_supported = None
         self.bmap_image_size = None
+        self.bmap_image_size_human = None
         self.bmap_block_size = None
         self.bmap_blocks_cnt = None
         self.bmap_mapped_cnt = None
         self.bmap_mapped_size = None
+        self.bmap_mapped_size_human = None
         self.bmap_mapped_percent = None
 
         self._f_image = None
@@ -87,6 +89,7 @@ class BmapCreator:
                         % (image_path, err), err.errno)
 
         self.bmap_image_size = os.fstat(self._f_image.fileno()).st_size
+        self.bmap_image_size_human = human_size(self.bmap_image_size)
         if self.bmap_image_size == 0:
             raise Error("cannot generate bmap for zero-sized image file '%s'" \
                         % image_path, err.errno)
@@ -160,7 +163,7 @@ class BmapCreator:
 
         xml += "<bmap version=\"%s\">\n" % bmap_version
         xml += "\t<!-- Image size in bytes (%s) -->\n" \
-                % BmapHelpers.human_size(self.bmap_image_size)
+                % self.bmap_image_size_human
         xml += "\t<ImageSize> %u </ImageSize>\n\n" % self.bmap_image_size
 
         xml += "\t<!-- Size of a block in bytes -->\n"
@@ -270,9 +273,8 @@ class BmapCreator:
             mapped blocks. """
 
         xml = "\t</BlockMap>\n\n"
-        human_size = BmapHelpers.human_size(self.bmap_mapped_size)
         xml += "\t<!-- Count of mapped blocks (%s or %.1f%% mapped) -->\n" \
-               % (human_size, self.bmap_mapped_percent)
+               % (self.bmap_mapped_size_human, self.bmap_mapped_percent)
         xml += "\t<MappedBlocksCount> %u </MappedBlocksCount>\n" \
                % self.bmap_mapped_cnt
         xml += "</bmap>"
@@ -333,6 +335,7 @@ class BmapCreator:
                               % (sha1, first, last))
 
         self.bmap_mapped_size = self.bmap_mapped_cnt * self.bmap_block_size
+        self.bmap_mapped_size_human = human_size(self.bmap_mapped_size)
         self.bmap_mapped_percent = self.bmap_mapped_cnt * 100.0
         self.bmap_mapped_percent /= self.bmap_blocks_cnt
         self._bmap_file_end()
