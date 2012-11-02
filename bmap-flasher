@@ -40,14 +40,14 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description = __doc__,
                                      prog = 'bmap-flasher')
 
-    # The first command-line argument - block device node
-    text = "the block device node to flash the image to"
-    parser.add_argument("bdev", help = text)
-
-    # The second command-line argument - image file
+    # The first positional argument - image file
     text = "the image file to flash. Supported formats: uncompressed, " + \
            ", ".join(BmapFlasher.supported_image_formats)
     parser.add_argument("image", help = text)
+
+    # The second positional argument - block device node
+    text = "the block device node to flash the image to"
+    parser.add_argument("bdev", help = text)
 
     # The --bmap option
     text = "the block map file for the image"
