@@ -145,7 +145,7 @@ class BmapFlasher:
         """ Open the block device in excluseve mode. """
 
         try:
-            self._f_bdev = os.open(self._bdev_path, os.O_RDWR | os.O_EXCL)
+            self._f_bdev = os.open(self._bdev_path, os.O_WRONLY | os.O_EXCL)
         except OSError as err:
             raise Error("cannot open block device '%s' in exclusive mode: %s" \
                         % (self._bdev_path, err.strerror))
