@@ -19,6 +19,7 @@ file which have to be copied to the block device.
 """
 
 import os
+import stat
 import hashlib
 from xml.etree import ElementTree
 from BmapHelpers import human_size
@@ -125,7 +126,17 @@ class BmapFlasher:
     def _open_image_file(self):
         """ Open the image The image file may be uncompressed or compressed.
             The compression type is recognized by the file extention. Supported
-            types are defined by 'supported_image_formats' """
+            types are defined by 'supported_image_formats'. """
+
+        try:
+            is_regular_file = stat.S_ISREG(os.stat(self._image_path).st_mode)
+        except OSError as err:
+            raise Error("cannot access image file '%s': %s" \
+                        % (self._image_path, err.strerror))
+
+        if not is_regular_file:
+            raise Error("image file '%s' is not a regular file" \
+                        % self._image_path)
 
         try:
             if self._image_path.endswith('.tar.gz') \
