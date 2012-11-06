@@ -187,10 +187,56 @@ class BmapFlasher:
         # Turn the block device file descriptor into a file object
         try:
             self._f_bdev = os.fdopen(self._f_bdev, "wb")
-        except IOError as err:
+        except OSError as err:
             os.close(self._f_bdev)
             raise Error("cannot open block device '%s': %s" \
-                        % (self._bdev_path, err.strerror))
+                        % (self._bdev_path, err))
+
+    def _tune_block_device(self):
+        """" Tune the block device for better performance:
+             1. Switching to the 'noop' I/O scheduler if it is available.
+                Sequential write to the block device becomes a lot faster
+                comparing to CFQ.
+             2. Limit the write buffering - we do not need the kernel to buffer
+                a lot of the data we send to the block device, because we write
+                sequentially. Limit the buffering. """
+
+        # Construct the path to the sysfs directory of our block device
+        st_rdev = os.fstat(self._f_bdev.fileno()).st_rdev
+        sysfs_base = "/sys/dev/block/%s:%s/" \
+                      % (os.major(st_rdev), os.minor(st_rdev))
+
+        # Switch to the 'noop' I/O scheduler
+        scheduler_path = sysfs_base + "queue/scheduler"
+        try:
+            f_scheduler = open(scheduler_path, "w")
+        except OSError as err:
+            # If we can't find the file, no problem, this stuff is just an
+            # optimization.
+            f_scheduler = None
+            pass
+
+        if f_scheduler:
+            try:
+                f_scheduler.write("noop")
+            except IOError as err:
+                pass
+            f_scheduler.close()
+
+        # Limit the write buffering
+        ratio_path = sysfs_base + "bdi/max_ratio"
+        try:
+            f_ratio = open(ratio_path, "w")
+        except OSError as err:
+            f_ratio = None
+            pass
+
+        if f_ratio:
+            try:
+                f_ratio.write("1")
+            except IOError as err:
+                pass
+            f_ratio.close()
 
     def __init__(self, image_path, bdev_path, bmap_path = None):
         """ Initialize a class instance:
@@ -365,6 +411,9 @@ class BmapFlasher:
             defines wether the block device has to be synchronized upon return.
             The 'verify' argument defines whether the SHA1 checksum has to be
             verified while writing. """
+
+        if self.target_is_block_device:
+            self._tune_block_device()
 
         if not self._f_bmap:
             self._write_entire_image(sync)
