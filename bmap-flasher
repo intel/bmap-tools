@@ -121,7 +121,7 @@ def main():
 
     start_time = time.time()
     if not args.bmap:
-        log.info("no block map given (see the --bmap option")
+        log.info("no block map given (see the --bmap option)")
         log.info("falling-back to writing entire image to '%s'" % args.bdev)
     else:
         log.info("block map format version %s" % flasher.bmap_version)
