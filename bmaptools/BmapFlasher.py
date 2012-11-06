@@ -75,10 +75,24 @@ class BmapFlasher:
         This module supports all the bmap format versions up version
         'supported_bmap_version'. """
 
+    def _initialize_sizes(self, image_size):
+        """ This function is only used when the there is no bmap. It
+            initializes attributes like 'bmap_blocks_cnt', 'bmap_mapped_cnt',
+            etc. Normally, the values are read from the bmap file, but in this
+            case they are just set to something resonable. """
+
+        self.bmap_image_size = image_size
+        self.bmap_image_size_human = human_size(image_size)
+        self.bmap_blocks_cnt = self.bmap_image_size + self.bmap_block_size - 1
+        self.bmap_blocks_cnt /= self.bmap_block_size
+        self.bmap_mapped_cnt = self.bmap_blocks_cnt
+        self.bmap_mapped_size = self.bmap_image_size
+        self.bmap_mapped_size_human = self.bmap_image_size_human
+
 
     def _parse_bmap(self):
         """ This is an internal helper function which parses the bmap file and
-            initializes bmap-related variables like 'block_size', 'mapped_cnt',
+            initializes attributes 'bmap_block_size', 'bmap_mapped_cnt',
             etc. """
 
         try:
@@ -297,14 +311,7 @@ class BmapFlasher:
 
             image_size += len(chunk)
 
-        # Now we finally know the image size, initialize some of the
-        # user-visible variables
-        self.bmap_image_size = image_size
-        self.bmap_image_size_human = human_size(image_size)
-        self.bmap_blocks_cnt = self.bmap_image_size / self.bmap_block_size
-        self.bmap_mapped_cnt = self.bmap_blocks_cnt
-        self.bmap_mapped_size = self.bmap_image_size
-        self.bmap_mapped_size_human = self.bmap_image_size_human
+        self._initialize_sizes(image_size)
 
         if sync:
             self.sync()
