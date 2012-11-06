@@ -247,6 +247,22 @@ class BmapFlasher:
                 image_size = os.fstat(self._f_image.fileno()).st_size
                 self._initialize_sizes(image_size)
 
+        # If we are writing to a real block device and the image size is known,
+        # check that the image fits the block device.
+        if self.target_is_block_device and self.bmap_image_size:
+            try:
+                bdev_size = os.lseek(self._f_bdev.fileno(), 0, os.SEEK_END)
+                os.lseek(self._f_bdev.fileno(), 0, os.SEEK_SET)
+            except OSError as err:
+                raise Error("cannot seed block device '%s': %s " \
+                            % (self._bdev_path, err.strerror))
+
+            if bdev_size < self.bmap_image_size:
+                raise Error("the image file '%s' has size %s and it will not " \
+                            "fit the block device '%s' which has %s capacity" \
+                            % (self._image_path, self.bmap_image_size_human,
+                               self._bdev_path, human_size(bdev_size)))
+
     def __del__(self):
         """ The class destructor which closes the opened files. """
 
