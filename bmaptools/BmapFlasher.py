@@ -150,6 +150,7 @@ class BmapFlasher:
                 import bz2
                 self._f_image = bz2.BZ2File(self._image_path, 'rb')
             else:
+                self._image_is_compressed = False
                 self._f_image = open(self._image_path, 'rb')
         except IOError as err:
             raise Error("cannot open image file '%s': %s" \
@@ -191,6 +192,8 @@ class BmapFlasher:
         self._f_bmap  = None
 
         self._xml = None
+        self._image_is_compressed = True
+
         self.bmap_version = None
         self.bmap_block_size = None
         self.bmap_blocks_cnt = None
@@ -212,13 +215,17 @@ class BmapFlasher:
                             % (bmap_path, err.strerror))
             self._parse_bmap()
         else:
-            # There is no bmap. Initialize user-visible variables to something
+            # There is no bmap. Initialize user-visible attributes to something
             # sensible with an assumption that we just have all blocks mapped.
-            # Note, we do not know image size before we read it (thing about
-            # compressed image), so we only initialize some of the variables.
             self.bmap_version = 0
             self.bmap_block_size = 4096
             self.bmap_mapped_percent = 100
+
+            # We can initialize size-related attributes only if we the image is
+            # uncompressed.
+            if not self._image_is_compressed:
+                image_size = os.fstat(self._f_image.fileno()).st_size
+                self._initialize_sizes(image_size)
 
     def __del__(self):
         """ The class destructor which closes the opened files. """
@@ -311,7 +318,8 @@ class BmapFlasher:
 
             image_size += len(chunk)
 
-        self._initialize_sizes(image_size)
+        if self._image_is_compressed:
+            self._initialize_sizes(image_size)
 
         if sync:
             self.sync()
