@@ -176,6 +176,14 @@ class BmapFlasher:
             raise Error("cannot open block device '%s' in exclusive mode: %s" \
                         % (self._bdev_path, err.strerror))
 
+        try:
+            st_mode = os.fstat(self._f_bdev).st_mode
+        except OSError as err:
+            raise Error("cannot access block device '%s': %s" \
+                        % (self._bdev_path, err.strerror))
+
+        self.target_is_block_device = stat.S_ISBLK(st_mode)
+
         # Turn the block device file descriptor into a file object
         try:
             self._f_bdev = os.fdopen(self._f_bdev, "wb")
@@ -214,6 +222,7 @@ class BmapFlasher:
         self.bmap_mapped_size = None
         self.bmap_mapped_size_human = None
         self.bmap_mapped_percent = None
+        self.target_is_block_device = None
 
         self._open_block_device()
         self._open_image_file()

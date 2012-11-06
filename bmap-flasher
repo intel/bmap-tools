@@ -27,9 +27,7 @@ file which have to be copied to the block device.
 VERSION = "0.1.0"
 
 import argparse
-import os
 import sys
-import stat
 import time
 import logging
 from bmaptools import BmapFlasher, BmapHelpers
@@ -104,20 +102,13 @@ def main():
         log = setup_logger(logging.INFO)
 
     try:
-        is_block_device = stat.S_ISBLK(os.stat(args.bdev).st_mode)
-    except OSError as err:
-        log.error("cannot access block device '%s': %s" \
-                   % (args.bdev, err.strerror))
-        raise SystemExit(1)
-
-    if not is_block_device:
-        log.warning("'%s' is not a block device!" % args.bdev)
-
-    try:
         flasher = BmapFlasher.BmapFlasher(args.image, args.bdev, args.bmap)
     except BmapFlasher.Error as err:
         log.error(str(err))
         raise SystemExit(1)
+
+    if not flasher.target_is_block_device:
+        log.warning("'%s' is not a block device!" % args.bdev)
 
     start_time = time.time()
     if not args.bmap:
