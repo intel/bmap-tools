@@ -55,12 +55,6 @@ def parse_arguments():
     text = "do not verify the data checksum while writing"
     parser.add_argument("--no-verify", action="store_true", help = text)
 
-    # The --no-sync option
-    text = "do not synchronize the block device after flashing (use "  \
-           "carefully and make sure you synchronize the block device " \
-           "manually before you unplug it)"
-    parser.add_argument("--no-sync", action="store_true", help = text)
-
     # The --quiet option
     text = "be quiet"
     parser.add_argument("-q", "--quiet", action="store_true", help = text)
@@ -131,13 +125,12 @@ def main():
         raise SystemExit(1)
 
     # Synchronize the block device
-    if not args.no_sync:
-        log.info("synchronizing block device '%s'" % args.bdev)
-        try:
-            flasher.sync()
-        except BmapFlasher.Error as err:
-            log.error(str(err))
-            raise SystemExit(1)
+    log.info("synchronizing block device '%s'" % args.bdev)
+    try:
+        flasher.sync()
+    except BmapFlasher.Error as err:
+        log.error(str(err))
+        raise SystemExit(1)
 
     flashing_time = time.time() - start_time
     flashing_speed = flasher.bmap_image_size / flashing_time
