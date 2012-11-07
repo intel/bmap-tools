@@ -24,7 +24,7 @@ essentially, it is an XML document which contains list of blocks in the image
 file which have to be copied to the block device.
 """
 
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 
 import argparse
 import sys

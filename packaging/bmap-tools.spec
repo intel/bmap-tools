@@ -1,6 +1,6 @@
 Name:       bmap-tools
 Summary:    Bmap Tools
-Version:    0.1.0
+Version:    0.1.1
 Release:    1
 Group:      Development/Tools/Other
 License:    GPL-2.0

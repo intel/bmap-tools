@@ -29,7 +29,7 @@ areas represent the areas which have to be flashed. The block map file lists
 these areas.
 """
 
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 
 import argparse
 import sys
