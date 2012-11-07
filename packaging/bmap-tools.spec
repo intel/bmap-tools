@@ -10,8 +10,18 @@ Source0:    %{name}_%{version}.tar.gz
 
 BuildRequires:  python-distribute
 
+# In OpenSuse the xml.etree module is provided by the python-xml package
+%if 0%{?suse_version}
+Requires:	python-xml
+%endif
+
+# In Fedora the xml.etree module is provided by the python-libs package
+%if 0%{?fedora_version}
+Requires:	python-libs
+%endif
+
 %description
-Bmap-flasher - Flash an image file to a block device using the block map (bmap).
+Bmap-tools - tools to generate block map (AKA bmap) and flash images using bmap
 
 %prep
 %setup -q -n %{name}-%{version}
