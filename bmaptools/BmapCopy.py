@@ -176,50 +176,6 @@ class BmapCopy:
             raise Error("cannot open destination file '%s': %s" \
                         % (self._dest_path, err))
 
-    def _tune_block_device(self):
-        """" Tune the block device for better performance:
-             1. Switching to the 'noop' I/O scheduler if it is available.
-                Sequential write to the block device becomes a lot faster
-                comparing to CFQ.
-             2. Limit the write buffering - we do not need the kernel to buffer
-                a lot of the data we send to the block device, because we write
-                sequentially. Limit the buffering. """
-
-        # Construct the path to the sysfs directory of our block device
-        st_rdev = os.fstat(self._f_dest.fileno()).st_rdev
-        sysfs_base = "/sys/dev/block/%s:%s/" \
-                      % (os.major(st_rdev), os.minor(st_rdev))
-
-        # Switch to the 'noop' I/O scheduler
-        scheduler_path = sysfs_base + "queue/scheduler"
-        try:
-            f_scheduler = open(scheduler_path, "w")
-        except OSError:
-            # If we can't find the file, no problem, this stuff is just an
-            # optimization.
-            f_scheduler = None
-
-        if f_scheduler:
-            try:
-                f_scheduler.write("noop")
-            except IOError:
-                pass
-            f_scheduler.close()
-
-        # Limit the write buffering
-        ratio_path = sysfs_base + "bdi/max_ratio"
-        try:
-            f_ratio = open(ratio_path, "w")
-        except OSError:
-            f_ratio = None
-
-        if f_ratio:
-            try:
-                f_ratio.write("1")
-            except IOError:
-                pass
-            f_ratio.close()
-
     def __init__(self, image_path, dest_path, bmap_path = None):
         """ Initialize a class instance:
             image_path - full path to the image which should be flashed
@@ -250,7 +206,6 @@ class BmapCopy:
         self.bmap_mapped_size = None
         self.bmap_mapped_size_human = None
         self.bmap_mapped_percent = None
-        self.target_is_block_device = None
 
         self._open_destination_file()
         self._open_image_file()
@@ -378,9 +333,6 @@ class BmapCopy:
             The 'verify' argument defines whether the SHA1 checksum has to be
             verified while writing. """
 
-        if self.target_is_block_device:
-            self._tune_block_device()
-
         if not self._f_bmap:
             self._write_entire_image(sync)
             return
@@ -460,8 +412,6 @@ class BmapBdevCopy(BmapCopy):
             raise Error("cannot access block device '%s': %s" \
                         % (self._dest_path, err.strerror))
 
-        self.target_is_block_device = stat.S_ISBLK(st_mode)
-
         # Turn the block device file descriptor into a file object
         try:
             self._f_dest = os.fdopen(self._f_dest, "wb")
@@ -469,6 +419,59 @@ class BmapBdevCopy(BmapCopy):
             os.close(self._f_dest)
             raise Error("cannot open block device '%s': %s" \
                         % (self._dest_path, err))
+
+    def _tune_block_device(self):
+        """" Tune the block device for better performance:
+        1. Switch to the 'noop' I/O scheduler if it is available - sequential
+           write to the block device becomes a lot faster comparing to CFQ.
+        2. Limit the write buffering - we do not need the kernel to buffer a
+           lot of the data we send to the block device, because we write
+           sequentially. Limit the buffering.
+
+        TODO: 1. save current settings and restore them at the end
+              2. this does not work for partitions like /dev/sda1 - fix """
+
+        # Construct the path to the sysfs directory of our block device
+        st_rdev = os.fstat(self._f_dest.fileno()).st_rdev
+        sysfs_base = "/sys/dev/block/%s:%s/" \
+                      % (os.major(st_rdev), os.minor(st_rdev))
+
+        # Switch to the 'noop' I/O scheduler
+        scheduler_path = sysfs_base + "queue/scheduler"
+        try:
+            f_scheduler = open(scheduler_path, "w")
+        except OSError:
+            # If we can't find the file, no problem, this stuff is just an
+            # optimization.
+            f_scheduler = None
+
+        if f_scheduler:
+            try:
+                f_scheduler.write("noop")
+            except IOError:
+                pass
+            f_scheduler.close()
+
+        # Limit the write buffering
+        ratio_path = sysfs_base + "bdi/max_ratio"
+        try:
+            f_ratio = open(ratio_path, "w")
+        except OSError:
+            f_ratio = None
+
+        if f_ratio:
+            try:
+                f_ratio.write("1")
+            except IOError:
+                pass
+            f_ratio.close()
+
+    def write(self, sync = True, verify = True):
+        """ The same as in the base class but tunes the block device for better
+        performance before starting writing. """
+
+        self._tune_block_device()
+        BmapCopy.write(self, sync, verify)
 
     def __init__(self, image_path, dest_path, bmap_path = None):
         """ The same as the constructur of the 'BmapCopy' base class, but adds
