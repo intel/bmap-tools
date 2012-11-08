@@ -9,8 +9,8 @@
 bmap. Generally speaking, these tools are about writing large image files
 quickly.
 
-The bmap file is an XML file which which contains a list of mapped blocks of
-the image. Mapped blocks are the blocks which have disk sectors associated with
+The bmap file is an XML file which contains a list of mapped blocks of the
+image. Mapped blocks are the blocks which have disk sectors associated with
 them, as opposed to holes, which are blocks with no associated disk sectors. In
 other words, the image is considered to be a sparse file, and bmap basically
 contains a list of mapped blocks of this sparse file. The bmap additionally
