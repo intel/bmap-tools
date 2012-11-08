@@ -24,7 +24,7 @@ assume that the image was a sparse file at the moment of creation, and the bmap
 was generated for this sparse file).
 
 For example, you may have a 4GiB image file, which contains only 100MiB of user
-data and you need to flashi it to a slow USB stick. With the bmap file you end
+data and you need to flash it to a slow USB stick. With the bmap file you end
 up writing only a little bit more than 100MiB of data from the image file to
 the USB stick. This is a lot faster than writing all 4GiB of data. We say that
 it is a bit more than 100MiB because there are also file-system meta-data,
@@ -105,7 +105,7 @@ def create_command(args, log):
     files, directories, file-system meta-data, partition table, etc. When
     flashing the image to the target device, you do not have to copy all the
     4GiB of data, you can copy only 512MiB of it, which is 4 times less, so
-    flashing shoud presumably be 4 times faster.
+    flashing should presumably be 4 times faster.
 
     The block map file is an XML file which contains a list of blocks which
     have to be copied to the target device. The other blocks are not used and
