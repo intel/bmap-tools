@@ -171,13 +171,13 @@ class BmapCopy:
         """ Open the block device in exclusive mode. """
 
         try:
-            self._f_bdev = os.open(self._bdev_path, os.O_WRONLY | os.O_EXCL)
+            self._f_dest = os.open(self._bdev_path, os.O_WRONLY | os.O_EXCL)
         except OSError as err:
             raise Error("cannot open block device '%s' in exclusive mode: %s" \
                         % (self._bdev_path, err.strerror))
 
         try:
-            st_mode = os.fstat(self._f_bdev).st_mode
+            st_mode = os.fstat(self._f_dest).st_mode
         except OSError as err:
             raise Error("cannot access block device '%s': %s" \
                         % (self._bdev_path, err.strerror))
@@ -186,9 +186,9 @@ class BmapCopy:
 
         # Turn the block device file descriptor into a file object
         try:
-            self._f_bdev = os.fdopen(self._f_bdev, "wb")
+            self._f_dest = os.fdopen(self._f_dest, "wb")
         except OSError as err:
-            os.close(self._f_bdev)
+            os.close(self._f_dest)
             raise Error("cannot open block device '%s': %s" \
                         % (self._bdev_path, err))
 
@@ -202,7 +202,7 @@ class BmapCopy:
                 sequentially. Limit the buffering. """
 
         # Construct the path to the sysfs directory of our block device
-        st_rdev = os.fstat(self._f_bdev.fileno()).st_rdev
+        st_rdev = os.fstat(self._f_dest.fileno()).st_rdev
         sysfs_base = "/sys/dev/block/%s:%s/" \
                       % (os.major(st_rdev), os.minor(st_rdev))
 
@@ -250,7 +250,7 @@ class BmapCopy:
         self._bdev_path  = bdev_path
         self._bmap_path  = bmap_path
 
-        self._f_bdev  = None
+        self._f_dest  = None
         self._f_image = None
         self._f_bmap  = None
 
@@ -295,8 +295,8 @@ class BmapCopy:
         # check that the image fits the block device.
         if self.target_is_block_device and self.bmap_image_size:
             try:
-                bdev_size = os.lseek(self._f_bdev.fileno(), 0, os.SEEK_END)
-                os.lseek(self._f_bdev.fileno(), 0, os.SEEK_SET)
+                bdev_size = os.lseek(self._f_dest.fileno(), 0, os.SEEK_END)
+                os.lseek(self._f_dest.fileno(), 0, os.SEEK_SET)
             except OSError as err:
                 raise Error("cannot seed block device '%s': %s " \
                             % (self._bdev_path, err.strerror))
@@ -312,8 +312,8 @@ class BmapCopy:
 
         if self._f_image:
             self._f_image.close()
-        if self._f_bdev:
-            self._f_bdev.close()
+        if self._f_dest:
+            self._f_dest.close()
         if self._f_bmap:
             self._f_bmap.close()
 
@@ -330,7 +330,7 @@ class BmapCopy:
 
         start = first * self.bmap_block_size
         self._f_image.seek(start)
-        self._f_bdev.seek(start)
+        self._f_dest.seek(start)
 
         chunk_size = (1024 * 1024) / self.bmap_block_size
         blocks_to_write = last - first + 1
@@ -357,7 +357,7 @@ class BmapCopy:
                 hash_obj.update(chunk)
 
             try:
-                self._f_bdev.write(chunk)
+                self._f_dest.write(chunk)
             except IOError as err:
                 raise Error("error while writing block %d to block device " \
                             "'%s': %s" \
@@ -376,7 +376,7 @@ class BmapCopy:
             to be synchronized upon return. """
 
         self._f_image.seek(0)
-        self._f_bdev.seek(0)
+        self._f_dest.seek(0)
         chunk_size = 1024 * 1024
         image_size = 0
 
@@ -391,7 +391,7 @@ class BmapCopy:
                 break
 
             try:
-                self._f_bdev.write(chunk)
+                self._f_dest.write(chunk)
             except IOError as err:
                 raise Error("cannot write %d bytes to '%s': %s" \
                             % (len(chunk), self._bdev_path, err))
@@ -459,13 +459,13 @@ class BmapCopy:
             written to the disk. """
 
         try:
-            self._f_bdev.flush()
+            self._f_dest.flush()
         except IOError as err:
             raise Error("cannot flush block device '%s': %s" \
                         % (self._bdev_path, err))
 
         try:
-            os.fsync(self._f_bdev.fileno()),
+            os.fsync(self._f_dest.fileno()),
         except OSError as err:
             raise Error("cannot synchronize block device '%s': %s " \
                         % (self._bdev_path, err.strerror))
