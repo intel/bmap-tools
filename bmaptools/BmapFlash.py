@@ -37,7 +37,7 @@ class Error(Exception):
     pass
 
 class BmapFlash:
-    """ This class implemends all the bmap flashing functionality. To flash an
+    """ This class implements all the bmap flashing functionality. To flash an
         image to a block device you should create an instance of this class and
         provide the following:
         * full path to the image to flash
@@ -49,8 +49,8 @@ class BmapFlash:
         also just copy the entire image to the block device if the bmap file is
         not provided.
 
-        The image file may either be an uncompressed raw image or a comressed
-        image. Compression type is defined by the image file extention.
+        The image file may either be an uncompressed raw image or a compressed
+        image. Compression type is defined by the image file extension.
         Supported types are listed by 'supported_image_formats'.
 
         Once an instance of 'BmapFlash' is created, all the 'bmap_*'
@@ -68,10 +68,10 @@ class BmapFlash:
         may choose whether to verify the SHA1 checksum while writing or not.
         Note, this is done only in case of bmap flashing and only if the bmap
         contains SHA1 checksums (e.g., bmap version 1.0 did not have SHA1
-        checksums). You may choose whether to synchonize the block device after
+        checksums). You may choose whether to synchronize the block device after
         writing or not.
 
-        To explicitely synchronize the block device, use the 'sync()' method.
+        To explicitly synchronize the block device, use the 'sync()' method.
 
         This module supports all the bmap format versions up version
         'supported_bmap_version'. """
@@ -80,7 +80,7 @@ class BmapFlash:
         """ This function is only used when the there is no bmap. It
             initializes attributes like 'bmap_blocks_cnt', 'bmap_mapped_cnt',
             etc. Normally, the values are read from the bmap file, but in this
-            case they are just set to something resonable. """
+            case they are just set to something reasonable. """
 
         self.bmap_image_size = image_size
         self.bmap_image_size_human = human_size(image_size)
@@ -125,7 +125,7 @@ class BmapFlash:
 
     def _open_image_file(self):
         """ Open the image The image file may be uncompressed or compressed.
-            The compression type is recognized by the file extention. Supported
+            The compression type is recognized by the file extension. Supported
             types are defined by 'supported_image_formats'. """
 
         try:
@@ -168,7 +168,7 @@ class BmapFlash:
                         % (self._image_path, err))
 
     def _open_block_device(self):
-        """ Open the block device in excluseve mode. """
+        """ Open the block device in exclusive mode. """
 
         try:
             self._f_bdev = os.open(self._bdev_path, os.O_WRONLY | os.O_EXCL)
@@ -374,7 +374,7 @@ class BmapFlash:
 
     def _write_entire_image(self, sync = True):
         """ Internal helper function which copies the entire image file to the
-            block device. The sync argument defines wether the block device has
+            block device. The sync argument defines whether the block device has
             to be synchronized upon return. """
 
         self._f_image.seek(0)
@@ -408,7 +408,7 @@ class BmapFlash:
 
     def write(self, sync = True, verify = True):
         """ Write the image to the block device using bmap. The sync argument
-            defines wether the block device has to be synchronized upon return.
+            defines whether the block device has to be synchronized upon return.
             The 'verify' argument defines whether the SHA1 checksum has to be
             verified while writing. """
 
