@@ -469,3 +469,11 @@ class BmapCopy:
         except OSError as err:
             raise Error("cannot synchronize block device '%s': %s " \
                         % (self._bdev_path, err.strerror))
+
+class BmapBdevCopy(BmapCopy):
+    """ This class is a specialized version of 'BmapCopy' which copies the
+    image to a block device. Unlike the base 'BmapCopy' class, this class does
+    various optimizations specific to block devices, e.g., switchint to the
+    'noop' I/O scheduler. """
+
+    pass

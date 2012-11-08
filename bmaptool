@@ -37,6 +37,8 @@ VERSION = "0.1.1"
 
 import argparse
 import sys
+import os
+import stat
 import time
 import logging
 from bmaptools import BmapCreate, BmapCopy, BmapHelpers
@@ -44,8 +46,34 @@ from bmaptools import BmapCreate, BmapCopy, BmapHelpers
 def copy_command(args, log):
     """ Copy an image to a block device or a regular file using bmap. """
 
+    # Try to open the destination file. If it does not exist, a new regular
+    # file will be created. If it exists and it is a regular file - it'll be
+    # truncated. If this is a block device, it'll just be opened.
     try:
-        writer = BmapCopy.BmapCopy(args.image, args.dest, args.bmap)
+        dest_file = open(args.dest, 'w+')
+    except IOError as err:
+        log.error("cannot open destination file '%s': %s" \
+                  % (args.dest, err))
+        raise SystemExit(1)
+
+    dest_file.close()
+
+    # Check whether the destination file is a block device
+    try:
+        is_block_device = stat.S_ISBLK(os.stat(args.dest).st_mode)
+    except OSError as err:
+        log.error("cannot access destination file '%s': %s" \
+                   % (args.bdev, err.strerror))
+        raise SystemExit(1)
+
+    try:
+        if is_block_device:
+            # For block devices, use the specialized class
+            destination_type = "block device"
+            writer = BmapCopy.BmapBdevCopy(args.image, args.dest, args.bmap)
+        else:
+            destination_type = "file"
+            writer = BmapCopy.BmapCopy(args.image, args.dest, args.bmap)
     except BmapCopy.Error as err:
         log.error(str(err))
         raise SystemExit(1)
@@ -61,8 +89,8 @@ def copy_command(args, log):
                     writer.bmap_image_size_human, writer.bmap_mapped_cnt,
                     writer.bmap_mapped_size_human,
                     writer.bmap_mapped_percent))
-        log.info("copying the image to '%s' using bmap file '%s'" \
-                 % (args.dest, args.bmap))
+        log.info("copying the image to %s '%s' using bmap file '%s'" \
+                 % (destination_type, args.dest, args.bmap))
 
     try:
         try:
