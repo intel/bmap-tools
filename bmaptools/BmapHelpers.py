@@ -1,6 +1,6 @@
 """
 This module contains various helper functions which are shared between
-BmapFlasher and BmapCreator or which are useful for users of bmaptools.
+BmapFlash and BmapCreate or which are useful for users of bmaptools.
 """
 
 def human_size(size):

@@ -1,6 +1,6 @@
 """
 This module implements the block map (AKA bmap) generating functionality and
-provides corresponding API (in a form of the BmapCreator class).
+provides corresponding API (in a form of the BmapCreate class).
 
 The idea is that while images files may generally be very large (e.g., 4GiB),
 they may nevertheless contain only little real data, e.g., 512MiB. This data
@@ -39,7 +39,7 @@ import array
 bmap_version = "1.2"
 
 class Error(Exception):
-    """ A class for exceptions of BmapCreator. We currently support only one
+    """ A class for exceptions of BmapCreate. We currently support only one
         type of exceptions, and we basically throw human-readable problem
         description in case of errors. """
 
@@ -51,10 +51,10 @@ class Error(Exception):
     def __str__(self):
         return self.strerror
 
-class BmapCreator:
+class BmapCreate:
     """ This class the bmap creation functionality. To generate a bmap for an
         image (which is supposedly a sparse file) you should first create an
-        instance of 'BmapCreator' and provide:
+        instance of 'BmapCreate' and provide:
         * full path to the image to create bmap for
         * a logger object to output the generated bmap to
 

@@ -1,6 +1,6 @@
 """
 This module implements flashing with block map (AKA bmap) and provides flashing
-API (in form of the 'BmapFlasher' class).
+API (in form of the 'BmapFlash' class).
 
 The bmap contains list of blocks which have to be read from the image file and
 then written to the block device. The rest of the blocks are not required to be
@@ -31,12 +31,12 @@ supported_image_formats = ('bz2', 'gz', 'tar.gz', 'tgz', 'tar.bz2')
 supported_bmap_version = 1
 
 class Error(Exception):
-    """ A class for exceptions of BmapFlasher. We currently support only one
+    """ A class for exceptions of BmapFlash. We currently support only one
         type of exceptions, and we basically throw human-readable problem
         description in case of errors. """
     pass
 
-class BmapFlasher:
+class BmapFlash:
     """ This class implemends all the bmap flashing functionality. To flash an
         image to a block device you should create an instance of this class and
         provide the following:
@@ -53,12 +53,12 @@ class BmapFlasher:
         image. Compression type is defined by the image file extention.
         Supported types are listed by 'supported_image_formats'.
 
-        Once an instance of 'BmapFlasher' is created, all the 'bmap_*'
+        Once an instance of 'BmapFlash' is created, all the 'bmap_*'
         attributes are initialized and available. They are read from the bmap.
         However, in case of bmap-less flashing, some of them (all the image
         size-related) are available only after writing the image, but not after
         creating the instance. The reason for this is that when bmap is absent,
-        'BmapFlasher' uses sensible fall-back values for 'bmap_*' attributes
+        'BmapFlash' uses sensible fall-back values for 'bmap_*' attributes
         assuming the entire image is "mapped". And if the image is compressed,
         we cannot easily get the image size unless we decompress it, which is
         too time-consuming to do in '__init__()'. However, after the 'write()'

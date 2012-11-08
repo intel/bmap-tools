@@ -40,7 +40,7 @@ def parse_arguments():
 
     # The first positional argument - image file
     text = "the image file to flash. Supported formats: uncompressed, " + \
-           ", ".join(BmapFlasher.supported_image_formats)
+           ", ".join(BmapFlash.supported_image_formats)
     parser.add_argument("image", help = text)
 
     # The second positional argument - block device node
@@ -96,8 +96,8 @@ def main():
         log = setup_logger(logging.INFO)
 
     try:
-        flasher = BmapFlasher.BmapFlasher(args.image, args.bdev, args.bmap)
-    except BmapFlasher.Error as err:
+        flasher = BmapFlash.BmapFlash(args.image, args.bdev, args.bmap)
+    except BmapFlash.Error as err:
         log.error(str(err))
         raise SystemExit(1)
 
@@ -121,7 +121,7 @@ def main():
     try:
         try:
             flasher.write(False, not args.no_verify)
-        except BmapFlasher.Error as err:
+        except BmapFlash.Error as err:
             log.error(str(err))
             raise SystemExit(1)
 
@@ -129,7 +129,7 @@ def main():
         log.info("synchronizing block device '%s'" % args.bdev)
         try:
             flasher.sync()
-        except BmapFlasher.Error as err:
+        except BmapFlash.Error as err:
             log.error(str(err))
             raise SystemExit(1)
     except KeyboardInterrupt:

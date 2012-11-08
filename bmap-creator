@@ -123,9 +123,9 @@ def main():
     output = setup_output_stream(args.output)
 
     try:
-        creator = BmapCreator.BmapCreator(args.image, output)
+        creator = BmapCreate.BmapCreate(args.image, output)
         creator.generate(not args.no_checksum)
-    except BmapCreator.Error as err:
+    except BmapCreate.Error as err:
         log.error(str(err))
         raise SystemExit(1)
 
