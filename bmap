@@ -50,9 +50,6 @@ def copy_command(args, log):
         log.error(str(err))
         raise SystemExit(1)
 
-    if not writer.target_is_block_device:
-        log.warning("'%s' is not a block device!" % args.bdev)
-
     start_time = time.time()
     if not args.bmap:
         log.info("no block map given (see the --bmap option)")
