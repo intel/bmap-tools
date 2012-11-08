@@ -86,10 +86,11 @@ def flash_command(args, log):
             raise SystemExit(1)
     except KeyboardInterrupt:
         log.error("the program is interrupted")
-        log.warning("do not panic if the program may not finish immediately, " \
-                    "just wait")
-        log.warning("reason: this is the Linux kernel behavior - it " \
-                    "synchronizes the block device")
+        if flasher.target_is_block_device:
+            log.warning("do not panic if the program does not finish " \
+                        "immediately, just wait")
+            log.warning("reason: this is the Linux kernel behavior - it " \
+                        "synchronizes the block device")
         raise SystemExit(1)
 
     flashing_time = time.time() - start_time
