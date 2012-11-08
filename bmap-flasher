@@ -30,7 +30,7 @@ import argparse
 import sys
 import time
 import logging
-from bmaptools import BmapFlasher, BmapHelpers
+from bmaptools import BmapFlash, BmapHelpers
 
 def parse_arguments():
     """ A helper function which parses the input arguments. """

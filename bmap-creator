@@ -34,7 +34,7 @@ VERSION = "0.1.1"
 import argparse
 import sys
 import logging
-from bmaptools import BmapCreator
+from bmaptools import BmapCreate
 
 def parse_arguments():
     """ A helper function which parses the input arguments. """
