@@ -39,14 +39,14 @@ import argparse
 import sys
 import time
 import logging
-from bmaptools import BmapCreate, BmapFlash, BmapHelpers
+from bmaptools import BmapCreate, BmapCopy, BmapHelpers
 
 def copy_command(args, log):
     """ Copy an image to a block device or a regular file using bmap. """
 
     try:
-        writer = BmapFlash.BmapFlash(args.image, args.bdev, args.bmap)
-    except BmapFlash.Error as err:
+        writer = BmapCopy.BmapCopy(args.image, args.bdev, args.bmap)
+    except BmapCopy.Error as err:
         log.error(str(err))
         raise SystemExit(1)
 
@@ -67,7 +67,7 @@ def copy_command(args, log):
     try:
         try:
             writer.write(False, not args.no_verify)
-        except BmapFlash.Error as err:
+        except BmapCopy.Error as err:
             log.error(str(err))
             raise SystemExit(1)
 
@@ -75,7 +75,7 @@ def copy_command(args, log):
         log.info("synchronizing block device '%s'" % args.bdev)
         try:
             writer.sync()
-        except BmapFlash.Error as err:
+        except BmapCopy.Error as err:
             log.error(str(err))
             raise SystemExit(1)
     except KeyboardInterrupt:
@@ -183,7 +183,7 @@ def parse_arguments():
 
     # The first positional argument - image file
     text = "the image file to copy. Supported formats: uncompressed, " + \
-           ", ".join(BmapFlash.supported_image_formats)
+           ", ".join(BmapCopy.supported_image_formats)
     parser_copy.add_argument("image", help = text)
 
     # The second positional argument - block device node
