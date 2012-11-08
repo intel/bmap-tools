@@ -45,7 +45,7 @@ def copy_command(args, log):
     """ Copy an image to a block device or a regular file using bmap. """
 
     try:
-        writer = BmapCopy.BmapCopy(args.image, args.bdev, args.bmap)
+        writer = BmapCopy.BmapCopy(args.image, args.dest, args.bmap)
     except BmapCopy.Error as err:
         log.error(str(err))
         raise SystemExit(1)
@@ -53,7 +53,7 @@ def copy_command(args, log):
     start_time = time.time()
     if not args.bmap:
         log.info("no block map given (see the --bmap option)")
-        log.info("falling-back to copying entire image to '%s'" % args.bdev)
+        log.info("falling-back to copying entire image to '%s'" % args.dest)
     else:
         log.info("block map format version %s" % writer.bmap_version)
         log.info("%d blocks of size %d (%s), mapped %d blocks (%s or %.1f%%)" \
@@ -62,7 +62,7 @@ def copy_command(args, log):
                     writer.bmap_mapped_size_human,
                     writer.bmap_mapped_percent))
         log.info("copying the image to '%s' using bmap file '%s'" \
-                 % (args.bdev, args.bmap))
+                 % (args.dest, args.bmap))
 
     try:
         try:
@@ -72,7 +72,7 @@ def copy_command(args, log):
             raise SystemExit(1)
 
         # Synchronize the block device
-        log.info("synchronizing block device '%s'" % args.bdev)
+        log.info("synchronizing block device '%s'" % args.dest)
         try:
             writer.sync()
         except BmapCopy.Error as err:
@@ -187,8 +187,8 @@ def parse_arguments():
     parser_copy.add_argument("image", help = text)
 
     # The second positional argument - block device node
-    text = "the block device node to copy the image to"
-    parser_copy.add_argument("bdev", help = text)
+    text = "the destination file or device node to copy the image to"
+    parser_copy.add_argument("dest", help = text)
 
     # The --bmap option
     text = "the block map file for the image"
