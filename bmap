@@ -5,30 +5,33 @@
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
 # Note! We use the below docstring for the program help text as well.
-""" A tool to generate block map (AKA bmap) for image files and to copy or
-flash image files using bmap.
+""" This is a tool to generate block map files (bmap) and to copy files using
+bmap. Generally speaking, these tools are about writing large image files
+quickly.
 
-The bmap is an XML file which which contains list of mapped blocks in the
-image. Mapped blocks are image file blocks which have corresponding disk
-sectors associated with them, as opposed to holes which are image file blocks
-not associated with any disk sectors. In other words, the image is considered
-to be a sparse file and bmap basically contains a list of mapped blocks of this
-sparse file. The bmap also contains some additional useful information like
-block size (usually 4KiB), image size, mapped blocks count, etc.
+The bmap file is an XML file which which contains a list of mapped blocks of
+the image. Mapped blocks are the blocks which have disk sectors associated with
+them, as opposed to holes, which are blocks with no associated disk sectors. In
+other words, the image is considered to be a sparse file, and bmap basically
+contains a list of mapped blocks of this sparse file. The bmap additionally
+contains some useful information like block size (usually 4KiB), image size,
+mapped blocks count, etc.
 
-The bmap is used for flashing or copying the image to a block device or a
-different file. The idea is that we may flash or copy quickly with the bmap
-because we copy only mapped blocks and ignore the holes, because they are
-useless. And usually images contain a lot of unused blocks (of course, we
-assume that the image was a sparse file at the moment of creation, and the bmap
-was generated for this sparse file).
+The bmap is used for copying the image to a block device or to a regualr file.
+The idea is that we copy quickly with bmap because we copy only mapped blocks
+and ignore the holes, because they are useless. And if the image is generated
+properly (starting with a huge hole and writing all the data), it usually
+contains only little mapped blocks, comparing to the overall image size. And
+such an image compresses very well (because holes are read as all zeroes), so
+it is benefitial to destribute them as compressed files along with the bmap.
 
-For example, you may have a 4GiB image file, which contains only 100MiB of user
-data and you need to flash it to a slow USB stick. With the bmap file you end
-up writing only a little bit more than 100MiB of data from the image file to
-the USB stick. This is a lot faster than writing all 4GiB of data. We say that
-it is a bit more than 100MiB because there are also file-system meta-data,
-partition table, etc. """
+Here is an example. Suppose you have a 4GiB image which contains only 100MiB of
+user data and you need to flash it to a slow USB stick. With bmap you end up
+copying only a little bit more than 100MiB of data from the image to the USB
+stick (namely, you write only mapped blocks). This is a lot faster than copying
+all 4GiB of data. We say that it is a bit more than 100MiB because things like
+file-system meta-data (inode tables, superblocks, etc), partition table, etc
+also contribute to the mapped blocks and are also copied. """
 
 VERSION = "0.1.1"
 
@@ -39,13 +42,7 @@ import logging
 from bmaptools import BmapCreate, BmapFlash, BmapHelpers
 
 def flash_command(args, log):
-    """ Write raw image file to the target block device using the block map
-    file (AKA bmap). The bmap contains list of blocks which have to be read
-    from the image file and then written to the block device. The rest of the
-    blocks are not required to be copied. And usually image files have a lot of
-    useless blocks (i.e., the blocks which are not used in the internal
-    file-system of the image), so flashing with bmap is usually much faster
-    than copying entire image to the block device. """
+    """ Copy an image to a block device or a regular file using bmap. """
 
     try:
         flasher = BmapFlash.BmapFlash(args.image, args.bdev, args.bmap)
@@ -59,7 +56,7 @@ def flash_command(args, log):
     start_time = time.time()
     if not args.bmap:
         log.info("no block map given (see the --bmap option)")
-        log.info("falling-back to writing entire image to '%s'" % args.bdev)
+        log.info("falling-back to copying entire image to '%s'" % args.bdev)
     else:
         log.info("block map format version %s" % flasher.bmap_version)
         log.info("%d blocks of size %d (%s), mapped %d blocks (%s or %.1f%%)" \
@@ -67,7 +64,7 @@ def flash_command(args, log):
                     flasher.bmap_image_size_human, flasher.bmap_mapped_cnt,
                     flasher.bmap_mapped_size_human,
                     flasher.bmap_mapped_percent))
-        log.info("writing the image to '%s' using bmap file '%s'" \
+        log.info("copying the image to '%s' using bmap file '%s'" \
                  % (args.bdev, args.bmap))
 
     try:
@@ -95,18 +92,18 @@ def flash_command(args, log):
 
     flashing_time = time.time() - start_time
     flashing_speed = flasher.bmap_image_size / flashing_time
-    log.info("flashing time: %s, flashing speed %s/sec" \
+    log.info("copying time: %s, copying speed %s/sec" \
              % (BmapHelpers.human_time(flashing_time), \
                 BmapHelpers.human_size(flashing_speed)))
 
 def create_command(args, log):
     """ Generate block map (AKA bmap) for an image. The idea is that while
-    images files may generally be very large (e.g., 4GiB), they may
-    nevertheless contain only little real data, e.g., 512MiB. This data are
-    files, directories, file-system meta-data, partition table, etc. When
-    flashing the image to the target device, you do not have to copy all the
-    4GiB of data, you can copy only 512MiB of it, which is 4 times less, so
-    flashing should presumably be 4 times faster.
+    images may be very large (e.g., 4GiB), they may nevertheless contain only
+    little real data, e.g., 512MiB. This data are files, directories,
+    file-system meta-data, partition table, etc. When copying the image to the
+    target device, you do not have to copy all the 4GiB of data, you can copy
+    only 512MiB of it, which is 4 times less, so copying should presumably be 4
+    times faster.
 
     The block map file is an XML file which contains a list of blocks which
     have to be copied to the target device. The other blocks are not used and
@@ -114,14 +111,14 @@ def create_command(args, log):
     information like block size, image size, count of mapped blocks, etc. There
     are also many commentaries, so it is human-readable.
 
-    The image file has to be a sparse file. Generally, this often means that
-    when you generate this image file, you should start with a huge sparse file
-    which contains a single hole spanning the entire file. Then you should
-    partition it, write all the data (probably by means of loop-back mounting
-    the image file or parts of it), etc. The end result should be a sparse
-    file where holes represent the areas which do not have to be flashed. On
-    the other hand, the mapped file areas represent the areas which have to be
-    flashed. The block map file lists these areas. """
+    The image has to be a sparse file. Generally, this means that when you
+    generate this image file, you should start with a huge sparse file which
+    contains a single hole spanning the entire file. Then you should partition
+    it, write all the data (probably by means of loop-back mounting the image
+    or parts of it), etc. The end result should be a sparse file where mapped
+    areas represent useful parts of the image and holes represent useless parts
+    of the image, which do not have to be copied when copying the image to the
+    target device. """
 
     # Create and setup the output stream
     output = logging.getLogger('bmap-create-output')
