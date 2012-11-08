@@ -41,16 +41,16 @@ import time
 import logging
 from bmaptools import BmapCreate, BmapFlash, BmapHelpers
 
-def flash_command(args, log):
+def copy_command(args, log):
     """ Copy an image to a block device or a regular file using bmap. """
 
     try:
-        flasher = BmapFlash.BmapFlash(args.image, args.bdev, args.bmap)
+        writer = BmapFlash.BmapFlash(args.image, args.bdev, args.bmap)
     except BmapFlash.Error as err:
         log.error(str(err))
         raise SystemExit(1)
 
-    if not flasher.target_is_block_device:
+    if not writer.target_is_block_device:
         log.warning("'%s' is not a block device!" % args.bdev)
 
     start_time = time.time()
@@ -58,18 +58,18 @@ def flash_command(args, log):
         log.info("no block map given (see the --bmap option)")
         log.info("falling-back to copying entire image to '%s'" % args.bdev)
     else:
-        log.info("block map format version %s" % flasher.bmap_version)
+        log.info("block map format version %s" % writer.bmap_version)
         log.info("%d blocks of size %d (%s), mapped %d blocks (%s or %.1f%%)" \
-                 % (flasher.bmap_blocks_cnt, flasher.bmap_block_size,
-                    flasher.bmap_image_size_human, flasher.bmap_mapped_cnt,
-                    flasher.bmap_mapped_size_human,
-                    flasher.bmap_mapped_percent))
+                 % (writer.bmap_blocks_cnt, writer.bmap_block_size,
+                    writer.bmap_image_size_human, writer.bmap_mapped_cnt,
+                    writer.bmap_mapped_size_human,
+                    writer.bmap_mapped_percent))
         log.info("copying the image to '%s' using bmap file '%s'" \
                  % (args.bdev, args.bmap))
 
     try:
         try:
-            flasher.write(False, not args.no_verify)
+            writer.write(False, not args.no_verify)
         except BmapFlash.Error as err:
             log.error(str(err))
             raise SystemExit(1)
@@ -77,24 +77,24 @@ def flash_command(args, log):
         # Synchronize the block device
         log.info("synchronizing block device '%s'" % args.bdev)
         try:
-            flasher.sync()
+            writer.sync()
         except BmapFlash.Error as err:
             log.error(str(err))
             raise SystemExit(1)
     except KeyboardInterrupt:
         log.error("the program is interrupted")
-        if flasher.target_is_block_device:
+        if writer.target_is_block_device:
             log.warning("do not panic if the program does not finish " \
                         "immediately, just wait")
             log.warning("reason: this is the Linux kernel behavior - it " \
                         "synchronizes the block device")
         raise SystemExit(1)
 
-    flashing_time = time.time() - start_time
-    flashing_speed = flasher.bmap_image_size / flashing_time
+    copying_time = time.time() - start_time
+    copying_speed = writer.bmap_image_size / copying_time
     log.info("copying time: %s, copying speed %s/sec" \
-             % (BmapHelpers.human_time(flashing_time), \
-                BmapHelpers.human_size(flashing_speed)))
+             % (BmapHelpers.human_time(copying_time), \
+                BmapHelpers.human_size(copying_speed)))
 
 def create_command(args, log):
     """ Generate block map (AKA bmap) for an image. The idea is that while
@@ -178,28 +178,28 @@ def parse_arguments():
                                help = text)
 
     #
-    # Create the parser for the "flash" command
+    # Create the parser for the "copy" command
     #
     text = "write an image to a block device using bmap"
-    parser_flash = subparsers.add_parser("flash", help = text)
-    parser_flash.set_defaults(func=flash_command)
+    parser_copy = subparsers.add_parser("copy", help = text)
+    parser_copy.set_defaults(func=copy_command)
 
     # The first positional argument - image file
-    text = "the image file to flash. Supported formats: uncompressed, " + \
+    text = "the image file to copy. Supported formats: uncompressed, " + \
            ", ".join(BmapFlash.supported_image_formats)
-    parser_flash.add_argument("image", help = text)
+    parser_copy.add_argument("image", help = text)
 
     # The second positional argument - block device node
-    text = "the block device node to flash the image to"
-    parser_flash.add_argument("bdev", help = text)
+    text = "the block device node to copy the image to"
+    parser_copy.add_argument("bdev", help = text)
 
     # The --bmap option
     text = "the block map file for the image"
-    parser_flash.add_argument("--bmap", help = text)
+    parser_copy.add_argument("--bmap", help = text)
 
     # The --no-verify option
     text = "do not verify the data checksum while writing"
-    parser_flash.add_argument("--no-verify", action="store_true", help = text)
+    parser_copy.add_argument("--no-verify", action="store_true", help = text)
 
     return parser.parse_args()
 

@@ -11,6 +11,6 @@ setup(
     scripts = ['bmap'],
     packages = find_packages(),
     license='GPLv2',
-    long_description="Tools to generate block map (AKA bmap) and flash " \
+    long_description="Tools to generate block map (AKA bmap) and copy " \
                      "images using bmap",
 )
