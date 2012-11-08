@@ -25,7 +25,7 @@ it is benefitial to destribute them as compressed files along with the bmap.
 Here is an example. Suppose you have a 4GiB image which contains only 100MiB of
 user data and you need to flash it to a slow USB stick. With bmap you end up
 copying only a little bit more than 100MiB of data from the image to the USB
-stick (namely, you write only mapped blocks). This is a lot faster than copying
+stick (namely, you copy only mapped blocks). This is a lot faster than copying
 all 4GiB of data. We say that it is a bit more than 100MiB because things like
 file-system meta-data (inode tables, superblocks, etc), partition table, etc
 also contribute to the mapped blocks and are also copied. """
@@ -262,11 +262,11 @@ class BmapCopy:
         self._f_dest.seek(start)
 
         chunk_size = (1024 * 1024) / self.bmap_block_size
-        blocks_to_write = last - first + 1
+        blocks_to_copy = last - first + 1
         blocks_written = 0
-        while blocks_written < blocks_to_write:
-            if blocks_written + chunk_size > blocks_to_write:
-                chunk_size = blocks_to_write - blocks_written
+        while blocks_written < blocks_to_copy:
+            if blocks_written + chunk_size > blocks_to_copy:
+                chunk_size = blocks_to_copy - blocks_written
 
             try:
                 chunk = self._f_image.read(chunk_size * self.bmap_block_size)
@@ -298,7 +298,7 @@ class BmapCopy:
                         "calculated %s, should be %s" \
                         % (first, last, hash_obj.hexdigest(), sha1))
 
-    def _write_entire_image(self, sync = True):
+    def _copy_entire_image(self, sync = True):
         """ Internal helper function which copies the entire image file to the
         destination file, and only used when the bmap was not provided. The
         sync argument defines whether the destination file has to be
@@ -333,14 +333,14 @@ class BmapCopy:
         if sync:
             self.sync()
 
-    def write(self, sync = True, verify = True):
+    def copy(self, sync = True, verify = True):
         """ Copy the image to the destination file using bmap. The sync
         argument defines whether the destination file has to be synchronized
         upon return.  The 'verify' argument defines whether the SHA1 checksum
         has to be verified while copying. """
 
         if not self._f_bmap:
-            self._write_entire_image(sync)
+            self._copy_entire_image(sync)
             return
 
         xml = self._xml
@@ -471,12 +471,12 @@ class BmapBdevCopy(BmapCopy):
                 pass
             f_ratio.close()
 
-    def write(self, sync = True, verify = True):
+    def copy(self, sync = True, verify = True):
         """ The same as in the base class but tunes the block device for better
         performance before starting writing. """
 
         self._tune_block_device()
-        BmapCopy.write(self, sync, verify)
+        BmapCopy.copy(self, sync, verify)
 
     def __init__(self, image_path, dest_path, bmap_path = None):
         """ The same as the constructur of the 'BmapCopy' base class, but adds
