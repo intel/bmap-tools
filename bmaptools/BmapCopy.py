@@ -171,16 +171,16 @@ class BmapCopy:
         """ Open the block device in exclusive mode. """
 
         try:
-            self._f_dest = os.open(self._bdev_path, os.O_WRONLY | os.O_EXCL)
+            self._f_dest = os.open(self._dest_path, os.O_WRONLY | os.O_EXCL)
         except OSError as err:
             raise Error("cannot open block device '%s' in exclusive mode: %s" \
-                        % (self._bdev_path, err.strerror))
+                        % (self._dest_path, err.strerror))
 
         try:
             st_mode = os.fstat(self._f_dest).st_mode
         except OSError as err:
             raise Error("cannot access block device '%s': %s" \
-                        % (self._bdev_path, err.strerror))
+                        % (self._dest_path, err.strerror))
 
         self.target_is_block_device = stat.S_ISBLK(st_mode)
 
@@ -190,7 +190,7 @@ class BmapCopy:
         except OSError as err:
             os.close(self._f_dest)
             raise Error("cannot open block device '%s': %s" \
-                        % (self._bdev_path, err))
+                        % (self._dest_path, err))
 
     def _tune_block_device(self):
         """" Tune the block device for better performance:
@@ -236,10 +236,10 @@ class BmapCopy:
                 pass
             f_ratio.close()
 
-    def __init__(self, image_path, bdev_path, bmap_path = None):
+    def __init__(self, image_path, dest_path, bmap_path = None):
         """ Initialize a class instance:
             image_path - full path to the image which should be flashed
-            bdev_path  - full path to the block device to flash the image to
+            dest_path  - full path to the block device to flash the image to
             bmap_path  - full path to the bmap file to use for flashing
 
             If the bmap file is not specified, all the bmap-related members
@@ -247,7 +247,7 @@ class BmapCopy:
             image file to the block device. """
 
         self._image_path = image_path
-        self._bdev_path  = bdev_path
+        self._dest_path  = dest_path
         self._bmap_path  = bmap_path
 
         self._f_dest  = None
@@ -299,13 +299,13 @@ class BmapCopy:
                 os.lseek(self._f_dest.fileno(), 0, os.SEEK_SET)
             except OSError as err:
                 raise Error("cannot seed block device '%s': %s " \
-                            % (self._bdev_path, err.strerror))
+                            % (self._dest_path, err.strerror))
 
             if bdev_size < self.bmap_image_size:
                 raise Error("the image file '%s' has size %s and it will not " \
                             "fit the block device '%s' which has %s capacity" \
                             % (self._image_path, self.bmap_image_size_human,
-                               self._bdev_path, human_size(bdev_size)))
+                               self._dest_path, human_size(bdev_size)))
 
     def __del__(self):
         """ The class destructor which closes the opened files. """
@@ -361,7 +361,7 @@ class BmapCopy:
             except IOError as err:
                 raise Error("error while writing block %d to block device " \
                             "'%s': %s" \
-                            % (first + blocks_written, self._bdev_path, err))
+                            % (first + blocks_written, self._dest_path, err))
 
             blocks_written += chunk_size
 
@@ -394,7 +394,7 @@ class BmapCopy:
                 self._f_dest.write(chunk)
             except IOError as err:
                 raise Error("cannot write %d bytes to '%s': %s" \
-                            % (len(chunk), self._bdev_path, err))
+                            % (len(chunk), self._dest_path, err))
 
             image_size += len(chunk)
 
@@ -462,13 +462,13 @@ class BmapCopy:
             self._f_dest.flush()
         except IOError as err:
             raise Error("cannot flush block device '%s': %s" \
-                        % (self._bdev_path, err))
+                        % (self._dest_path, err))
 
         try:
             os.fsync(self._f_dest.fileno()),
         except OSError as err:
             raise Error("cannot synchronize block device '%s': %s " \
-                        % (self._bdev_path, err.strerror))
+                        % (self._dest_path, err.strerror))
 
 class BmapBdevCopy(BmapCopy):
     """ This class is a specialized version of 'BmapCopy' which copies the
