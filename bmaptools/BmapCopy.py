@@ -167,29 +167,13 @@ class BmapCopy:
             raise Error("cannot open image file '%s': %s" \
                         % (self._image_path, err))
 
-    def _open_block_device(self):
-        """ Open the block device in exclusive mode. """
+    def _open_destination_file(self):
+        """ Open the destination file. """
 
         try:
-            self._f_dest = os.open(self._dest_path, os.O_WRONLY | os.O_EXCL)
-        except OSError as err:
-            raise Error("cannot open block device '%s' in exclusive mode: %s" \
-                        % (self._dest_path, err.strerror))
-
-        try:
-            st_mode = os.fstat(self._f_dest).st_mode
-        except OSError as err:
-            raise Error("cannot access block device '%s': %s" \
-                        % (self._dest_path, err.strerror))
-
-        self.target_is_block_device = stat.S_ISBLK(st_mode)
-
-        # Turn the block device file descriptor into a file object
-        try:
-            self._f_dest = os.fdopen(self._f_dest, "wb")
-        except OSError as err:
-            os.close(self._f_dest)
-            raise Error("cannot open block device '%s': %s" \
+            self._f_dest = open(self._dest_path, 'w+')
+        except IOError as err:
+            raise Error("cannot open destination file '%s': %s" \
                         % (self._dest_path, err))
 
     def _tune_block_device(self):
@@ -268,7 +252,7 @@ class BmapCopy:
         self.bmap_mapped_percent = None
         self.target_is_block_device = None
 
-        self._open_block_device()
+        self._open_destination_file()
         self._open_image_file()
 
         if bmap_path:
@@ -476,4 +460,27 @@ class BmapBdevCopy(BmapCopy):
     various optimizations specific to block devices, e.g., switchint to the
     'noop' I/O scheduler. """
 
-    pass
+    def _open_destination_file(self):
+        """ Open the block device in exclusive mode. """
+
+        try:
+            self._f_dest = os.open(self._dest_path, os.O_WRONLY | os.O_EXCL)
+        except OSError as err:
+            raise Error("cannot open block device '%s' in exclusive mode: %s" \
+                        % (self._dest_path, err.strerror))
+
+        try:
+            st_mode = os.fstat(self._f_dest).st_mode
+        except OSError as err:
+            raise Error("cannot access block device '%s': %s" \
+                        % (self._dest_path, err.strerror))
+
+        self.target_is_block_device = stat.S_ISBLK(st_mode)
+
+        # Turn the block device file descriptor into a file object
+        try:
+            self._f_dest = os.fdopen(self._f_dest, "wb")
+        except OSError as err:
+            os.close(self._f_dest)
+            raise Error("cannot open block device '%s': %s" \
+                        % (self._dest_path, err))
