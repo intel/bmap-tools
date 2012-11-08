@@ -7,7 +7,7 @@ they may nevertheless contain only little real data, e.g., 512MiB. This data
 are files, directories, file-system meta-data, partition table, etc. When
 flashing the image to the target device, you do not have to copy all the 4GiB
 of data, you can copy only 512MiB of it, which is 4 times less, so flashing
-shoud presumably be 4 times faster.
+should presumably be 4 times faster.
 
 The block map file is an XML file which contains a list of blocks which have to
 be copied to the target device. The other blocks are not used and there is no
@@ -123,7 +123,7 @@ class BmapCreate:
                 self_is_mapped_fibmap(0)
             except Error as err:
                 if err.errno == os.errno.EPERM or err.errno == os.errno.EACCES:
-                    raise Error("unfortunatelly your system does not support " \
+                    raise Error("unfortunately your system does not support " \
                                 "the FIEMAP ioctl, and we have to use FIBMAP"  \
                                 "ioctl instead, with requires 'CAP_SYS_RAWIO'" \
                                 " capability, which you do not have; try to"   \
@@ -187,7 +187,7 @@ class BmapCreate:
             This function uses the FIBMAP ioctl (number 1) to detect whether
             'block' is mapped to the disk.  The ioctl returns zero if 'block'
             is not mapped and non-zero disk block number if it is mapped.
-            Unfortunatelly, FIBMAP requires root rights, unlike FIEMAP.
+            Unfortunately, FIBMAP requires root rights, unlike FIEMAP.
 
             This function should only be used if the more advanced FIEMAP ioctl
             is not supported, probably because the Linux kernel is too old. """
@@ -215,7 +215,7 @@ class BmapCreate:
         # need to know the FIEMAP interface, which is documented in the
         # Documentation/filesystems/fiemap.txt file in the Linux kernel
         # sources. The ioctl is quite complex and python is not the best tool
-        # for dealing with ioctl's...
+        # for dealing with ioctls...
 
         # Prepare a 'struct fiemap' buffer which contains a single
         # 'struct fiemap_extent' element.
@@ -255,7 +255,7 @@ class BmapCreate:
             Of course, the image file must have been created as a sparse file
             originally, otherwise all blocks will be mapped. And it is also
             essential to generate the block map before the file had been copied
-            anywhere or compressed, because othewise we lose the information
+            anywhere or compressed, because otherwise we lose the information
             about unmapped blocks. """
 
         for key, group in groupby(xrange(self.bmap_blocks_cnt), self._is_mapped):
@@ -268,7 +268,7 @@ class BmapCreate:
                 yield first, last
 
     def _bmap_file_end(self):
-        """ A helper funstion which generates the final parts of the block map
+        """ A helper function which generates the final parts of the block map
             file: the ending tags and the information about the amount of
             mapped blocks. """
 
@@ -303,7 +303,7 @@ class BmapCreate:
         return hash_obj.hexdigest()
 
     def generate(self, include_checksums = True):
-        """ Thenerate bmap for the image file. If 'include_checksums' is True,
+        """ Generate bmap for the image file. If 'include_checksums' is True,
             also generate SHA1 checksums for block ranges. """
 
         self._bmap_file_start()
