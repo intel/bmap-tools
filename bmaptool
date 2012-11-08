@@ -95,12 +95,12 @@ def copy_command(args, log):
 
 def create_command(args, log):
     """ Generate block map (AKA bmap) for an image. The idea is that while
-    images may be very large (e.g., 4GiB), they may nevertheless contain only
-    little real data, e.g., 512MiB. This data are files, directories,
-    file-system meta-data, partition table, etc. When copying the image to the
-    target device, you do not have to copy all the 4GiB of data, you can copy
-    only 512MiB of it, which is 4 times less, so copying should presumably be 4
-    times faster.
+    images files may generally be very large (e.g., 4GiB), they may
+    nevertheless contain only little real data, e.g., 512MiB. This data are
+    files, directories, file-system meta-data, partition table, etc. When
+    copying the image to the target device, you do not have to copy all the
+    4GiB of data, you can copy only 512MiB of it, which is 4 times less, so
+    copying should presumably be 4 times faster.
 
     The block map file is an XML file which contains a list of blocks which
     have to be copied to the target device. The other blocks are not used and
@@ -142,7 +142,7 @@ def create_command(args, log):
 def parse_arguments():
     """ A helper function which parses the input arguments. """
 
-    parser = argparse.ArgumentParser(description = __doc__, prog = 'bmap')
+    parser = argparse.ArgumentParser(description = __doc__, prog = 'bmaptool')
 
     # The --version option
     parser.add_argument("--version", action = "version", \
@@ -213,7 +213,7 @@ def setup_logger(loglevel):
 
     log = logging.getLogger('bmap-logger')
     log.setLevel(loglevel)
-    formatter = logging.Formatter("bmap: %(levelname)s: %(message)s")
+    formatter = logging.Formatter("bmaptool: %(levelname)s: %(message)s")
     where = logging.StreamHandler(sys.stderr)
     where.setFormatter(formatter)
     log.addHandler(where)

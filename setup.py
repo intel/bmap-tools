@@ -8,7 +8,7 @@ setup(
     author = "Artem Bityutskiy",
     author_email = "artem.bityutskiy@linux.intel.com",
     version = "0.1.0",
-    scripts = ['bmap'],
+    scripts = ['bmaptool'],
     packages = find_packages(),
     license='GPLv2',
     long_description="Tools to generate block map (AKA bmap) and copy " \
