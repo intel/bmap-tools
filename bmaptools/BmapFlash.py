@@ -210,16 +210,15 @@ class BmapFlash:
         scheduler_path = sysfs_base + "queue/scheduler"
         try:
             f_scheduler = open(scheduler_path, "w")
-        except OSError as err:
+        except OSError:
             # If we can't find the file, no problem, this stuff is just an
             # optimization.
             f_scheduler = None
-            pass
 
         if f_scheduler:
             try:
                 f_scheduler.write("noop")
-            except IOError as err:
+            except IOError:
                 pass
             f_scheduler.close()
 
@@ -227,14 +226,13 @@ class BmapFlash:
         ratio_path = sysfs_base + "bdi/max_ratio"
         try:
             f_ratio = open(ratio_path, "w")
-        except OSError as err:
+        except OSError:
             f_ratio = None
-            pass
 
         if f_ratio:
             try:
                 f_ratio.write("1")
-            except IOError as err:
+            except IOError:
                 pass
             f_ratio.close()
 
@@ -348,7 +346,7 @@ class BmapFlash:
                             "file '%s': %s" \
                             % (first + blocks_written,
                                first + blocks_written + chunk_size,
-                               last, self._image_path, err))
+                               self._image_path, err))
 
             if not chunk:
                 raise Error("cannot read block %d, the image file '%s' is " \
