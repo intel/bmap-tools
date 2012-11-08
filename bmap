@@ -176,7 +176,8 @@ def parse_arguments():
 
     # The --no-checksum option
     text = "do not generate the checksum for block ranges in the bmap"
-    parser_create.add_argument("--no-checksum", action="store_true", help = text)
+    parser_create.add_argument("--no-checksum", action="store_true",
+                               help = text)
 
     #
     # Create the parser for the "flash" command
