@@ -120,7 +120,7 @@ class BmapCreate:
             # FIEMAP is not supported by the running kernel and we need to
             # fall-back to FIBMAP, which requires root permissions.
             try:
-                self_is_mapped_fibmap(0)
+                self._is_mapped_fibmap(0)
             except Error as err:
                 if err.errno == os.errno.EPERM or err.errno == os.errno.EACCES:
                     raise Error("unfortunately your system does not support " \
