@@ -275,22 +275,6 @@ class BmapCopy:
                 image_size = os.fstat(self._f_image.fileno()).st_size
                 self._initialize_sizes(image_size)
 
-        # If we are writing to a real block device and the image size is known,
-        # check that the image fits the block device.
-        if self.target_is_block_device and self.bmap_image_size:
-            try:
-                bdev_size = os.lseek(self._f_dest.fileno(), 0, os.SEEK_END)
-                os.lseek(self._f_dest.fileno(), 0, os.SEEK_SET)
-            except OSError as err:
-                raise Error("cannot seed block device '%s': %s " \
-                            % (self._dest_path, err.strerror))
-
-            if bdev_size < self.bmap_image_size:
-                raise Error("the image file '%s' has size %s and it will not " \
-                            "fit the block device '%s' which has %s capacity" \
-                            % (self._image_path, self.bmap_image_size_human,
-                               self._dest_path, human_size(bdev_size)))
-
     def __del__(self):
         """ The class destructor which closes the opened files. """
 
@@ -454,6 +438,7 @@ class BmapCopy:
             raise Error("cannot synchronize block device '%s': %s " \
                         % (self._dest_path, err.strerror))
 
+
 class BmapBdevCopy(BmapCopy):
     """ This class is a specialized version of 'BmapCopy' which copies the
     image to a block device. Unlike the base 'BmapCopy' class, this class does
@@ -484,3 +469,26 @@ class BmapBdevCopy(BmapCopy):
             os.close(self._f_dest)
             raise Error("cannot open block device '%s': %s" \
                         % (self._dest_path, err))
+
+    def __init__(self, image_path, dest_path, bmap_path = None):
+        """ The same as the constructur of the 'BmapCopy' base class, but adds
+        useful guard-checks specific to block devices. """
+
+        # Call the base class construcor first
+        BmapCopy.__init__(self, image_path, dest_path, bmap_path)
+
+        # If the image size is known (i.e., it is not compressed) - check that
+        # itfits the block device.
+        if self.bmap_image_size:
+            try:
+                bdev_size = os.lseek(self._f_dest.fileno(), 0, os.SEEK_END)
+                os.lseek(self._f_dest.fileno(), 0, os.SEEK_SET)
+            except OSError as err:
+                raise Error("cannot seed block device '%s': %s " \
+                            % (self._dest_path, err.strerror))
+
+            if bdev_size < self.bmap_image_size:
+                raise Error("the image file '%s' has size %s and it will not " \
+                            "fit the block device '%s' which has %s capacity" \
+                            % (self._image_path, self.bmap_image_size_human,
+                               self._dest_path, human_size(bdev_size)))
