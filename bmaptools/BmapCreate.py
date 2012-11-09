@@ -282,6 +282,8 @@ class BmapCreate:
 
         start = first * self.bmap_block_size
         end = (last + 1) * self.bmap_block_size
+
+        self._f_image.seek(start)
         hash_obj = hashlib.sha1()
 
         chunk_size = 1024*1024
