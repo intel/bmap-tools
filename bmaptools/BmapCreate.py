@@ -325,7 +325,7 @@ class BmapCreate:
             self.bmap_mapped_cnt += last - first + 1
             if include_checksums:
                 sha1 = self._calculate_sha1(first, last)
-                sha1 = " sha1 =\"%s\"" % sha1
+                sha1 = " sha1=\"%s\"" % sha1
             else:
                 sha1 = ""
             self._output.info("\t\t<Range%s> %s-%s </Range>" \
