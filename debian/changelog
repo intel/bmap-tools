@@ -1,3 +1,13 @@
+bmap-tools (0.2) unstable; urgency=low
+
+  * Release 0.2 - mostly internal code re-structuring and renamings,
+    not much functional changes.
+  * The 'bmap-flasher' and 'bmap-creator' tools do not exist anymore. Now
+    we have 'bmaptool' which supports 'copy' and 'create' sub-commands instead.
+  * The BmapFlasher module was also re-named to BmapCopy.
+
+ -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com>  Fri, 09 Nov 2012 12:20:37 +0200
+
 bmap-tools (0.1.1) unstable; urgency=low
 
   * Release 0.1.1 - a lot of fixes and speed improvements.

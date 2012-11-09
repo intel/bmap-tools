@@ -1,3 +1,10 @@
+Fri Nov  9 10:21:31 UTC 2012 - Artem.Bityutskiy@intel.com
+- Release 0.2 - mostly internal code re-structuring and renamings,
+  not much functional changes.
+- The 'bmap-flasher' and 'bmap-creator' tools do not exist anymore. Now
+  we have 'bmaptool' which supports 'copy' and 'create' sub-commands instead.
+- The BmapFlasher module was also re-named to BmapCopy.
+
 Wed Nov  7 09:37:59 UTC 2012 - Artem.Bityutskiy@intel.com
 - Release 0.1.1 - a lot of fixes and speed improvements.
 
