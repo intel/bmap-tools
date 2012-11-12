@@ -8,7 +8,7 @@ XS-Python-Version: current
 
 Package: bmap-tools
 Architecture: all
-Depends: ${misc:Depends}, ${python:Depends}
+Depends: ${misc:Depends}, ${python:Depends}, python (>=2.7)
 XB-Python-Version: ${python:Versions}
 Description: Bmap tools
  Bmap-flasher - Flash an image file to a block device using the block map (bmap)
