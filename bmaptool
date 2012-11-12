@@ -107,12 +107,7 @@ def copy_command(args, log):
             log.error(str(err))
             raise SystemExit(1)
     except KeyboardInterrupt:
-        log.error("the program is interrupted")
-        if is_block_device:
-            log.warning("do not panic if the program does not finish " \
-                        "immediately, just wait")
-            log.warning("reason: this is the Linux kernel behavior - it " \
-                        "synchronizes the block device")
+        log.error("the program is interrupted, exiting")
         raise SystemExit(1)
 
     copying_time = time.time() - start_time

@@ -202,7 +202,10 @@ class BmapCopy:
 
         self._xml = None
         self._image_is_compressed = True
+
         self._blocks_written = None
+        self._dest_fsync_watermark = None
+        self._dest_fsync_last = None
 
         self.bmap_version = None
         self.bmap_block_size = None
@@ -247,6 +250,15 @@ class BmapCopy:
         if self._f_bmap:
             self._f_bmap.close()
 
+    def _fsync_dest(self):
+        """ Internal helper function which synchronizes the destination file if
+        we wrote more than '_dest_fsync_watermark' blocks of data there. """
+
+        size = self._dest_fsync_last + self._dest_fsync_watermark
+        if self._dest_fsync_watermark and self._blocks_written >= size:
+            self._dest_fsync_last = self._blocks_written
+            self.sync()
+
     def _copy_data(self, first, last, sha1):
         """ Internal helper function which copies the ['first'-'last'] region
         of the image file to the same region of the destination file. The
@@ -285,6 +297,10 @@ class BmapCopy:
 
             if sha1:
                 hash_obj.update(chunk)
+
+            # Synchronize the destination file if we reached the watermark
+            if self._dest_fsync_watermark:
+                self._fsync_dest()
 
             try:
                 self._f_dest.write(chunk)
@@ -348,8 +364,10 @@ class BmapCopy:
         xml = self._xml
         xml_bmap = xml.find("BlockMap")
 
-        # Copy the mapped blocks
         self._blocks_written = 0
+        self._dest_fsync_last = 0
+
+        # Copy the mapped blocks
         for xml_element in xml_bmap.findall("Range"):
             blocks_range = xml_element.text.strip()
             # The range of blocks has the "X - Y" format, or it can be just "X"
@@ -474,9 +492,19 @@ class BmapBdevCopy(BmapCopy):
 
     def copy(self, sync = True, verify = True):
         """ The same as in the base class but tunes the block device for better
-        performance before starting writing. """
+        performance before starting writing. Additionally, it forces block
+        device synchronization from time to time in order to make sure we do
+        not get stuck in 'fsync()' for too long time. The problem is that the
+        kernel synchronizes block devices when the file is closed. And the
+        result is that if the user interrupts us while we are copying the data,
+        the program will be blocked in 'close()' waiting for the block device
+        synchronization, which may last minutes for slow USB stick. This is
+        very bad user experience, and we work around this effect by
+        synchronizing from time to time. """
 
         self._tune_block_device()
+        self._dest_fsync_watermark = (6 * 1024 * 1024) / self.bmap_block_size
+
         BmapCopy.copy(self, sync, verify)
 
     def __init__(self, image_path, dest_path, bmap_path = None):
