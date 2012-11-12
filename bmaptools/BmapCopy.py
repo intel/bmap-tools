@@ -202,6 +202,7 @@ class BmapCopy:
 
         self._xml = None
         self._image_is_compressed = True
+        self._blocks_written = None
 
         self.bmap_version = None
         self.bmap_block_size = None
@@ -292,6 +293,7 @@ class BmapCopy:
                             % (first + blocks_written, self._dest_path, err))
 
             blocks_written += chunk_size
+            self._blocks_written += chunk_size
 
         if sha1 and hash_obj.hexdigest() != sha1:
             raise Error("checksum mismatch for blocks range %d-%d: " \
@@ -347,7 +349,7 @@ class BmapCopy:
         xml_bmap = xml.find("BlockMap")
 
         # Copy the mapped blocks
-        blocks_written = 0
+        self._blocks_written = 0
         for xml_element in xml_bmap.findall("Range"):
             blocks_range = xml_element.text.strip()
             # The range of blocks has the "X - Y" format, or it can be just "X"
@@ -369,13 +371,12 @@ class BmapCopy:
 
             self._copy_data(first, last, sha1)
 
-            blocks_written += last - first + 1
-
         # This is just a sanity check - we should have written exactly 'mapped_cnt'
         # blocks.
-        if blocks_written != self.bmap_mapped_cnt:
+        if self._blocks_written != self.bmap_mapped_cnt:
             raise Error("wrote %u blocks, but should have %u - inconsistent " \
-                       "bmap file" % (blocks_written, self.bmap_mapped_cnt))
+                       "bmap file" \
+                       % (self._blocks_written, self.bmap_mapped_cnt))
 
         if sync:
             self.sync()
