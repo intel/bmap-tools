@@ -445,7 +445,7 @@ class BmapBdevCopy(BmapCopy):
         scheduler_path = sysfs_base + "queue/scheduler"
         try:
             f_scheduler = open(scheduler_path, "w")
-        except OSError:
+        except IOError:
             # If we can't find the file, no problem, this stuff is just an
             # optimization.
             f_scheduler = None
@@ -461,7 +461,7 @@ class BmapBdevCopy(BmapCopy):
         ratio_path = sysfs_base + "bdi/max_ratio"
         try:
             f_ratio = open(ratio_path, "w")
-        except OSError:
+        except IOError:
             f_ratio = None
 
         if f_ratio:
