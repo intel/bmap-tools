@@ -207,6 +207,9 @@ class BmapCopy:
         self._dest_fsync_watermark = None
         self._dest_fsync_last = None
 
+        self._batch_blocks = None
+        self._batch_bytes = 1024 * 1024
+
         self.bmap_version = None
         self.bmap_block_size = None
         self.bmap_blocks_cnt = None
@@ -239,6 +242,8 @@ class BmapCopy:
             if not self._image_is_compressed:
                 image_size = os.fstat(self._f_image.fileno()).st_size
                 self._initialize_sizes(image_size)
+
+        self._batch_blocks = self._batch_bytes / self.bmap_block_size
 
     def __del__(self):
         """ The class destructor which closes the opened files. """
@@ -274,20 +279,20 @@ class BmapCopy:
         self._f_image.seek(start)
         self._f_dest.seek(start)
 
-        chunk_size = (1024 * 1024) / self.bmap_block_size
+        batch_blocks = self._batch_blocks
         blocks_to_copy = last - first + 1
         blocks_written = 0
         while blocks_written < blocks_to_copy:
-            if blocks_written + chunk_size > blocks_to_copy:
-                chunk_size = blocks_to_copy - blocks_written
+            if blocks_written + batch_blocks > blocks_to_copy:
+                batch_blocks = blocks_to_copy - blocks_written
 
             try:
-                chunk = self._f_image.read(chunk_size * self.bmap_block_size)
+                chunk = self._f_image.read(batch_blocks * self.bmap_block_size)
             except IOError as err:
                 raise Error("error while reading blocks %d-%d of the image " \
                             "file '%s': %s" \
                             % (first + blocks_written,
-                               first + blocks_written + chunk_size,
+                               first + blocks_written + batch_blocks,
                                self._image_path, err))
 
             if not chunk:
@@ -308,8 +313,8 @@ class BmapCopy:
                 raise Error("error while writing block %d to '%s': %s" \
                             % (first + blocks_written, self._dest_path, err))
 
-            blocks_written += chunk_size
-            self._blocks_written += chunk_size
+            blocks_written += batch_blocks
+            self._blocks_written += batch_blocks
 
         if verify and sha1 and hash_obj.hexdigest() != sha1:
             raise Error("checksum mismatch for blocks range %d-%d: " \
@@ -324,15 +329,14 @@ class BmapCopy:
 
         self._f_image.seek(0)
         self._f_dest.seek(0)
-        chunk_size = 1024 * 1024
         image_size = 0
 
         while True:
             try:
-                chunk = self._f_image.read(chunk_size)
+                chunk = self._f_image.read(self._batch_bytes)
             except IOError as err:
                 raise Error("cannot read %d bytes from '%s': %s" \
-                            % (chunk_size, self._image_path, err))
+                            % (self._batch_bytes, self._image_path, err))
 
             if not chunk:
                 break
