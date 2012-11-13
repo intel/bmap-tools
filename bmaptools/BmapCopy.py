@@ -264,6 +264,28 @@ class BmapCopy:
             self._dest_fsync_last = self._blocks_written
             self.sync()
 
+    def _get_batches(self, first, last):
+        """ This is a helper iterator which splits block ranges from the bmap
+        file to smaller batches. Indeed, we cannot read and write entire block
+        ranges from the image file, because a range can be very large. So we
+        perform the I/O in batches. Batch size is defined by the
+        '_batch_blocks' attribute. Thus, for each (first, last) block range,
+        the iterator returns smaller (start, end, length) batch ranges, where:
+          * 'start' is the starting batch block number;
+          * 'last' is the ending batch block numger;
+          * 'length' is the batch length in blocks (same as
+             'end' - 'start' + 1). """
+
+        batch_blocks = self._batch_blocks
+
+        while first + batch_blocks - 1 <= last:
+            yield (first, first + batch_blocks - 1, batch_blocks)
+            first += batch_blocks
+
+        batch_blocks = last - first + 1
+        if batch_blocks:
+            yield (first, first + batch_blocks - 1, batch_blocks)
+
     def _copy_data(self, first, last, sha1, verify):
         """ Internal helper function which copies the ['first'-'last'] region
         of the image file to the same region of the destination file. The
@@ -275,30 +297,22 @@ class BmapCopy:
         if verify and sha1:
             hash_obj = hashlib.sha1()
 
-        start = first * self.bmap_block_size
-        self._f_image.seek(start)
-        self._f_dest.seek(start)
+        position = first * self.bmap_block_size
+        self._f_image.seek(position)
+        self._f_dest.seek(position)
 
-        batch_blocks = self._batch_blocks
-        blocks_to_copy = last - first + 1
-        blocks_written = 0
-        while blocks_written < blocks_to_copy:
-            if blocks_written + batch_blocks > blocks_to_copy:
-                batch_blocks = blocks_to_copy - blocks_written
-
+        iterator = self._get_batches(first, last)
+        for (start, end, length) in iterator:
             try:
-                chunk = self._f_image.read(batch_blocks * self.bmap_block_size)
+                chunk = self._f_image.read(length * self.bmap_block_size)
             except IOError as err:
                 raise Error("error while reading blocks %d-%d of the image " \
                             "file '%s': %s" \
-                            % (first + blocks_written,
-                               first + blocks_written + batch_blocks,
-                               self._image_path, err))
+                            % (start, end, self._image_path, err))
 
             if not chunk:
                 raise Error("cannot read block %d, the image file '%s' is " \
-                            "too short" \
-                            % (first + blocks_written, self._image_path))
+                            "too short" % (start, self._image_path))
 
             if verify and sha1:
                 hash_obj.update(chunk)
@@ -311,10 +325,9 @@ class BmapCopy:
                 self._f_dest.write(chunk)
             except IOError as err:
                 raise Error("error while writing block %d to '%s': %s" \
-                            % (first + blocks_written, self._dest_path, err))
+                            % (start, self._dest_path, err))
 
-            blocks_written += batch_blocks
-            self._blocks_written += batch_blocks
+            self._blocks_written += length
 
         if verify and sha1 and hash_obj.hexdigest() != sha1:
             raise Error("checksum mismatch for blocks range %d-%d: " \
