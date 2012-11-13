@@ -259,15 +259,15 @@ class BmapCopy:
             self._dest_fsync_last = self._blocks_written
             self.sync()
 
-    def _copy_data(self, first, last, sha1):
+    def _copy_data(self, first, last, sha1, verify):
         """ Internal helper function which copies the ['first'-'last'] region
         of the image file to the same region of the destination file. The
         'first' and 'last' arguments are the block numbers, not byte offsets.
 
-        If the 'sha1' argument is not 'None', calculate the SHA1 checksum for
+        If the 'verify' argument is not 'None', calculate the SHA1 checksum for
         the region and make sure it is equivalent to 'sha1'. """
 
-        if sha1:
+        if verify and sha1:
             hash_obj = hashlib.sha1()
 
         start = first * self.bmap_block_size
@@ -295,7 +295,7 @@ class BmapCopy:
                             "too short" \
                             % (first + blocks_written, self._image_path))
 
-            if sha1:
+            if verify and sha1:
                 hash_obj.update(chunk)
 
             # Synchronize the destination file if we reached the watermark
@@ -311,7 +311,7 @@ class BmapCopy:
             blocks_written += chunk_size
             self._blocks_written += chunk_size
 
-        if sha1 and hash_obj.hexdigest() != sha1:
+        if verify and sha1 and hash_obj.hexdigest() != sha1:
             raise Error("checksum mismatch for blocks range %d-%d: " \
                         "calculated %s, should be %s" \
                         % (first, last, hash_obj.hexdigest(), sha1))
@@ -351,6 +351,40 @@ class BmapCopy:
         if sync:
             self.sync()
 
+    def _get_block_ranges(self):
+        """ This is a helper iterator that parses the bmap XML file and for
+        each block range in the XML file it generates a
+        ('first', 'last', 'sha1') triplet, where:
+          * 'first' is the first block of the range;
+          * 'last' is the last block of the range;
+          * 'sha1' is the SHA1 checksum of the range ('None' is used if it is
+            missing. """
+
+        xml = self._xml
+        xml_bmap = xml.find("BlockMap")
+
+        for xml_element in xml_bmap.findall("Range"):
+            blocks_range = xml_element.text.strip()
+            # The range of blocks has the "X - Y" format, or it can be just "X"
+            # in old bmap format versions. First, split the blocks range string
+            # and strip white-spaces.
+            split = [x.strip() for x in blocks_range.split('-', 1)]
+
+            first = int(split[0])
+            if len(split) > 1:
+                last = int(split[1])
+                if first > last:
+                    raise Error("bad range (first > last): '%s'" % blocks_range)
+            else:
+                first = last
+
+            if 'sha1' in xml_element.attrib:
+                sha1 = xml_element.attrib['sha1']
+            else:
+                sha1 = None
+
+            yield (first, last, sha1)
+
     def copy(self, sync = True, verify = True):
         """ Copy the image to the destination file using bmap. The sync
         argument defines whether the destination file has to be synchronized
@@ -361,33 +395,12 @@ class BmapCopy:
             self._copy_entire_image(sync)
             return
 
-        xml = self._xml
-        xml_bmap = xml.find("BlockMap")
-
         self._blocks_written = 0
         self._dest_fsync_last = 0
 
         # Copy the mapped blocks
-        for xml_element in xml_bmap.findall("Range"):
-            blocks_range = xml_element.text.strip()
-            # The range of blocks has the "X - Y" format, or it can be just "X"
-            # in old bmap format versions. First, split the blocks range string
-            # and strip white-spaces.
-            split = [x.strip() for x in blocks_range.split('-', 1)]
-            first = int(split[0])
-            if len(split) > 1:
-                last = int(split[1])
-                if first > last:
-                    raise Error("bad range (first > last): '%s'" % blocks_range)
-            else:
-                first = last
-
-            if verify and 'sha1' in xml_element.attrib:
-                sha1 = xml_element.attrib['sha1']
-            else:
-                sha1 = None
-
-            self._copy_data(first, last, sha1)
+        for (first, last, sha1) in self._get_block_ranges():
+            self._copy_data(first, last, sha1, verify)
 
         # This is just a sanity check - we should have written exactly
         # 'mapped_cnt' blocks.
