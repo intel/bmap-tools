@@ -1,3 +1,12 @@
+bmap-tools (0.3) unstable; urgency=low
+
+  * Fix flashing speed calculations
+  * Fix the Ctrl-C freeze issue - now we synchronize the block device
+    periodically so if a Ctrl-C interruption happens, we terminate withen few
+    seconds.
+
+ -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com>  Tue, 13 Nov 2012 10:56:11 +0200
+
 bmap-tools (0.2) unstable; urgency=low
 
   * Release 0.2 - mostly internal code re-structuring and renamings,

@@ -1,12 +1,18 @@
-Fri Nov  9 10:21:31 UTC 2012 - Artem.Bityutskiy@intel.com
+Tue Nov 13 08:56:49 UTC 2012 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 0.3
+- Fix flashing speed calculations
+- Fix the Ctrl-C freeze issue - now we synchronize the block device
+  periodically so if a Ctrl-C interruption happens, we terminate withen few
+  seconds.
+
+Fri Nov  9 10:21:31 UTC 2012 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 0.2
 - Release 0.2 - mostly internal code re-structuring and renamings,
   not much functional changes.
 - The 'bmap-flasher' and 'bmap-creator' tools do not exist anymore. Now
   we have 'bmaptool' which supports 'copy' and 'create' sub-commands instead.
 - The BmapFlasher module was also re-named to BmapCopy.
 
-Wed Nov  7 09:37:59 UTC 2012 - Artem.Bityutskiy@intel.com
+Wed Nov  7 09:37:59 UTC 2012 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 0.1.0
 - Release 0.1.1 - a lot of fixes and speed improvements.
 
-Sat Oct 27 19:13:31 UTC 2012 - eduard.bartosh@intel.com
+Sat Oct 27 19:13:31 UTC 2012 - Eduard Bartoch <eduard.bartosh@intel.com> 0.0.1
 - Initial packaging.
