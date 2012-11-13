@@ -33,6 +33,8 @@ also contribute to the mapped blocks and are also copied. """
 import os
 import stat
 import hashlib
+import Queue
+import thread
 from xml.etree import ElementTree
 from bmaptools.BmapHelpers import human_size
 
@@ -205,7 +207,9 @@ class BmapCopy:
 
         self._dest_fsync_watermark = None
         self._batch_blocks = None
+        self._batch_queue = None
         self._batch_bytes = 1024 * 1024
+        self._batch_queue_len = 2
 
         self.bmap_version = None
         self.bmap_block_size = None
@@ -372,12 +376,14 @@ class BmapCopy:
                 if verify and sha1:
                     hash_obj.update(buf)
 
-                yield (start, end, length, buf)
+                self._batch_queue.put((start, end, length, buf))
 
             if verify and sha1 and hash_obj.hexdigest() != sha1:
                 raise Error("checksum mismatch for blocks range %d-%d: " \
                             "calculated %s, should be %s" \
                             % (first, last, hash_obj.hexdigest(), sha1))
+
+        self._batch_queue.put(None)
 
     def copy(self, sync = True, verify = True):
         """ Copy the image to the destination file using bmap. The sync
@@ -389,12 +395,24 @@ class BmapCopy:
             self._copy_entire_image(sync)
             return
 
+        # Create the queue for block batches and start the reader thread, which
+        # will read the image in batches and put the results to '_batch_queue'.
+        self._batch_queue = Queue.Queue(self._batch_queue_len)
+        thread.start_new_thread(self._get_data, (verify, ))
+
         blocks_written = 0
         fsync_last = 0
 
         # Read the image in '_batch_blocks' chunks and write them to the
         # destination file
-        for (start, end, length, buf) in self._get_data(verify):
+        while True:
+            batch = self._batch_queue.get()
+            if batch is None:
+                # No more data, the image is written
+                break
+
+            (start, end, length, buf) = batch
+
             self._f_dest.seek(start * self.bmap_block_size)
 
             # Synchronize the destination file if we reached the watermark
@@ -409,6 +427,7 @@ class BmapCopy:
                 raise Error("error while writing blocks %d-%d of '%s': %s" \
                             % (start, end, self._dest_path, err))
 
+            self._batch_queue.task_done()
             blocks_written += length
 
         # This is just a sanity check - we should have written exactly
@@ -521,8 +540,6 @@ class BmapBdevCopy(BmapCopy):
         synchronizing from time to time. """
 
         self._tune_block_device()
-        self._dest_fsync_watermark = (6 * 1024 * 1024) / self.bmap_block_size
-
         BmapCopy.copy(self, sync, verify)
 
     def __init__(self, image_path, dest_path, bmap_path = None):
@@ -531,6 +548,11 @@ class BmapBdevCopy(BmapCopy):
 
         # Call the base class construcor first
         BmapCopy.__init__(self, image_path, dest_path, bmap_path)
+
+        self._batch_bytes = 1024 * 1024
+        self._batch_blocks = self._batch_bytes / self.bmap_block_size
+        self._batch_queue_len = 6
+        self._dest_fsync_watermark = (6 * 1024 * 1024) / self.bmap_block_size
 
         # If the image size is known (i.e., it is not compressed) - check that
         # itfits the block device.

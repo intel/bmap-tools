@@ -5,7 +5,5 @@
 3. In 'bmaptool create' when the blocks rage consists of a single block (say
    18282), write it in form of <>18282</> instead of less readable
    <>18282-18282</> form. 'bmaptool copy' supports both already.
-4. Try to read and write in parrallell from different threads - this may improve
-   USB stick flashing speed.
-5. The block device optimizations will not work if it was /dev/sdc1 instead of
+4. The block device optimizations will not work if it was /dev/sdc1 instead of
    /dev/sdc - fix this.
