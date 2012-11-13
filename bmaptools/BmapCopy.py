@@ -203,10 +203,7 @@ class BmapCopy:
         self._xml = None
         self._image_is_compressed = True
 
-        self._blocks_written = None
         self._dest_fsync_watermark = None
-        self._dest_fsync_last = None
-
         self._batch_blocks = None
         self._batch_bytes = 1024 * 1024
 
@@ -255,85 +252,6 @@ class BmapCopy:
         if self._f_bmap:
             self._f_bmap.close()
 
-    def _fsync_dest(self):
-        """ Internal helper function which synchronizes the destination file if
-        we wrote more than '_dest_fsync_watermark' blocks of data there. """
-
-        size = self._dest_fsync_last + self._dest_fsync_watermark
-        if self._dest_fsync_watermark and self._blocks_written >= size:
-            self._dest_fsync_last = self._blocks_written
-            self.sync()
-
-    def _get_batches(self, first, last):
-        """ This is a helper iterator which splits block ranges from the bmap
-        file to smaller batches. Indeed, we cannot read and write entire block
-        ranges from the image file, because a range can be very large. So we
-        perform the I/O in batches. Batch size is defined by the
-        '_batch_blocks' attribute. Thus, for each (first, last) block range,
-        the iterator returns smaller (start, end, length) batch ranges, where:
-          * 'start' is the starting batch block number;
-          * 'last' is the ending batch block numger;
-          * 'length' is the batch length in blocks (same as
-             'end' - 'start' + 1). """
-
-        batch_blocks = self._batch_blocks
-
-        while first + batch_blocks - 1 <= last:
-            yield (first, first + batch_blocks - 1, batch_blocks)
-            first += batch_blocks
-
-        batch_blocks = last - first + 1
-        if batch_blocks:
-            yield (first, first + batch_blocks - 1, batch_blocks)
-
-    def _copy_data(self, first, last, sha1, verify):
-        """ Internal helper function which copies the ['first'-'last'] region
-        of the image file to the same region of the destination file. The
-        'first' and 'last' arguments are the block numbers, not byte offsets.
-
-        If the 'verify' argument is not 'None', calculate the SHA1 checksum for
-        the region and make sure it is equivalent to 'sha1'. """
-
-        if verify and sha1:
-            hash_obj = hashlib.sha1()
-
-        position = first * self.bmap_block_size
-        self._f_image.seek(position)
-        self._f_dest.seek(position)
-
-        iterator = self._get_batches(first, last)
-        for (start, end, length) in iterator:
-            try:
-                chunk = self._f_image.read(length * self.bmap_block_size)
-            except IOError as err:
-                raise Error("error while reading blocks %d-%d of the image " \
-                            "file '%s': %s" \
-                            % (start, end, self._image_path, err))
-
-            if not chunk:
-                raise Error("cannot read block %d, the image file '%s' is " \
-                            "too short" % (start, self._image_path))
-
-            if verify and sha1:
-                hash_obj.update(chunk)
-
-            # Synchronize the destination file if we reached the watermark
-            if self._dest_fsync_watermark:
-                self._fsync_dest()
-
-            try:
-                self._f_dest.write(chunk)
-            except IOError as err:
-                raise Error("error while writing block %d to '%s': %s" \
-                            % (start, self._dest_path, err))
-
-            self._blocks_written += length
-
-        if verify and sha1 and hash_obj.hexdigest() != sha1:
-            raise Error("checksum mismatch for blocks range %d-%d: " \
-                        "calculated %s, should be %s" \
-                        % (first, last, hash_obj.hexdigest(), sha1))
-
     def _copy_entire_image(self, sync = True):
         """ Internal helper function which copies the entire image file to the
         destination file, and only used when the bmap was not provided. The
@@ -346,21 +264,21 @@ class BmapCopy:
 
         while True:
             try:
-                chunk = self._f_image.read(self._batch_bytes)
+                buf = self._f_image.read(self._batch_bytes)
             except IOError as err:
                 raise Error("cannot read %d bytes from '%s': %s" \
                             % (self._batch_bytes, self._image_path, err))
 
-            if not chunk:
+            if not buf:
                 break
 
             try:
-                self._f_dest.write(chunk)
+                self._f_dest.write(buf)
             except IOError as err:
                 raise Error("cannot write %d bytes to '%s': %s" \
-                            % (len(chunk), self._dest_path, err))
+                            % (len(buf), self._dest_path, err))
 
-            image_size += len(chunk)
+            image_size += len(buf)
 
         if self._image_is_compressed:
             self._initialize_sizes(image_size)
@@ -402,6 +320,65 @@ class BmapCopy:
 
             yield (first, last, sha1)
 
+    def _get_batches(self, first, last):
+        """ This is a helper iterator which splits block ranges from the bmap
+        file to smaller batches. Indeed, we cannot read and write entire block
+        ranges from the image file, because a range can be very large. So we
+        perform the I/O in batches. Batch size is defined by the
+        '_batch_blocks' attribute. Thus, for each (first, last) block range,
+        the iterator returns smaller (start, end, length) batch ranges, where:
+          * 'start' is the starting batch block number;
+          * 'last' is the ending batch block numger;
+          * 'length' is the batch length in blocks (same as
+             'end' - 'start' + 1). """
+
+        batch_blocks = self._batch_blocks
+
+        while first + batch_blocks - 1 <= last:
+            yield (first, first + batch_blocks - 1, batch_blocks)
+            first += batch_blocks
+
+        batch_blocks = last - first + 1
+        if batch_blocks:
+            yield (first, first + batch_blocks - 1, batch_blocks)
+
+    def _get_data(self, verify):
+        """ This is an iterator which reads the image file in '_batch_blocks'
+        chunks and returns ('start', 'end', 'length', 'buf) tuples, where:
+          * 'start' is the starting block number of the batch;
+          * 'end' is the last block of the batch;
+          * 'length' is batch length (same as 'end' - 'start' + 1);
+          * 'buf' a buffer containing the batch data. """
+
+        for (first, last, sha1) in self._get_block_ranges():
+            if verify and sha1:
+                hash_obj = hashlib.sha1()
+
+            self._f_image.seek(first * self.bmap_block_size)
+
+            iterator = self._get_batches(first, last)
+            for (start, end, length) in iterator:
+                try:
+                    buf = self._f_image.read(length * self.bmap_block_size)
+                except IOError as err:
+                    raise Error("error while reading blocks %d-%d of the image " \
+                                "file '%s': %s" \
+                                % (start, end, self._image_path, err))
+
+                if not buf:
+                    raise Error("cannot read block %d, the image file '%s' is " \
+                                "too short" % (start, self._image_path))
+
+                if verify and sha1:
+                    hash_obj.update(buf)
+
+                yield (start, end, length, buf)
+
+            if verify and sha1 and hash_obj.hexdigest() != sha1:
+                raise Error("checksum mismatch for blocks range %d-%d: " \
+                            "calculated %s, should be %s" \
+                            % (first, last, hash_obj.hexdigest(), sha1))
+
     def copy(self, sync = True, verify = True):
         """ Copy the image to the destination file using bmap. The sync
         argument defines whether the destination file has to be synchronized
@@ -412,19 +389,33 @@ class BmapCopy:
             self._copy_entire_image(sync)
             return
 
-        self._blocks_written = 0
-        self._dest_fsync_last = 0
+        blocks_written = 0
+        fsync_last = 0
 
-        # Copy the mapped blocks
-        for (first, last, sha1) in self._get_block_ranges():
-            self._copy_data(first, last, sha1, verify)
+        # Read the image in '_batch_blocks' chunks and write them to the
+        # destination file
+        for (start, end, length, buf) in self._get_data(verify):
+            self._f_dest.seek(start * self.bmap_block_size)
+
+            # Synchronize the destination file if we reached the watermark
+            if self._dest_fsync_watermark:
+                if blocks_written >= fsync_last + self._dest_fsync_watermark:
+                    fsync_last = blocks_written
+                    self.sync()
+
+            try:
+                self._f_dest.write(buf)
+            except IOError as err:
+                raise Error("error while writing blocks %d-%d of '%s': %s" \
+                            % (start, end, self._dest_path, err))
+
+            blocks_written += length
 
         # This is just a sanity check - we should have written exactly
         # 'mapped_cnt' blocks.
-        if self._blocks_written != self.bmap_mapped_cnt:
+        if blocks_written != self.bmap_mapped_cnt:
             raise Error("wrote %u blocks, but should have %u - inconsistent " \
-                       "bmap file" \
-                       % (self._blocks_written, self.bmap_mapped_cnt))
+                       "bmap file" % (blocks_written, self.bmap_mapped_cnt))
 
         if sync:
             self.sync()
