@@ -32,6 +32,7 @@ also contribute to the mapped blocks and are also copied. """
 
 import os
 import stat
+import sys
 import hashlib
 import Queue
 import thread
@@ -354,34 +355,40 @@ class BmapCopy:
           * 'length' is batch length (same as 'end' - 'start' + 1);
           * 'buf' a buffer containing the batch data. """
 
-        for (first, last, sha1) in self._get_block_ranges():
-            if verify and sha1:
-                hash_obj = hashlib.sha1()
-
-            self._f_image.seek(first * self.bmap_block_size)
-
-            iterator = self._get_batches(first, last)
-            for (start, end, length) in iterator:
-                try:
-                    buf = self._f_image.read(length * self.bmap_block_size)
-                except IOError as err:
-                    raise Error("error while reading blocks %d-%d of the image " \
-                                "file '%s': %s" \
-                                % (start, end, self._image_path, err))
-
-                if not buf:
-                    raise Error("cannot read block %d, the image file '%s' is " \
-                                "too short" % (start, self._image_path))
-
+        try:
+            for (first, last, sha1) in self._get_block_ranges():
                 if verify and sha1:
-                    hash_obj.update(buf)
+                    hash_obj = hashlib.sha1()
 
-                self._batch_queue.put((start, end, length, buf))
+                self._f_image.seek(first * self.bmap_block_size)
 
-            if verify and sha1 and hash_obj.hexdigest() != sha1:
-                raise Error("checksum mismatch for blocks range %d-%d: " \
-                            "calculated %s, should be %s" \
-                            % (first, last, hash_obj.hexdigest(), sha1))
+                iterator = self._get_batches(first, last)
+                for (start, end, length) in iterator:
+                    try:
+                        buf = self._f_image.read(length * self.bmap_block_size)
+                    except IOError as err:
+                        raise Error("error while reading blocks %d-%d of the " \
+                                    "image file '%s': %s" \
+                                    % (start, end, self._image_path, err))
+
+                    if not buf:
+                        raise Error("cannot read block %d, the image file " \
+                                    "'%s' is too short" \
+                                    % (start, self._image_path))
+
+                    if verify and sha1:
+                        hash_obj.update(buf)
+
+                    self._batch_queue.put(("range", start, end, length, buf))
+
+                if verify and sha1 and hash_obj.hexdigest() != sha1:
+                    raise Error("checksum mismatch for blocks range %d-%d: " \
+                                "calculated %s, should be %s" \
+                                % (first, last, hash_obj.hexdigest(), sha1))
+        except Exception, error:
+            # In case of any exception - just pass it to the main thread
+            # through the queue.
+            self._batch_queue.put(("error", sys.exc_info()))
 
         self._batch_queue.put(None)
 
@@ -410,8 +417,13 @@ class BmapCopy:
             if batch is None:
                 # No more data, the image is written
                 break
+            elif batch[0] == "error":
+                # The reader thread encountered an error and passed us the
+                # exception.
+                exc_info = batch[1]
+                raise exc_info[0], exc_info[1], exc_info[2]
 
-            (start, end, length, buf) = batch
+            (start, end, length, buf) = batch[1:5]
 
             self._f_dest.seek(start * self.bmap_block_size)
 
