@@ -206,7 +206,7 @@ def parse_arguments():
 
     # The first positional argument - image file
     text = "the image file to copy. Supported formats: uncompressed, " + \
-           ", ".join(BmapCopy.supported_image_formats)
+           ", ".join(BmapCopy.SUPPORTED_IMAGE_FORMATS)
     parser_copy.add_argument("image", help = text)
 
     # The second positional argument - block device node
