@@ -7,7 +7,7 @@ setup(
     description = "Bmap tools",
     author = "Artem Bityutskiy",
     author_email = "artem.bityutskiy@linux.intel.com",
-    version = "0.4",
+    version = "0.5",
     scripts = ['bmaptool'],
     packages = find_packages(),
     license='GPLv2',

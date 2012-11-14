@@ -1,3 +1,14 @@
+bmap-tools (0.5) unstable; urgency=low
+
+  * Fix handling of bmap files which contain ranges with only one block.
+  * Restore the block device settings which we change on exit.
+  * Change block device settings correctly for partitions.
+  * Rework API modules to accept file-like objects, not only paths.
+  * Fix and silence pylint warnings.
+  * Implement the base API test-case.
+
+ -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com>  Wed, 14 Nov 2012 12:35:06 +0200
+
 bmap-tools (0.4) unstable; urgency=low
 
   * Improved compressed images flashing speed by exploiting multiple threads:
