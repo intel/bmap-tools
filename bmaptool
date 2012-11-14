@@ -100,7 +100,7 @@ def copy_command(args, log):
             raise SystemExit(1)
 
         # Synchronize the block device
-        log.info("synchronizing block device '%s'" % args.dest)
+        log.info("synchronizing '%s'" % args.dest)
         try:
             writer.sync()
         except BmapCopy.Error as err:
