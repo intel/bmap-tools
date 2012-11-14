@@ -1,3 +1,11 @@
+bmap-tools (0.4) unstable; urgency=low
+
+  * Improved compressed images flashing speed by exploiting multiple threads:
+    now we read/decompress the image in one thread and write it in a different
+    thread.
+
+ -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com>  Wed, 14 Nov 2012 12:35:06 +0200
+
 bmap-tools (0.3) unstable; urgency=low
 
   * Fix flashing speed calculations

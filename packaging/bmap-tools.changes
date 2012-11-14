@@ -1,3 +1,8 @@
+Wed Nov 14 10:36:10 UTC 2012 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 0.4
+- Improved compressed images flashing speed by exploiting multiple threads:
+  now we read/decompress the image in one thread and write it in a different
+  thread.
+
 Tue Nov 13 08:56:49 UTC 2012 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 0.3
 - Fix flashing speed calculations
 - Fix the Ctrl-C freeze issue - now we synchronize the block device
