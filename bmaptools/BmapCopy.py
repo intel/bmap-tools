@@ -257,40 +257,6 @@ class BmapCopy:
         if self._f_bmap:
             self._f_bmap.close()
 
-    def _copy_entire_image(self, sync = True):
-        """ Internal helper function which copies the entire image file to the
-        destination file, and only used when the bmap was not provided. The
-        sync argument defines whether the destination file has to be
-        synchronized upon return. """
-
-        self._f_image.seek(0)
-        self._f_dest.seek(0)
-        image_size = 0
-
-        while True:
-            try:
-                buf = self._f_image.read(self._batch_bytes)
-            except IOError as err:
-                raise Error("cannot read %d bytes from '%s': %s" \
-                            % (self._batch_bytes, self._image_path, err))
-
-            if not buf:
-                break
-
-            try:
-                self._f_dest.write(buf)
-            except IOError as err:
-                raise Error("cannot write %d bytes to '%s': %s" \
-                            % (len(buf), self._dest_path, err))
-
-            image_size += len(buf)
-
-        if self._image_is_compressed:
-            self._initialize_sizes(image_size)
-
-        if sync:
-            self.sync()
-
     def _get_block_ranges(self):
         """ This is a helper iterator that parses the bmap XML file and for
         each block range in the XML file it generates a
@@ -298,8 +264,27 @@ class BmapCopy:
           * 'first' is the first block of the range;
           * 'last' is the last block of the range;
           * 'sha1' is the SHA1 checksum of the range ('None' is used if it is
-            missing. """
+            missing.
 
+        If there is no bmap file, the iterator just generate a single range for
+        entire image file. If the image size is unknown (the image is
+        compressed), the iterator infinitely generates continuous ranges of
+        size '_batch_blocks'. """
+
+        if not self._f_bmap:
+            # We do not have the bmap, generate a tuple with all blocks
+            if self.bmap_blocks_cnt:
+                yield (0, self.bmap_blocks_cnt - 1, None)
+            else:
+                # We do not know image size, keep generate tuple with many
+                # blocks infinitely
+                first = 0
+                while True:
+                    yield (first, first + self._batch_blocks - 1, None)
+                    first += self._batch_blocks
+            return
+
+        # We have the bmap, just read it ang generate block ranges
         xml = self._xml
         xml_bmap = xml.find("BlockMap")
 
@@ -372,13 +357,15 @@ class BmapCopy:
                                     % (start, end, self._image_path, err))
 
                     if not buf:
-                        raise Error("cannot read block %d, the image file " \
-                                    "'%s' is too short" \
-                                    % (start, self._image_path))
+                        self._batch_queue.put(None)
+                        return
 
                     if verify and sha1:
                         hash_obj.update(buf)
 
+                    length = len(buf) + self.bmap_block_size - 1
+                    length /= self.bmap_block_size
+                    end = start + length - 1
                     self._batch_queue.put(("range", start, end, length, buf))
 
                 if verify and sha1 and hash_obj.hexdigest() != sha1:
@@ -397,10 +384,6 @@ class BmapCopy:
         argument defines whether the destination file has to be synchronized
         upon return.  The 'verify' argument defines whether the SHA1 checksum
         has to be verified while copying. """
-
-        if not self._f_bmap:
-            self._copy_entire_image(sync)
-            return
 
         # Create the queue for block batches and start the reader thread, which
         # will read the image in batches and put the results to '_batch_queue'.
@@ -425,6 +408,8 @@ class BmapCopy:
 
             (start, end, length, buf) = batch[1:5]
 
+            assert len(buf) <= length * self.bmap_block_size
+
             self._f_dest.seek(start * self.bmap_block_size)
 
             # Synchronize the destination file if we reached the watermark
@@ -441,6 +426,12 @@ class BmapCopy:
 
             self._batch_queue.task_done()
             blocks_written += length
+
+        if not self.bmap_image_size:
+            # The image size was unknow up until now, probably because this is
+            # a compressed image. Initialize the corresponding class attributes
+            # now, when we know the size.
+            self._initialize_sizes(blocks_written * self.bmap_block_size)
 
         # This is just a sanity check - we should have written exactly
         # 'mapped_cnt' blocks.
