@@ -331,8 +331,13 @@ class BmapCreate:
                 sha1 = " sha1=\"%s\"" % sha1
             else:
                 sha1 = ""
-            self._output.info("        <Range%s> %s-%s </Range>" \
-                              % (sha1, first, last))
+
+            if first != last:
+                self._output.info("        <Range%s> %s-%s </Range>" \
+                                  % (sha1, first, last))
+            else:
+                self._output.info("        <Range%s> %s </Range>" \
+                                  % (sha1, first))
 
         self.bmap_mapped_size = self.bmap_mapped_cnt * self.bmap_block_size
         self.bmap_mapped_size_human = human_size(self.bmap_mapped_size)
