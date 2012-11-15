@@ -116,7 +116,7 @@ class BmapCopy:
                         "proper XML file: %s" % (self._bmap_path, err))
 
         xml = self._xml
-        self.bmap_version = xml.getroot().attrib.get('version')
+        self.bmap_version = str(xml.getroot().attrib.get('version'))
 
         # Make sure we support this version
         major = int(self.bmap_version.split('.', 1)[0])
