@@ -500,35 +500,32 @@ class BmapBdevCopy(BmapCopy):
         sysfs_base = "/sys/dev/block/%s:%s/" \
                       % (os.major(st_rdev), os.minor(st_rdev))
 
+        # Check if the 'quque' sub-directory exists. If yes, then our block
+        # device is entire disk. Otherwise, it is a partition, in which case we
+        # need to go one level up in the sysfs hierarchy.
+        try:
+            if not os.path.exists(sysfs_base + "queue"):
+                sysfs_base = sysfs_base + "../"
+        except OSError:
+            # Something happened when we tried to access the base directory.
+            # No problem, this is just an optimization.
+            pass
+
         # Switch to the 'noop' I/O scheduler
         scheduler_path = sysfs_base + "queue/scheduler"
         try:
-            f_scheduler = open(scheduler_path, "w")
-        except IOError:
-            # If we can't find the file, no problem, this stuff is just an
-            # optimization.
-            f_scheduler = None
-
-        if f_scheduler:
-            try:
+            with open(scheduler_path, "w") as f_scheduler:
                 f_scheduler.write("noop")
-            except IOError:
-                pass
-            f_scheduler.close()
+        except IOError:
+            pass
 
         # Limit the write buffering
         ratio_path = sysfs_base + "bdi/max_ratio"
         try:
-            f_ratio = open(ratio_path, "w")
-        except IOError:
-            f_ratio = None
-
-        if f_ratio:
-            try:
+            with open(ratio_path, "w") as f_ratio:
                 f_ratio.write("1")
-            except IOError:
-                pass
-            f_ratio.close()
+        except IOError:
+            pass
 
     def copy(self, sync = True, verify = True):
         """ The same as in the base class but tunes the block device for better

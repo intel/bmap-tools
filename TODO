@@ -2,5 +2,3 @@
    better. Currently we are calling it for each block.
 2. In the block device optimization code - remember the original settings and
    reconstruct them after writing.
-3. The block device optimizations will not work if it was /dev/sdc1 instead of
-   /dev/sdc - fix this.
