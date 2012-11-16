@@ -493,39 +493,55 @@ class BmapBdevCopy(BmapCopy):
            write to the block device becomes a lot faster comparing to CFQ.
         2. Limit the write buffering - we do not need the kernel to buffer a
            lot of the data we send to the block device, because we write
-           sequentially. Limit the buffering."""
+           sequentially. Limit the buffering.
 
-        # Construct the path to the sysfs directory of our block device
-        st_rdev = os.fstat(self._f_dest.fileno()).st_rdev
-        sysfs_base = "/sys/dev/block/%s:%s/" \
-                      % (os.major(st_rdev), os.minor(st_rdev))
-
-        # Check if the 'quque' sub-directory exists. If yes, then our block
-        # device is entire disk. Otherwise, it is a partition, in which case we
-        # need to go one level up in the sysfs hierarchy.
-        try:
-            if not os.path.exists(sysfs_base + "queue"):
-                sysfs_base = sysfs_base + "../"
-        except OSError:
-            # Something happened when we tried to access the base directory.
-            # No problem, this is just an optimization.
-            pass
-
+        The old settings are saved in order to be able to restore them later.
+        """
         # Switch to the 'noop' I/O scheduler
-        scheduler_path = sysfs_base + "queue/scheduler"
         try:
-            with open(scheduler_path, "w") as f_scheduler:
+            with open(self._sysfs_scheduler_path, "r+") as f_scheduler:
+                contents = f_scheduler.read()
+                f_scheduler.seek(0)
                 f_scheduler.write("noop")
         except IOError:
-            pass
+            # No problem, this is just an optimization.
+            return
+
+        # The file contains a list of scheduler with the current
+        # scheduler in square brackets, e.g., "noop deadline [cfq]".
+        # Fetch the current scheduler name
+        import re
+
+        match = re.match(r'.*\[(.+)\].*', contents)
+        self.old_scheduler_value = match.group(1)
 
         # Limit the write buffering
-        ratio_path = sysfs_base + "bdi/max_ratio"
         try:
-            with open(ratio_path, "w") as f_ratio:
+            with open(self._sysfs_max_ratio_path, "r+") as f_ratio:
+                self.old_max_ratio_value = f_ratio.read()
+                f_ratio.seek(0)
                 f_ratio.write("1")
         except IOError:
-            pass
+            return
+
+    def _restore_bdev_settings(self):
+        """ Restore old block device settings which we changed in
+        '_tune_block_device()'. """
+
+        if self.old_scheduler_value is not None:
+            try:
+                with open(self._sysfs_scheduler_path, "w") as f_scheduler:
+                    f_scheduler.write(self.old_scheduler_value)
+            except IOError:
+                # No problem, this is just an optimization.
+                return
+
+        if self.old_max_ratio_value is not None:
+            try:
+                with open(self._sysfs_max_ratio_path, "w") as f_ratio:
+                    f_ratio.write(self.old_max_ratio_value)
+            except IOError:
+                return
 
     def copy(self, sync = True, verify = True):
         """ The same as in the base class but tunes the block device for better
@@ -539,8 +555,12 @@ class BmapBdevCopy(BmapCopy):
         very bad user experience, and we work around this effect by
         synchronizing from time to time. """
 
-        self._tune_block_device()
-        BmapCopy.copy(self, sync, verify)
+        try:
+            self._tune_block_device()
+            BmapCopy.copy(self, sync, verify)
+        except:
+            self._restore_bdev_settings()
+            raise
 
     def __init__(self, image_path, dest_path, bmap_path = None):
         """ The same as the constructur of the 'BmapCopy' base class, but adds
@@ -553,6 +573,12 @@ class BmapBdevCopy(BmapCopy):
         self._batch_blocks = self._batch_bytes / self.bmap_block_size
         self._batch_queue_len = 6
         self._dest_fsync_watermark = (6 * 1024 * 1024) / self.bmap_block_size
+
+        self._sysfs_base = None
+        self._sysfs_scheduler_path = None
+        self._sysfs_max_ratio_path = None
+        self.old_scheduler_value = None
+        self.old_max_ratio_value = None
 
         # If the image size is known (i.e., it is not compressed) - check that
         # itfits the block device.
@@ -569,3 +595,21 @@ class BmapBdevCopy(BmapCopy):
                             "fit the block device '%s' which has %s capacity" \
                             % (self._image_path, self.bmap_image_size_human,
                                self._dest_path, human_size(bdev_size)))
+
+        # Construct the path to the sysfs directory of our block device
+        st_rdev = os.fstat(self._f_dest.fileno()).st_rdev
+        self._sysfs_base = "/sys/dev/block/%s:%s/" \
+                           % (os.major(st_rdev), os.minor(st_rdev))
+
+        # Check if the 'queue' sub-directory exists. If yes, then our block
+        # device is entire disk. Otherwise, it is a partition, in which case we
+        # need to go one level up in the sysfs hierarchy.
+        try:
+            if not os.path.exists(self._sysfs_base + "queue"):
+                self._sysfs_base = self._sysfs_base + "../"
+        except OSError:
+            # No problem, this is just an optimization.
+            pass
+
+        self._sysfs_scheduler_path = self._sysfs_base + "queue/scheduler"
+        self._sysfs_max_ratio_path = self._sysfs_base + "bdi/max_ratio"
