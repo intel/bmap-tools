@@ -1,6 +1,5 @@
 """
-This module contains various helper functions which are shared between
-BmapFlash and BmapCreate or which are useful for users of bmaptools.
+This module contains various shared helper functions.
 """
 
 def human_size(size):
@@ -32,3 +31,15 @@ def human_time(seconds):
         result += "%dm " % minutes
 
     return result + "%.1fs" % seconds
+
+def get_block_size(file_obj):
+    """ Returns block size for file object 'file_obj'. Errors are indicated by
+    the 'IOError' exception. """
+
+    from fcntl import ioctl
+    import struct
+
+    # Get the block size of the host file-system for the image file by calling
+    # the FIGETBSZ ioctl (number 2).
+    binary_data = ioctl(file_obj, 2, struct.pack('I', 0))
+    return struct.unpack('I', binary_data)[0]

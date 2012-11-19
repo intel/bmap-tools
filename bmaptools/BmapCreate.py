@@ -31,7 +31,7 @@ import hashlib
 from fcntl import ioctl
 import struct
 from itertools import groupby
-from bmaptools.BmapHelpers import human_size
+from bmaptools.BmapHelpers import human_size, get_block_size
 import array
 
 # The bmap format version we generate
@@ -133,11 +133,8 @@ class BmapCreate:
             raise Error("cannot generate bmap for zero-sized image file '%s'" \
                         % image_path, err.errno)
 
-        # Get the block size of the host file-system for the image file by
-        # calling the FIGETBSZ ioctl (number 2).
         try:
-            binary_data = ioctl(self._f_image, 2, struct.pack('I', 0))
-            self.bmap_block_size = struct.unpack('I', binary_data)[0]
+            self.bmap_block_size = get_block_size(self._f_image)
         except IOError as err:
             raise Error("cannot get block size for '%s': %s" \
                         % (image_path, err), err.errno)
