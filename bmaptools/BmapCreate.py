@@ -26,6 +26,11 @@ At the moment this module uses the FIBMAP ioctl to detect holes. However, it is
 possible to speed it up by using presumably faster FIBMAP ioctl (and fall-back
 to FIBMAP if the kernel is too old and does not support FIBMAP). """
 
+# Disable the following pylint recommendations:
+#   *  Too many instance attributes - R0902
+#   *  Too few public methods - R0903
+# pylint: disable=R0902,R0903
+
 import os
 import hashlib
 from fcntl import ioctl
@@ -162,7 +167,7 @@ class BmapCreate:
         self.bmap_image_size_human = human_size(self.bmap_image_size)
         if self.bmap_image_size == 0:
             raise Error("cannot generate bmap for zero-sized image file '%s'" \
-                        % self._image_path, err.errno)
+                        % self._image_path)
 
         try:
             self.bmap_block_size = get_block_size(self._f_image)
@@ -284,7 +289,8 @@ class BmapCreate:
         """ A helper function which generates ranges of mapped image file
         blocks. """
 
-        for key, group in groupby(xrange(self.bmap_blocks_cnt), self._is_mapped):
+        iterator = xrange(self.bmap_blocks_cnt)
+        for key, group in groupby(iterator, self._is_mapped):
             if key:
                 # Find the first and the last elements of the group
                 first = group.next()
@@ -315,7 +321,7 @@ class BmapCreate:
         end = (last + 1) * self.bmap_block_size
 
         self._f_image.seek(start)
-        hash_obj = hashlib.sha1()
+        hash_obj = hashlib.new("sha1")
 
         chunk_size = 1024*1024
         to_read = end - start
