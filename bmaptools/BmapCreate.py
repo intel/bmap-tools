@@ -95,20 +95,41 @@ class BmapCreate:
     bmap for an image (which is supposedly a sparse file), you should first
     create an instance of 'BmapCreate' and provide:
 
-    * full path to the image to create bmap for
-    * file-like object to write the output to
+    * full path or a file-like object of the image to create bmap for
+    * full path or a file-like object to use for writing the results to
 
     Then you should invoke the 'generate()' method of this class. It will use
     the FIEMAP ioctl to generate the bmap, and fall-back to the FIBMAP ioctl if
     FIEMAP is not supported. """
 
-    def __init__(self, image_path, output):
-        """ Initialize a class instance:
-        * image_path - full path to the image file to generate bmap for
-        * output - file-like object to write the generated bmap to """
+    def _open_image_file(self):
+        """ Open the image file. """
 
-        self._image_path = image_path
-        self._output = output
+        try:
+            self._f_image = open(self._image_path, 'rb')
+        except IOError as err:
+            raise Error("cannot open image file '%s': %s" \
+                        % (self._image_path, err), err.errno)
+
+        self._f_image_needs_close = True
+
+    def _open_bmap_file(self):
+        """ Open the bmap file. """
+
+        try:
+            self._f_bmap = open(self._bmap_path, 'w+')
+        except IOError as err:
+            raise Error("cannot open bmap file '%s': %s" \
+                        % (self._bmap_path, err), err.errno)
+
+        self._f_bmap_needs_close = True
+
+    def __init__(self, image, bmap):
+        """ Initialize a class instance:
+        * image - full path or a file-like object of the image to create bmap
+                  for
+        * bmap  - full path or a file-like object to use for writing the
+                  resulting bmap to """
 
         self.fiemap_supported = None
         self.bmap_image_size = None
@@ -120,25 +141,34 @@ class BmapCreate:
         self.bmap_mapped_size_human = None
         self.bmap_mapped_percent = None
 
-        self._f_image = None
+        self._f_image_needs_close = False
+        self._f_bmap_needs_close = False
 
-        try:
-            self._f_image = open(image_path, 'rb')
-        except IOError as err:
-            raise Error("cannot open image file '%s': %s" \
-                        % (image_path, err), err.errno)
+        if hasattr(image, "read"):
+            self._f_image = image
+            self._image_path = image.name
+        else:
+            self._image_path = image
+            self._open_image_file()
+
+        if hasattr(bmap, "read"):
+            self._f_bmap = bmap
+            self._bmap_path = bmap.name
+        else:
+            self._bmap_path = bmap
+            self._open_bmap_file()
 
         self.bmap_image_size = os.fstat(self._f_image.fileno()).st_size
         self.bmap_image_size_human = human_size(self.bmap_image_size)
         if self.bmap_image_size == 0:
             raise Error("cannot generate bmap for zero-sized image file '%s'" \
-                        % image_path, err.errno)
+                        % self._image_path, err.errno)
 
         try:
             self.bmap_block_size = get_block_size(self._f_image)
         except IOError as err:
             raise Error("cannot get block size for '%s': %s" \
-                        % (image_path, err), err.errno)
+                        % (self._image_path, err), err.errno)
 
         self.bmap_blocks_cnt = self.bmap_image_size + self.bmap_block_size - 1
         self.bmap_blocks_cnt /= self.bmap_block_size
@@ -179,7 +209,7 @@ class BmapCreate:
                   self.bmap_image_size_human, self.bmap_image_size,
                   self.bmap_block_size, self.bmap_blocks_cnt)
 
-        self._output.write(xml)
+        self._f_bmap.write(xml)
 
     def _is_mapped_fibmap(self, block):
         """ A helper function which returns 'True' if block number 'block' of
@@ -275,7 +305,7 @@ class BmapCreate:
                % self.bmap_mapped_cnt
         xml += "</bmap>\n"
 
-        self._output.write(xml)
+        self._f_bmap.write(xml)
 
     def _calculate_sha1(self, first, last):
         """ A helper function which calculates SHA1 checksum for the range of
@@ -304,6 +334,9 @@ class BmapCreate:
         """ Generate bmap for the image file. If 'include_checksums' is 'True',
         also generate SHA1 checksums for block ranges. """
 
+        # Save image file position in order to restore it at the end
+        image_pos = self._f_image.tell()
+
         self._bmap_file_start()
 
         # Synchronize the image file before starting to generate its block map
@@ -330,10 +363,10 @@ class BmapCreate:
                 sha1 = ""
 
             if first != last:
-                self._output.write("        <Range%s> %s-%s </Range>\n" \
+                self._f_bmap.write("        <Range%s> %s-%s </Range>\n" \
                                    % (sha1, first, last))
             else:
-                self._output.write("        <Range%s> %s </Range>\n" \
+                self._f_bmap.write("        <Range%s> %s </Range>\n" \
                                    % (sha1, first))
 
         self.bmap_mapped_size = self.bmap_mapped_cnt * self.bmap_block_size
@@ -343,10 +376,14 @@ class BmapCreate:
 
         self._bmap_file_end()
 
-        self._output.flush()
+        self._f_bmap.flush()
+
+        self._f_image.seek(image_pos)
 
     def __del__(self):
         """ The class destructor which closes the opened files. """
 
-        if self._f_image:
+        if self._f_image_needs_close:
             self._f_image.close()
+        if self._f_bmap_needs_close:
+            self._f_bmap.close()
