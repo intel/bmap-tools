@@ -141,13 +141,15 @@ def create_command(args, log):
     target device. """
 
     # Create and setup the output stream
-    output = logging.getLogger('bmap-create-output')
-    output.setLevel(logging.INFO)
     if args.output:
-        where = logging.FileHandler(args.output)
+        try:
+            output = open(args.output, "w+")
+        except IOError as err:
+            log.error("cannot open the output file '%s': %s" \
+                      % (args.output, err))
+            raise SystemExit(1)
     else:
-        where = logging.StreamHandler(sys.stdout)
-    output.addHandler(where)
+        output = sys.stdout
 
     try:
         creator = BmapCreate.BmapCreate(args.image, output)
