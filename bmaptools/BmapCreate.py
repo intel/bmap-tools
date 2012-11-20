@@ -304,7 +304,6 @@ class BmapCreate:
         also generate SHA1 checksums for block ranges. """
 
         self._bmap_file_start()
-        self._f_image.seek(0)
 
         # Synchronize the image file before starting to generate its block map
         try:
