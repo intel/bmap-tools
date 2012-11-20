@@ -301,7 +301,7 @@ class BmapCopy:
                 if first > last:
                     raise Error("bad range (first > last): '%s'" % blocks_range)
             else:
-                first = last
+                last = first
 
             if 'sha1' in xml_element.attrib:
                 sha1 = xml_element.attrib['sha1']
