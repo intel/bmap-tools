@@ -478,6 +478,11 @@ class BmapCopy:
             raise Error("wrote %u blocks, but should have %u - inconsistent " \
                        "bmap file" % (blocks_written, self.bmap_mapped_cnt))
 
+        try:
+            self._f_dest.flush()
+        except IOError as err:
+            raise Error("cannot flush '%s': %s" % (self._dest_path, err))
+
         if sync:
             self.sync()
 
@@ -489,11 +494,6 @@ class BmapCopy:
     def sync(self):
         """ Synchronize the destination file to make sure all the data are
         actually written to the disk. """
-
-        try:
-            self._f_dest.flush()
-        except IOError as err:
-            raise Error("cannot flush '%s': %s" % (self._dest_path, err))
 
         try:
             os.fsync(self._f_dest.fileno()),
