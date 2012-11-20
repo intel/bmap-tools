@@ -50,7 +50,7 @@ def copy_command(args, log):
     # file will be created. If it exists and it is a regular file - it'll be
     # truncated. If this is a block device, it'll just be opened.
     try:
-        dest_file = open(args.dest, 'w+')
+        dest_file = open(args.dest, 'wb+')
     except IOError as err:
         log.error("cannot open destination file '%s': %s" \
                   % (args.dest, err))
