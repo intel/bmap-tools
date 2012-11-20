@@ -195,7 +195,7 @@ class BmapCopy:
         """ Open the destination file. """
 
         try:
-            self._f_dest = open(self._dest_path, 'w+')
+            self._f_dest = open(self._dest_path, 'w')
         except IOError as err:
             raise Error("cannot open destination file '%s': %s" \
                         % (self._dest_path, err))
