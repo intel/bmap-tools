@@ -30,6 +30,9 @@ all 4GiB of data. We say that it is a bit more than 100MiB because things like
 file-system meta-data (inode tables, superblocks, etc), partition table, etc
 also contribute to the mapped blocks and are also copied. """
 
+# Disable the "Too many instance attributes" pylint recommendation (R0902)
+# pylint: disable=R0902
+
 import os
 import stat
 import sys
@@ -377,7 +380,7 @@ class BmapCopy:
         try:
             for (first, last, sha1) in self._get_block_ranges():
                 if verify and sha1:
-                    hash_obj = hashlib.sha1()
+                    hash_obj = hashlib.new('sha1')
 
                 self._f_image.seek(first * self.bmap_block_size)
 
@@ -406,7 +409,10 @@ class BmapCopy:
                     raise Error("checksum mismatch for blocks range %d-%d: " \
                                 "calculated %s, should be %s" \
                                 % (first, last, hash_obj.hexdigest(), sha1))
-        except Exception, error:
+        # Silence pylint warning about catching too general exception
+        # pylint: disable=W0703
+        except Exception:
+            # pylint: enable=W0703
             # In case of any exception - just pass it to the main thread
             # through the queue.
             self._batch_queue.put(("error", sys.exc_info()))
