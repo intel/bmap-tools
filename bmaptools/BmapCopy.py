@@ -56,9 +56,9 @@ class BmapCopy:
     image with bmap you should create an instance of this class, which requires
     the following:
 
-    * full path to the image to copy
-    * full path to the destination file copy the image to
-    * full path to the bmap file (optional)
+    * full path or a file-like object of the image to copy
+    * full path or a file-like object of the destination file copy the image to
+    * full path or a file-like object of the bmap file (optional)
 
     Although the main purpose of this class is to use bmap, the bmap is not
     required, and if it was not provided then the entire image will be copied
@@ -67,6 +67,10 @@ class BmapCopy:
     The image file may either be an uncompressed raw image or a compressed
     image. Compression type is defined by the image file extension.  Supported
     types are listed by 'SUPPORTED_IMAGE_FORMATS'.
+
+    IMPORTANT: if the image is given as a file-like object, the compression
+    type recognition is not performed - the file-like object's 'read()' method
+    is used directly instead.
 
     Once an instance of 'BmapCopy' is created, all the 'bmap_*' attributes are
     initialized and available. They are read from the bmap.
@@ -109,6 +113,9 @@ class BmapCopy:
     def _parse_bmap(self):
         """ Parse the bmap file and initialize the 'bmap_*' attributes. """
 
+        bmap_pos = self._f_bmap.tell()
+        self._f_bmap.seek(0)
+
         try:
             self._xml = ElementTree.parse(self._f_bmap)
         except  ElementTree.ParseError as err:
@@ -135,6 +142,8 @@ class BmapCopy:
         self.bmap_mapped_size_human = human_size(self.bmap_mapped_size)
         self.bmap_mapped_percent = self.bmap_mapped_cnt * 100.0
         self.bmap_mapped_percent /= self.bmap_blocks_cnt
+
+        self._f_bmap.seek(bmap_pos)
 
     def _open_image_file(self):
         """ Open the image file which may be compressed or not. The compression
@@ -180,6 +189,8 @@ class BmapCopy:
             raise Error("cannot open image file '%s': %s" \
                         % (self._image_path, err))
 
+        self._f_image_needs_close = True
+
     def _open_destination_file(self):
         """ Open the destination file. """
 
@@ -189,19 +200,26 @@ class BmapCopy:
             raise Error("cannot open destination file '%s': %s" \
                         % (self._dest_path, err))
 
-    def __init__(self, image_path, dest_path, bmap_path = None):
+        self._f_dest_needs_close = True
+
+    def _open_bmap_file(self):
+        """ Open the bmap file. """
+
+        try:
+            self._f_bmap = open(self._bmap_path, 'r')
+        except IOError as err:
+            raise Error("cannot open bmap file '%s': %s" \
+                        % (self._bmap_path, err.strerror))
+
+        self._f_bmap_needs_close = True
+
+    def __init__(self, image, dest, bmap = None):
         """ The class constructor. The parameters are:
-            image_path - full path to the image which should be copied
-            dest_path  - full path to the destination file to copy the image to
-            bmap_path  - full path to the bmap file to use for copying """
-
-        self._image_path = image_path
-        self._dest_path  = dest_path
-        self._bmap_path  = bmap_path
-
-        self._f_dest  = None
-        self._f_image = None
-        self._f_bmap  = None
+            image - full path or file object of the image which should be copied
+            dest  - full path or file-like object of the destination file to
+                    copy the image to
+            bmap  - full path or file-like object of the bmap file to use for
+                    copying """
 
         self._xml = None
         self._image_is_compressed = True
@@ -222,15 +240,31 @@ class BmapCopy:
         self.bmap_mapped_size_human = None
         self.bmap_mapped_percent = None
 
-        self._open_destination_file()
-        self._open_image_file()
+        self._f_dest_needs_close = False
+        self._f_image_needs_close = False
+        self._f_bmap_needs_close = False
 
-        if bmap_path:
-            try:
-                self._f_bmap = open(bmap_path, 'r')
-            except IOError as err:
-                raise Error("cannot open bmap file '%s': %s" \
-                            % (bmap_path, err.strerror))
+        if hasattr(dest, "write"):
+            self._f_dest  = dest
+            self._dest_path  = dest.name
+        else:
+            self._dest_path  = dest
+            self._open_destination_file()
+
+        if hasattr(image, "read"):
+            self._f_image = image
+            self._image_path = image.name
+        else:
+            self._image_path = image
+            self._open_image_file()
+
+        if bmap:
+            if hasattr(bmap, "read"):
+                self._f_bmap = bmap
+                self._bmap_path = bmap.name
+            else:
+                self._bmap_path = bmap
+                self._open_bmap_file()
             self._parse_bmap()
         else:
             # There is no bmap. Initialize user-visible attributes to something
@@ -250,11 +284,11 @@ class BmapCopy:
     def __del__(self):
         """ The class destructor which closes the opened files. """
 
-        if self._f_image:
+        if self._f_image_needs_close:
             self._f_image.close()
-        if self._f_dest:
+        if self._f_dest_needs_close:
             self._f_dest.close()
-        if self._f_bmap:
+        if self._f_bmap_needs_close:
             self._f_bmap.close()
 
     def _get_block_ranges(self):
@@ -385,6 +419,11 @@ class BmapCopy:
         upon return.  The 'verify' argument defines whether the SHA1 checksum
         has to be verified while copying. """
 
+        # Save file positions in order to restore them at the end
+        image_pos = self._f_image.tell()
+        dest_pos = self._f_dest.tell()
+        bmap_pos = self._f_bmap.tell()
+
         # Create the queue for block batches and start the reader thread, which
         # will read the image in batches and put the results to '_batch_queue'.
         self._batch_queue = Queue.Queue(self._batch_queue_len)
@@ -442,6 +481,11 @@ class BmapCopy:
         if sync:
             self.sync()
 
+        # Restore file positions
+        self._f_image.seek(image_pos)
+        self._f_dest.seek(dest_pos)
+        self._f_bmap.seek(bmap_pos)
+
     def sync(self):
         """ Synchronize the destination file to make sure all the data are
         actually written to the disk. """
@@ -486,6 +530,8 @@ class BmapBdevCopy(BmapCopy):
             os.close(self._f_dest)
             raise Error("cannot open block device '%s': %s" \
                         % (self._dest_path, err))
+
+        self._f_dest_needs_close = True
 
     def _tune_block_device(self):
         """" Tune the block device for better performance:
@@ -562,12 +608,12 @@ class BmapBdevCopy(BmapCopy):
             self._restore_bdev_settings()
             raise
 
-    def __init__(self, image_path, dest_path, bmap_path = None):
+    def __init__(self, image, dest, bmap = None):
         """ The same as the constructur of the 'BmapCopy' base class, but adds
         useful guard-checks specific to block devices. """
 
         # Call the base class construcor first
-        BmapCopy.__init__(self, image_path, dest_path, bmap_path)
+        BmapCopy.__init__(self, image, dest, bmap)
 
         self._batch_bytes = 1024 * 1024
         self._batch_blocks = self._batch_bytes / self.bmap_block_size
