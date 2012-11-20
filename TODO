@@ -1,3 +1,5 @@
 1. bmaptool create is slow and can be improved if we use the FIEMAP ioctl
    better. Currently we are calling it for each block.
 2. Create a test-suite
+3. When bmaptool is killed or Ctrl-C'ed half-way through, it should delete
+   the files it creates.
