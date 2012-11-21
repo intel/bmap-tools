@@ -126,8 +126,20 @@ class TestCreateCopy(unittest.TestCase):
         #
         creator.generate()
         creator.generate()
+        writer.copy(True, False)
         writer.copy(False, True)
         writer.sync()
-        writer.copy(False, True)
         filecmp.cmp(self._image_path, self._copy_path, False)
         filecmp.cmp(self._bmap1_path, self._bmap2_path, False)
+
+        #
+        # Pass 4: copy the sparse file without bmap and make sure it is
+        # identical to the original file
+        #
+        writer = BmapCopy.BmapCopy(self._f_image, self._copy_path)
+        writer.copy(True, True)
+        filecmp.cmp(self._image_path, self._copy_path, False)
+
+        writer = BmapCopy.BmapCopy(self._f_image, self._f_copy)
+        writer.copy(False, True)
+        filecmp.cmp(self._image_path, self._copy_path, False)
