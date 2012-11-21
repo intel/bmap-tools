@@ -247,11 +247,19 @@ class BmapCopy:
         self._f_image_needs_close = False
         self._f_bmap_needs_close = False
 
+        self._f_dest = None
+        self._f_image = None
+        self._f_bmap = None
+
+        self._dest_path  = None
+        self._image_path = None
+        self._bmap_path = None
+
         if hasattr(dest, "write"):
-            self._f_dest  = dest
-            self._dest_path  = dest.name
+            self._f_dest = dest
+            self._dest_path = dest.name
         else:
-            self._dest_path  = dest
+            self._dest_path = dest
             self._open_destination_file()
 
         if hasattr(image, "read"):
@@ -428,7 +436,8 @@ class BmapCopy:
         # Save file positions in order to restore them at the end
         image_pos = self._f_image.tell()
         dest_pos = self._f_dest.tell()
-        bmap_pos = self._f_bmap.tell()
+        if self._f_bmap:
+            bmap_pos = self._f_bmap.tell()
 
         # Create the queue for block batches and start the reader thread, which
         # will read the image in batches and put the results to '_batch_queue'.
@@ -495,7 +504,8 @@ class BmapCopy:
         # Restore file positions
         self._f_image.seek(image_pos)
         self._f_dest.seek(dest_pos)
-        self._f_bmap.seek(bmap_pos)
+        if self._f_bmap:
+            self._f_bmap.seek(bmap_pos)
 
     def sync(self):
         """ Synchronize the destination file to make sure all the data are
