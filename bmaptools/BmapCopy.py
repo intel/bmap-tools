@@ -585,12 +585,12 @@ class BmapBdevCopy(BmapCopy):
         import re
 
         match = re.match(r'.*\[(.+)\].*', contents)
-        self.old_scheduler_value = match.group(1)
+        self._old_scheduler_value = match.group(1)
 
         # Limit the write buffering
         try:
             with open(self._sysfs_max_ratio_path, "r+") as f_ratio:
-                self.old_max_ratio_value = f_ratio.read()
+                self._old_max_ratio_value = f_ratio.read()
                 f_ratio.seek(0)
                 f_ratio.write("1")
         except IOError:
@@ -600,18 +600,18 @@ class BmapBdevCopy(BmapCopy):
         """ Restore old block device settings which we changed in
         '_tune_block_device()'. """
 
-        if self.old_scheduler_value is not None:
+        if self._old_scheduler_value is not None:
             try:
                 with open(self._sysfs_scheduler_path, "w") as f_scheduler:
-                    f_scheduler.write(self.old_scheduler_value)
+                    f_scheduler.write(self._old_scheduler_value)
             except IOError:
                 # No problem, this is just an optimization.
                 return
 
-        if self.old_max_ratio_value is not None:
+        if self._old_max_ratio_value is not None:
             try:
                 with open(self._sysfs_max_ratio_path, "w") as f_ratio:
-                    f_ratio.write(self.old_max_ratio_value)
+                    f_ratio.write(self._old_max_ratio_value)
             except IOError:
                 return
 
@@ -649,8 +649,8 @@ class BmapBdevCopy(BmapCopy):
         self._sysfs_base = None
         self._sysfs_scheduler_path = None
         self._sysfs_max_ratio_path = None
-        self.old_scheduler_value = None
-        self.old_max_ratio_value = None
+        self._old_scheduler_value = None
+        self._old_max_ratio_value = None
 
         # If the image size is known (i.e., it is not compressed) - check that
         # itfits the block device.
