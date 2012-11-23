@@ -30,8 +30,13 @@ all 4GiB of data. We say that it is a bit more than 100MiB because things like
 file-system meta-data (inode tables, superblocks, etc), partition table, etc
 also contribute to the mapped blocks and are also copied. """
 
-# Disable the "Too many instance attributes" pylint recommendation (R0902)
+# Disable the following pylint recommendations:
+#   * Too many instance attributes (R0902)
+#   * Too many statements (R0915)
+#   * Too many branches (R0912)
 # pylint: disable=R0902
+# pylint: disable=R0915
+# pylint: disable=R0912
 
 import os
 import stat
