@@ -219,7 +219,7 @@ class BmapCreate:
         # Generate the block map and write it to the XML block map
         # file as we go.
         self.mapped_cnt = 0
-        for first, last in self.fiemap.get_mapped_ranges():
+        for first, last in self.fiemap.get_mapped_ranges(0, self.blocks_cnt):
             self.mapped_cnt += last - first + 1
             if include_checksums:
                 sha1 = self._calculate_sha1(first, last)

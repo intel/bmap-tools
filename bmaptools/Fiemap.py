@@ -118,12 +118,13 @@ class Fiemap:
 
         return not self.block_is_mapped(block)
 
-    def _get_ranges(self, test_func):
-        """ Internal helper generator which produces list of mapped or unmapped
-        blocks. The 'test_func' is a function object which tests whether a
-        block is mapped or unmapped. """
+    @staticmethod
+    def _get_ranges(start, count, test_func):
+        """ Internal helper function which implements 'get_mapped_ranges()' and
+        'get_unmapped_ranges()', depending whethier 'test_func' is a
+        'block_is_mapped()' or 'block_is_unmapped()' object. """
 
-        iterator = xrange(self.blocks_cnt)
+        iterator = xrange(start, count)
         for key, group in itertools.groupby(iterator, test_func):
             if key:
                 # Find the first and the last elements of the group
@@ -133,12 +134,18 @@ class Fiemap:
                     pass
                 yield first, last
 
-    def get_mapped_ranges(self):
-        """ Generate ranges of mapped blocks in the file. """
+    def get_mapped_ranges(self, start, count):
+        """ Generate ranges of mapped blocks in the file. The ranges are tuples
+        of 2 elements: [first, last], where 'first' is the first mapped block
+        and 'last' is the last mapped block.
 
-        return self._get_ranges(self.block_is_mapped)
+        The ranges are generated for the area for the file starting from block
+        'start' and 'count' blocks in size. """
 
-    def get_unmapped_ranges(self):
-        """ Generate ranges of unmapped blocks in the file. """
+        return self._get_ranges(start, count, self.block_is_mapped)
 
-        return self._get_ranges(self.block_is_unmapped)
+    def get_unmapped_ranges(self, start, count):
+        """ Just like 'get_mapped_ranges()', but for un-mapped blocks
+        (holes). """
+
+        return self._get_ranges(start, count, self.block_is_unmapped)

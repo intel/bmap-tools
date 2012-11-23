@@ -62,7 +62,7 @@ def create_random_sparse_file(file_obj, size):
 
     # Make sure the Fiemap module reports holes correctly
     fiemap = Fiemap.Fiemap(file_obj)
-    fiemap_iterator = fiemap.get_unmapped_ranges()
+    fiemap_iterator = fiemap.get_unmapped_ranges(0, blocks_cnt)
     iterator = itertools.izip_longest(holes, fiemap_iterator)
     for ours, fiemaps in iterator:
         if ours != fiemaps:
