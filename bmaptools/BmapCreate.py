@@ -126,14 +126,14 @@ class BmapCreate:
         * bmap  - full path or a file-like object to use for writing the
                   resulting bmap to """
 
-        self.bmap_image_size = None
-        self.bmap_image_size_human = None
-        self.bmap_block_size = None
-        self.bmap_blocks_cnt = None
-        self.bmap_mapped_cnt = None
-        self.bmap_mapped_size = None
-        self.bmap_mapped_size_human = None
-        self.bmap_mapped_percent = None
+        self.image_size = None
+        self.image_size_human = None
+        self.block_size = None
+        self.blocks_cnt = None
+        self.mapped_cnt = None
+        self.mapped_size = None
+        self.mapped_size_human = None
+        self.mapped_percent = None
 
         self._f_image_needs_close = False
         self._f_bmap_needs_close = False
@@ -152,20 +152,20 @@ class BmapCreate:
             self._bmap_path = bmap
             self._open_bmap_file()
 
-        self.bmap_image_size = os.fstat(self._f_image.fileno()).st_size
-        self.bmap_image_size_human = human_size(self.bmap_image_size)
-        if self.bmap_image_size == 0:
+        self.image_size = os.fstat(self._f_image.fileno()).st_size
+        self.image_size_human = human_size(self.image_size)
+        if self.image_size == 0:
             raise Error("cannot generate bmap for zero-sized image file '%s'" \
                         % self._image_path)
 
         try:
-            self.bmap_block_size = get_block_size(self._f_image)
+            self.block_size = get_block_size(self._f_image)
         except IOError as err:
             raise Error("cannot get block size for '%s': %s" \
                         % (self._image_path, err))
 
-        self.bmap_blocks_cnt = self.bmap_image_size + self.bmap_block_size - 1
-        self.bmap_blocks_cnt /= self.bmap_block_size
+        self.blocks_cnt = self.image_size + self.block_size - 1
+        self.blocks_cnt /= self.block_size
 
         # Check if the FIEMAP ioctl is supported
         self._is_mapped(0)
@@ -176,8 +176,8 @@ class BmapCreate:
 
         xml = _BMAP_START_TEMPLATE \
                % (SUPPORTED_BMAP_VERSION,
-                  self.bmap_image_size_human, self.bmap_image_size,
-                  self.bmap_block_size, self.bmap_blocks_cnt)
+                  self.image_size_human, self.image_size,
+                  self.block_size, self.blocks_cnt)
 
         self._f_bmap.write(xml)
 
@@ -202,8 +202,8 @@ class BmapCreate:
         struct_fiemap_format = "=QQLLLL"
         struct_size = struct.calcsize(struct_fiemap_format)
         buf = struct.pack(struct_fiemap_format,
-                          block * self.bmap_block_size,
-                          self.bmap_block_size, 0, 0, 1, 0)
+                          block * self.block_size,
+                          self.block_size, 0, 0, 1, 0)
         # sizeof(struct fiemap_extent) == 56
         buf += "\0"*56
         # Python strings are "immutable", meaning that python will pass a copy
@@ -230,7 +230,7 @@ class BmapCreate:
         """ A helper function which generates ranges of mapped image file
         blocks. """
 
-        iterator = xrange(self.bmap_blocks_cnt)
+        iterator = xrange(self.blocks_cnt)
         for key, group in groupby(iterator, self._is_mapped):
             if key:
                 # Find the first and the last elements of the group
@@ -247,9 +247,9 @@ class BmapCreate:
 
         xml =  "    </BlockMap>\n\n"
         xml += "    <!-- Count of mapped blocks (%s or %.1f%% mapped) -->\n" \
-               % (self.bmap_mapped_size_human, self.bmap_mapped_percent)
+               % (self.mapped_size_human, self.mapped_percent)
         xml += "    <MappedBlocksCount> %u </MappedBlocksCount>\n" \
-               % self.bmap_mapped_cnt
+               % self.mapped_cnt
         xml += "</bmap>\n"
 
         self._f_bmap.write(xml)
@@ -258,8 +258,8 @@ class BmapCreate:
         """ A helper function which calculates SHA1 checksum for the range of
         blocks of the image file: from block 'first' to block 'last'. """
 
-        start = first * self.bmap_block_size
-        end = (last + 1) * self.bmap_block_size
+        start = first * self.block_size
+        end = (last + 1) * self.block_size
 
         self._f_image.seek(start)
         hash_obj = hashlib.new("sha1")
@@ -300,9 +300,9 @@ class BmapCreate:
 
         # Generate the block map and write it to the XML block map
         # file as we go.
-        self.bmap_mapped_cnt = 0
+        self.mapped_cnt = 0
         for first, last in self._get_ranges():
-            self.bmap_mapped_cnt += last - first + 1
+            self.mapped_cnt += last - first + 1
             if include_checksums:
                 sha1 = self._calculate_sha1(first, last)
                 sha1 = " sha1=\"%s\"" % sha1
@@ -316,10 +316,9 @@ class BmapCreate:
                 self._f_bmap.write("        <Range%s> %s </Range>\n" \
                                    % (sha1, first))
 
-        self.bmap_mapped_size = self.bmap_mapped_cnt * self.bmap_block_size
-        self.bmap_mapped_size_human = human_size(self.bmap_mapped_size)
-        self.bmap_mapped_percent = self.bmap_mapped_cnt * 100.0
-        self.bmap_mapped_percent /= self.bmap_blocks_cnt
+        self.mapped_size = self.mapped_cnt * self.block_size
+        self.mapped_size_human = human_size(self.mapped_size)
+        self.mapped_percent = (self.mapped_cnt * 100.0) /  self.blocks_cnt
 
         self._bmap_file_end()
 

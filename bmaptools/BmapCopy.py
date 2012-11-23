@@ -100,17 +100,17 @@ class BmapCopy:
 
     def _initialize_sizes(self, image_size):
         """ This function is only used when the there is no bmap. It
-        initializes attributes like 'bmap_blocks_cnt', 'bmap_mapped_cnt', etc.
-        Normally, the values are read from the bmap file, but in this case they
-        are just set to something reasonable. """
+        initializes attributes like 'blocks_cnt', 'mapped_cnt', etc. Normally,
+        the values are read from the bmap file, but in this case they are just
+        set to something reasonable. """
 
-        self.bmap_image_size = image_size
-        self.bmap_image_size_human = human_size(image_size)
-        self.bmap_blocks_cnt = self.bmap_image_size + self.bmap_block_size - 1
-        self.bmap_blocks_cnt /= self.bmap_block_size
-        self.bmap_mapped_cnt = self.bmap_blocks_cnt
-        self.bmap_mapped_size = self.bmap_image_size
-        self.bmap_mapped_size_human = self.bmap_image_size_human
+        self.image_size = image_size
+        self.image_size_human = human_size(image_size)
+        self.blocks_cnt = self.image_size + self.block_size - 1
+        self.blocks_cnt /= self.block_size
+        self.mapped_cnt = self.blocks_cnt
+        self.mapped_size = self.image_size
+        self.mapped_size_human = self.image_size_human
 
 
     def _parse_bmap(self):
@@ -136,15 +136,14 @@ class BmapCopy:
                         % (SUPPORTED_BMAP_VERSION, major))
 
         # Fetch interesting data from the bmap XML file
-        self.bmap_block_size = int(xml.find("BlockSize").text.strip())
-        self.bmap_blocks_cnt = int(xml.find("BlocksCount").text.strip())
-        self.bmap_mapped_cnt = int(xml.find("MappedBlocksCount").text.strip())
-        self.bmap_image_size = self.bmap_blocks_cnt * self.bmap_block_size
-        self.bmap_image_size_human = human_size(self.bmap_image_size)
-        self.bmap_mapped_size = self.bmap_mapped_cnt * self.bmap_block_size
-        self.bmap_mapped_size_human = human_size(self.bmap_mapped_size)
-        self.bmap_mapped_percent = self.bmap_mapped_cnt * 100.0
-        self.bmap_mapped_percent /= self.bmap_blocks_cnt
+        self.block_size = int(xml.find("BlockSize").text.strip())
+        self.blocks_cnt = int(xml.find("BlocksCount").text.strip())
+        self.mapped_cnt = int(xml.find("MappedBlocksCount").text.strip())
+        self.image_size = self.blocks_cnt * self.block_size
+        self.image_size_human = human_size(self.image_size)
+        self.mapped_size = self.mapped_cnt * self.block_size
+        self.mapped_size_human = human_size(self.mapped_size)
+        self.mapped_percent = (self.mapped_cnt * 100.0) / self.blocks_cnt
 
         self._f_bmap.seek(bmap_pos)
 
@@ -234,14 +233,14 @@ class BmapCopy:
         self._batch_queue_len = 2
 
         self.bmap_version = None
-        self.bmap_block_size = None
-        self.bmap_blocks_cnt = None
-        self.bmap_mapped_cnt = None
-        self.bmap_image_size = None
-        self.bmap_image_size_human = None
-        self.bmap_mapped_size = None
-        self.bmap_mapped_size_human = None
-        self.bmap_mapped_percent = None
+        self.block_size = None
+        self.blocks_cnt = None
+        self.mapped_cnt = None
+        self.image_size = None
+        self.image_size_human = None
+        self.mapped_size = None
+        self.mapped_size_human = None
+        self.mapped_percent = None
 
         self._f_dest_needs_close = False
         self._f_image_needs_close = False
@@ -281,8 +280,8 @@ class BmapCopy:
             # There is no bmap. Initialize user-visible attributes to something
             # sensible with an assumption that we just have all blocks mapped.
             self.bmap_version = 0
-            self.bmap_block_size = 4096
-            self.bmap_mapped_percent = 100
+            self.block_size = 4096
+            self.mapped_percent = 100
 
             # We can initialize size-related attributes only if we the image is
             # uncompressed.
@@ -290,7 +289,7 @@ class BmapCopy:
                 image_size = os.fstat(self._f_image.fileno()).st_size
                 self._initialize_sizes(image_size)
 
-        self._batch_blocks = self._batch_bytes / self.bmap_block_size
+        self._batch_blocks = self._batch_bytes / self.block_size
 
     def __del__(self):
         """ The class destructor which closes the opened files. """
@@ -318,8 +317,8 @@ class BmapCopy:
 
         if not self._f_bmap:
             # We do not have the bmap, generate a tuple with all blocks
-            if self.bmap_blocks_cnt:
-                yield (0, self.bmap_blocks_cnt - 1, None)
+            if self.blocks_cnt:
+                yield (0, self.blocks_cnt - 1, None)
             else:
                 # We do not know image size, keep generate tuple with many
                 # blocks infinitely
@@ -390,12 +389,12 @@ class BmapCopy:
                 if verify and sha1:
                     hash_obj = hashlib.new('sha1')
 
-                self._f_image.seek(first * self.bmap_block_size)
+                self._f_image.seek(first * self.block_size)
 
                 iterator = self._get_batches(first, last)
                 for (start, end, length) in iterator:
                     try:
-                        buf = self._f_image.read(length * self.bmap_block_size)
+                        buf = self._f_image.read(length * self.block_size)
                     except IOError as err:
                         raise Error("error while reading blocks %d-%d of the " \
                                     "image file '%s': %s" \
@@ -408,8 +407,8 @@ class BmapCopy:
                     if verify and sha1:
                         hash_obj.update(buf)
 
-                    length = len(buf) + self.bmap_block_size - 1
-                    length /= self.bmap_block_size
+                    length = len(buf) + self.block_size - 1
+                    length /= self.block_size
                     end = start + length - 1
                     self._batch_queue.put(("range", start, end, length, buf))
 
@@ -462,9 +461,9 @@ class BmapCopy:
 
             (start, end, length, buf) = batch[1:5]
 
-            assert len(buf) <= length * self.bmap_block_size
+            assert len(buf) <= length * self.block_size
 
-            self._f_dest.seek(start * self.bmap_block_size)
+            self._f_dest.seek(start * self.block_size)
 
             # Synchronize the destination file if we reached the watermark
             if self._dest_fsync_watermark:
@@ -481,17 +480,17 @@ class BmapCopy:
             self._batch_queue.task_done()
             blocks_written += length
 
-        if not self.bmap_image_size:
+        if not self.image_size:
             # The image size was unknow up until now, probably because this is
             # a compressed image. Initialize the corresponding class attributes
             # now, when we know the size.
-            self._initialize_sizes(blocks_written * self.bmap_block_size)
+            self._initialize_sizes(blocks_written * self.block_size)
 
         # This is just a sanity check - we should have written exactly
         # 'mapped_cnt' blocks.
-        if blocks_written != self.bmap_mapped_cnt:
+        if blocks_written != self.mapped_cnt:
             raise Error("wrote %u blocks, but should have %u - inconsistent " \
-                       "bmap file" % (blocks_written, self.bmap_mapped_cnt))
+                       "bmap file" % (blocks_written, self.mapped_cnt))
 
         try:
             self._f_dest.flush()
@@ -632,9 +631,9 @@ class BmapBdevCopy(BmapCopy):
         BmapCopy.__init__(self, image, dest, bmap)
 
         self._batch_bytes = 1024 * 1024
-        self._batch_blocks = self._batch_bytes / self.bmap_block_size
+        self._batch_blocks = self._batch_bytes / self.block_size
         self._batch_queue_len = 6
-        self._dest_fsync_watermark = (6 * 1024 * 1024) / self.bmap_block_size
+        self._dest_fsync_watermark = (6 * 1024 * 1024) / self.block_size
 
         self._sysfs_base = None
         self._sysfs_scheduler_path = None
@@ -644,7 +643,7 @@ class BmapBdevCopy(BmapCopy):
 
         # If the image size is known (i.e., it is not compressed) - check that
         # itfits the block device.
-        if self.bmap_image_size:
+        if self.image_size:
             try:
                 bdev_size = os.lseek(self._f_dest.fileno(), 0, os.SEEK_END)
                 os.lseek(self._f_dest.fileno(), 0, os.SEEK_SET)
@@ -652,10 +651,10 @@ class BmapBdevCopy(BmapCopy):
                 raise Error("cannot seed block device '%s': %s " \
                             % (self._dest_path, err.strerror))
 
-            if bdev_size < self.bmap_image_size:
+            if bdev_size < self.image_size:
                 raise Error("the image file '%s' has size %s and it will not " \
                             "fit the block device '%s' which has %s capacity" \
-                            % (self._image_path, self.bmap_image_size_human,
+                            % (self._image_path, self.image_size_human,
                                self._dest_path, human_size(bdev_size)))
 
         # Construct the path to the sysfs directory of our block device

@@ -85,10 +85,9 @@ def copy_command(args, log):
     else:
         log.info("block map format version %s" % writer.bmap_version)
         log.info("%d blocks of size %d (%s), mapped %d blocks (%s or %.1f%%)" \
-                 % (writer.bmap_blocks_cnt, writer.bmap_block_size,
-                    writer.bmap_image_size_human, writer.bmap_mapped_cnt,
-                    writer.bmap_mapped_size_human,
-                    writer.bmap_mapped_percent))
+                 % (writer.blocks_cnt, writer.block_size,
+                    writer.image_size_human, writer.mapped_cnt,
+                    writer.mapped_size_human, writer.mapped_percent))
         log.info("copying the image to %s '%s' using bmap file '%s'" \
                  % (destination_type, args.dest, args.bmap))
 
@@ -111,7 +110,7 @@ def copy_command(args, log):
         raise SystemExit(1)
 
     copying_time = time.time() - start_time
-    copying_speed = writer.bmap_mapped_size / copying_time
+    copying_speed = writer.mapped_size / copying_time
     log.info("copying time: %s, copying speed %s/sec" \
              % (BmapHelpers.human_time(copying_time), \
                 BmapHelpers.human_size(copying_speed)))
@@ -158,9 +157,9 @@ def create_command(args, log):
         log.error(str(err))
         raise SystemExit(1)
 
-    if creator.bmap_mapped_cnt == creator.bmap_blocks_cnt:
+    if creator.mapped_cnt == creator.blocks_cnt:
         log.warning("all %s are mapped, no holes in '%s'" \
-                    % (creator.bmap_image_size_human, args.image))
+                    % (creator.image_size_human, args.image))
         log.warning("was the image handled incorrectly and holes " \
                     "were expanded?")
 
