@@ -22,9 +22,7 @@ etc. The end result should be a sparse file where mapped areas represent useful
 parts of the image and holes represent useless parts of the image, which do not
 have to be copied when copying the image to the target device.
 
-At the moment this module uses the FIBMAP ioctl to detect holes. However, it is
-possible to speed it up by using presumably faster FIBMAP ioctl (and fall-back
-to FIBMAP if the kernel is too old and does not support FIBMAP). """
+This module uses the FIBMAP ioctl to detect holes. """
 
 # Disable the following pylint recommendations:
 #   *  Too many instance attributes - R0902
@@ -104,8 +102,7 @@ class BmapCreate:
     * full path or a file-like object to use for writing the results to
 
     Then you should invoke the 'generate()' method of this class. It will use
-    the FIEMAP ioctl to generate the bmap, and fall-back to the FIBMAP ioctl if
-    FIEMAP is not supported. """
+    the FIEMAP ioctl to generate the bmap. """
 
     def _open_image_file(self):
         """ Open the image file. """
@@ -136,7 +133,6 @@ class BmapCreate:
         * bmap  - full path or a file-like object to use for writing the
                   resulting bmap to """
 
-        self.fiemap_supported = None
         self.bmap_image_size = None
         self.bmap_image_size_human = None
         self.bmap_block_size = None
@@ -178,32 +174,8 @@ class BmapCreate:
         self.bmap_blocks_cnt = self.bmap_image_size + self.bmap_block_size - 1
         self.bmap_blocks_cnt /= self.bmap_block_size
 
-        # Check if the FIEMAP ioctl is supported or not
-        try:
-            self.fiemap_supported = True
-            self._is_mapped_fiemap(0)
-        except Error as err:
-            # ENOTTY means that the FIEMAP ioctl is not supported
-            if err.errno != os.errno.ENOTTY:
-                raise
-            self.fiemap_supported = False
-
-        if not self.fiemap_supported:
-            # FIEMAP is not supported by the running kernel and we need to
-            # fall-back to FIBMAP, which requires root permissions.
-            try:
-                self._is_mapped_fibmap(0)
-            except Error as err:
-                if err.errno == os.errno.EPERM or err.errno == os.errno.EACCES:
-                    raise Error("unfortunately your system does not support " \
-                                "the FIEMAP ioctl, and we have to use FIBMAP"  \
-                                "ioctl instead, with requires 'CAP_SYS_RAWIO'" \
-                                " capability, which you do not have; try to"   \
-                                "either become 'root' of upgrade your kernel"  \
-                                "to make it support FIEMAP, which does not"    \
-                                "require 'CAP_SYS_RAWIO'", err.errno)
-                else:
-                    raise
+        # Check if the FIEMAP ioctl is supported
+        self._is_mapped(0)
 
     def _bmap_file_start(self):
         """ A helper function which generates the starting contents of the
@@ -216,28 +188,7 @@ class BmapCreate:
 
         self._f_bmap.write(xml)
 
-    def _is_mapped_fibmap(self, block):
-        """ A helper function which returns 'True' if block number 'block' of
-        the image file is mapped and 'False' otherwise.
-
-        This function uses the FIBMAP ioctl (number 1) to detect whether
-        'block' is mapped to the disk. The ioctl returns zero if 'block' is not
-        mapped and non-zero disk block number if it is mapped. Unfortunately,
-        FIBMAP requires root rights, unlike FIEMAP.
-
-        This function should only be used if the more advanced FIEMAP ioctl is
-        not supported, probably because the Linux kernel is too old. """
-
-        try:
-            binary_data = ioctl(self._f_image, 1, struct.pack('I', block))
-            result = struct.unpack('I', binary_data)[0]
-        except IOError as err:
-            raise Error("the FIBMAP ioctl failed for '%s': %s" \
-                        % (self._image_path, err), err.errno)
-
-        return result != 0
-
-    def _is_mapped_fiemap(self, block):
+    def _is_mapped(self, block):
         """ A helper function which returns 'True' if block number 'block' of
         the image file is mapped and 'False' otherwise.
 
@@ -269,21 +220,18 @@ class BmapCreate:
         try:
             ioctl(self._f_image, 0xC020660B, buf, 1)
         except IOError as err:
-            raise Error("the FIBMAP ioctl failed for '%s': %s" \
-                        % (self._image_path, err), err.errno)
+            error_msg = "the FIBMAP ioctl failed for '%s': %s" \
+                        % (self._image_path, err)
+            if err.errno == os.errno.EPERM or err.errno == os.errno.EACCES:
+                # The FIEMAP ioctl was added in kernel version 2.6.28 in 2008
+                error_msg += " (looks like your kernel does not support FIEMAP)"
+
+            raise Error(error_msg, err.errno)
 
         res = struct.unpack(struct_fiemap_format, buf[:struct_size])
         # res[3] is the 'fm_mapped_extents' field of 'struct fiemap'. If it
         # contains zero, the block is not mapped, otherwise it is mapped.
         return bool(res[3])
-
-    def _is_mapped(self, block):
-        """ A helper function which returns True if block number 'block' of the
-        image file is mapped and False otherwise. """
-        if self.fiemap_supported:
-            return self._is_mapped_fiemap(block)
-        else:
-            return self._is_mapped_fibmap(block)
 
     def _get_ranges(self):
         """ A helper function which generates ranges of mapped image file
