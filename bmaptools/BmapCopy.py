@@ -268,6 +268,9 @@ class BmapCopy:
             self._image_path = image
             self._open_image_file()
 
+        st_mode = os.fstat(self._f_dest.fileno()).st_mode
+        self._dest_is_regfile = stat.S_ISREG(st_mode)
+
         if bmap:
             if hasattr(bmap, "read"):
                 self._f_bmap = bmap
@@ -491,6 +494,14 @@ class BmapCopy:
         if blocks_written != self.mapped_cnt:
             raise Error("wrote %u blocks, but should have %u - inconsistent " \
                        "bmap file" % (blocks_written, self.mapped_cnt))
+
+        if self._dest_is_regfile:
+            # Make sure the destination file has the same size as the image
+            try:
+                os.ftruncate(self._f_dest.fileno(), self.image_size)
+            except OSError as err:
+                raise Error("cannot truncate file '%s': %s" \
+                            % (self._dest_path, err))
 
         try:
             self._f_dest.flush()
