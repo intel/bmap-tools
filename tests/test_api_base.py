@@ -69,6 +69,23 @@ def create_random_sparse_file(file_obj, size):
             raise Error("mismatch for hole %d-%d, Fiemap returned %d-%d" \
                         % (ours[0], ours[1], fiemaps[0], fiemaps[1]))
 
+def compare_holes(file1, file2):
+    """ Make sure that files 'file1' and 'file2' have holes at the same places.
+    The 'file1' and 'file2' arguments may be full file paths or file
+    objects. """
+
+    fiemap1 = Fiemap.Fiemap(file1)
+    fiemap2 = Fiemap.Fiemap(file2)
+
+    iterator1 = fiemap1.get_unmapped_ranges(0, fiemap1.blocks_cnt)
+    iterator2 = fiemap2.get_unmapped_ranges(0, fiemap2.blocks_cnt)
+
+    iterator = itertools.izip_longest(iterator1, iterator2)
+    for range1, range2 in iterator:
+        if range1 != range2:
+            raise Error("mismatch for hole %d-%d, it is %d-%d in file2" \
+                        % (range1[0], range1[1], range2[0], range2[1]))
+
 class TestCreateCopy(unittest.TestCase):
     """" A basic test for the bmap creation and copying functionality. It first
     generates a bmap for a sparse file, and then copies the sparse file to a
@@ -137,6 +154,9 @@ class TestCreateCopy(unittest.TestCase):
 
         # Compare the original file and the copy are identical
         assert filecmp.cmp(self._image_path, self._copy_path, False)
+        # Make sure that holes in the copy are identical to holes in the random
+        # sparse file.
+        compare_holes(self._image_path, self._copy_path)
 
         #
         # Pass 2: same as pass 1, but use file objects instead of paths
@@ -149,6 +169,7 @@ class TestCreateCopy(unittest.TestCase):
         writer.copy(False, True)
 
         assert filecmp.cmp(self._image_path, self._copy_path, False)
+        compare_holes(self._f_image, self._f_copy)
 
         # Make sure the bmap files generated at pass 1 and pass 2 are identical
         assert filecmp.cmp(self._bmap1_path, self._bmap2_path, False)
@@ -165,6 +186,7 @@ class TestCreateCopy(unittest.TestCase):
         writer.copy(False, True)
         writer.sync()
         assert filecmp.cmp(self._image_path, self._copy_path, False)
+        compare_holes(self._f_image, self._f_copy)
         assert filecmp.cmp(self._bmap1_path, self._bmap2_path, False)
 
         #
