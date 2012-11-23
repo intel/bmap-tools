@@ -29,13 +29,9 @@ This module uses the FIBMAP ioctl to detect holes. """
 #   *  Too few public methods - R0903
 # pylint: disable=R0902,R0903
 
-import os
 import hashlib
-from fcntl import ioctl
-import struct
-from itertools import groupby
-from bmaptools.BmapHelpers import human_size, get_block_size
-import array
+from bmaptools.BmapHelpers import human_size
+from bmaptools import Fiemap
 
 # The bmap format version we generate
 SUPPORTED_BMAP_VERSION = "1.2"
@@ -152,23 +148,16 @@ class BmapCreate:
             self._bmap_path = bmap
             self._open_bmap_file()
 
-        self.image_size = os.fstat(self._f_image.fileno()).st_size
+        self.fiemap = Fiemap.Fiemap(self._f_image)
+
+        self.image_size = self.fiemap.image_size
         self.image_size_human = human_size(self.image_size)
         if self.image_size == 0:
             raise Error("cannot generate bmap for zero-sized image file '%s'" \
                         % self._image_path)
 
-        try:
-            self.block_size = get_block_size(self._f_image)
-        except IOError as err:
-            raise Error("cannot get block size for '%s': %s" \
-                        % (self._image_path, err))
-
-        self.blocks_cnt = self.image_size + self.block_size - 1
-        self.blocks_cnt /= self.block_size
-
-        # Check if the FIEMAP ioctl is supported
-        self._is_mapped(0)
+        self.block_size = self.fiemap.block_size
+        self.blocks_cnt = self.fiemap.blocks_cnt
 
     def _bmap_file_start(self):
         """ A helper function which generates the starting contents of the
@@ -180,65 +169,6 @@ class BmapCreate:
                   self.block_size, self.blocks_cnt)
 
         self._f_bmap.write(xml)
-
-    def _is_mapped(self, block):
-        """ A helper function which returns 'True' if block number 'block' of
-        the image file is mapped and 'False' otherwise.
-
-        This function uses the FIEMAP ioctl to detect whether 'block' is mapped
-        to the disk. However, we do not use all the power of this ioctl: we
-        call it for each and every block, while there is a possibility to call
-        it once for a range of blocks, which is a lot faster when dealing with
-        huge files. """
-
-        # I know that the below cruft is not readable. To understand that, you
-        # need to know the FIEMAP interface, which is documented in the
-        # Documentation/filesystems/fiemap.txt file in the Linux kernel
-        # sources. The ioctl is quite complex and python is not the best tool
-        # for dealing with ioctls...
-
-        # Prepare a 'struct fiemap' buffer which contains a single
-        # 'struct fiemap_extent' element.
-        struct_fiemap_format = "=QQLLLL"
-        struct_size = struct.calcsize(struct_fiemap_format)
-        buf = struct.pack(struct_fiemap_format,
-                          block * self.block_size,
-                          self.block_size, 0, 0, 1, 0)
-        # sizeof(struct fiemap_extent) == 56
-        buf += "\0"*56
-        # Python strings are "immutable", meaning that python will pass a copy
-        # of the string to the ioctl, unless we turn it into an array.
-        buf = array.array('B', buf)
-
-        try:
-            ioctl(self._f_image, 0xC020660B, buf, 1)
-        except IOError as err:
-            error_msg = "the FIBMAP ioctl failed for '%s': %s" \
-                        % (self._image_path, err)
-            if err.errno == os.errno.EPERM or err.errno == os.errno.EACCES:
-                # The FIEMAP ioctl was added in kernel version 2.6.28 in 2008
-                error_msg += " (looks like your kernel does not support FIEMAP)"
-
-            raise Error(error_msg)
-
-        res = struct.unpack(struct_fiemap_format, buf[:struct_size])
-        # res[3] is the 'fm_mapped_extents' field of 'struct fiemap'. If it
-        # contains zero, the block is not mapped, otherwise it is mapped.
-        return bool(res[3])
-
-    def _get_ranges(self):
-        """ A helper function which generates ranges of mapped image file
-        blocks. """
-
-        iterator = xrange(self.blocks_cnt)
-        for key, group in groupby(iterator, self._is_mapped):
-            if key:
-                # Find the first and the last elements of the group
-                first = group.next()
-                last = first
-                for last in group:
-                    pass
-                yield first, last
 
     def _bmap_file_end(self):
         """ A helper function which generates the final parts of the block map
@@ -286,22 +216,10 @@ class BmapCreate:
 
         self._bmap_file_start()
 
-        # Synchronize the image file before starting to generate its block map
-        try:
-            self._f_image.flush()
-        except IOError as err:
-            raise Error("cannot flush image file '%s': %s" \
-                        % (self._image_path, err))
-        try:
-            os.fsync(self._f_image.fileno()),
-        except OSError as err:
-            raise Error("cannot synchronize image file '%s': %s " \
-                        % (self._image_path, err.strerror))
-
         # Generate the block map and write it to the XML block map
         # file as we go.
         self.mapped_cnt = 0
-        for first, last in self._get_ranges():
+        for first, last in self.fiemap.get_mapped_ranges():
             self.mapped_cnt += last - first + 1
             if include_checksums:
                 sha1 = self._calculate_sha1(first, last)
