@@ -323,7 +323,11 @@ class BmapCreate:
 
         self._bmap_file_end()
 
-        self._f_bmap.flush()
+        try:
+            self._f_bmap.flush()
+        except IOError as err:
+            raise Error("cannot flush the bmap file '%s': %s" \
+                        % (self._bmap_path, err))
 
         self._f_image.seek(image_pos)
 
