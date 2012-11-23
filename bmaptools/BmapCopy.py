@@ -251,13 +251,8 @@ class BmapCopy:
         self._f_image_needs_close = False
         self._f_bmap_needs_close = False
 
-        self._f_dest = None
-        self._f_image = None
         self._f_bmap = None
-
-        self._dest_path  = None
-        self._image_path = None
-        self._bmap_path = None
+        self._f_bmap_path = None
 
         if hasattr(dest, "write"):
             self._f_dest = dest
