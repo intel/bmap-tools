@@ -110,26 +110,25 @@ class Fiemap:
         if self._f_image_needs_close:
             self._f_image.close()
 
-    def block_is_mapped(self, block):
-        """ This function returns 'True' if block number 'block' of the image
-        file is mapped and 'False' otherwise. """
+    def _invoke_fiemap(self, block, count):
+        """ Invoke the FIEMAP ioctl for 'count' blocks of the file starting from
+        block number 'block'.
+
+        The full result of the operation is stored in 'self._buf' on exit.
+        Returns the unpacked 'struct fiemap' data structure in form of a python
+        list (just like 'struct.upack()'). """
 
         if block < 0 or block >= self.blocks_cnt:
             raise Error("bad block number %d, should be within [0, %d]" \
                         % (block, self.blocks_cnt))
 
-        # Prepare a 'struct fiemap' buffer which contains a single
-        # 'struct fiemap_extent' element.
-        buf = struct.pack(_FIEMAP_FORMAT, block * self.block_size,
-                          self.block_size, 0, 0, 1, 0)
-        buf += '\0' * _FIEMAP_EXTENT_SIZE
-
-        # Python strings are "immutable", meaning that python will pass a copy
-        # of the string to the ioctl, unless we turn it into an array.
-        buf = array.array('B', buf)
+        # Initialize the 'struct fiemap' part of the buffer
+        struct.pack_into(_FIEMAP_FORMAT, self._buf, 0, block * self.block_size,
+                         count * self.block_size, 0, 0,
+                         self._fiemap_extent_cnt, 0)
 
         try:
-            fcntl.ioctl(self._f_image, _FIEMAP_IOCTL, buf, 1)
+            fcntl.ioctl(self._f_image, _FIEMAP_IOCTL, self._buf, 1)
         except IOError as err:
             error_msg = "the FIEMAP ioctl failed for '%s': %s" \
                         % (self._image_path, err)
@@ -139,11 +138,18 @@ class Fiemap:
 
             raise Error(error_msg)
 
-        res = struct.unpack(_FIEMAP_FORMAT, buf[:_FIEMAP_SIZE])
+        return struct.unpack(_FIEMAP_FORMAT, self._buf[:_FIEMAP_SIZE])
 
-        # res[3] is the 'fm_mapped_extents' field of 'struct fiemap'. If it
-        # contains zero, the block is not mapped, otherwise it is mapped.
-        return bool(res[3])
+    def block_is_mapped(self, block):
+        """ This function returns 'True' if block number 'block' of the image
+        file is mapped and 'False' otherwise. """
+
+        struct_fiemap = self._invoke_fiemap(block, 1)
+
+        # The 3rd element of 'struct_fiemap' is the 'fm_mapped_extents' field.
+        # If it contains zero, the block is not mapped, otherwise it is
+        # mapped.
+        return bool(struct_fiemap[3])
 
     def block_is_unmapped(self, block):
         """ This function returns 'True' if block number 'block' of the image
