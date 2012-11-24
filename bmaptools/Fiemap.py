@@ -94,6 +94,10 @@ class Fiemap:
         """ This function returns 'True' if block number 'block' of the image
         file is mapped and 'False' otherwise. """
 
+        if block < 0 or block >= self.blocks_cnt:
+            raise Error("bad block number %d, should be within [0, %d]" \
+                        % (block, self.blocks_cnt))
+
         # Prepare a 'struct fiemap' buffer which contains a single
         # 'struct fiemap_extent' element.
         buf = struct.pack(_FIEMAP_FORMAT, block * self.block_size,
