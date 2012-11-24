@@ -107,7 +107,7 @@ class Fiemap:
         try:
             fcntl.ioctl(self._f_image, _FIEMAP_IOCTL, buf, 1)
         except IOError as err:
-            error_msg = "the FIBMAP ioctl failed for '%s': %s" \
+            error_msg = "the FIEMAP ioctl failed for '%s': %s" \
                         % (self._image_path, err)
             if err.errno == os.errno.EPERM or err.errno == os.errno.EACCES:
                 # The FIEMAP ioctl was added in kernel version 2.6.28 in 2008
