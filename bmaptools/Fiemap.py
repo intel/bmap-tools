@@ -127,11 +127,19 @@ class Fiemap:
 
         return not self.block_is_mapped(block)
 
-    @staticmethod
-    def _get_ranges(start, count, test_func):
+    def _get_ranges(self, start, count, test_func):
         """ Internal helper function which implements 'get_mapped_ranges()' and
         'get_unmapped_ranges()', depending whethier 'test_func' is a
         'block_is_mapped()' or 'block_is_unmapped()' object. """
+
+        if start < 0 or count < 0:
+            raise Error("the 'start' (%d) and 'count' (%d) arguments must be " \
+                        "positive" % (start, count))
+
+        if start + count > self.blocks_cnt:
+            raise Error("file '%s' has only %d blocks, which is less than " \
+                        "the specified 'start' + 'count' = %d" \
+                        % (self._image_path, start, count))
 
         iterator = xrange(start, count)
         for key, group in itertools.groupby(iterator, test_func):
