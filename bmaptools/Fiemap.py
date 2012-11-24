@@ -45,9 +45,14 @@ class Fiemap:
 
         self._f_image_needs_close = True
 
-    def __init__(self, image):
+    def __init__(self, image, buf_size = 1024 * 1024):
         """ Initialize a class instance. The 'image' argument is full path to
-        the file to operate on, or a file object to operate on. """
+        the file to operate on, or a file object to operate on.
+
+        The 'buf_size' argument is the size of the buffer for 'struct
+        fiemap_extent' elements which will be used when invoking the FIEMAP
+        ioctl. The larger is the buffer, the less times the FIEMAP ioctl will
+        be invoked. """
 
         self._f_image_needs_close = False
 
@@ -57,6 +62,21 @@ class Fiemap:
         else:
             self._image_path = image
             self._open_image_file()
+
+        # Validate 'buf_size'
+        min_buf_size = _FIEMAP_SIZE + _FIEMAP_EXTENT_SIZE
+        if buf_size < min_buf_size:
+            raise Error("too small buffer (%d bytes), minimum is %d bytes" \
+                        % (buf_size, min_buf_size))
+
+        # How many 'struct fiemap_extent' elements fit the buffer
+        buf_size -= _FIEMAP_SIZE
+        self._fiemap_extent_cnt = buf_size / _FIEMAP_EXTENT_SIZE
+        self._buf_size = self._fiemap_extent_cnt * _FIEMAP_EXTENT_SIZE
+        buf_size += _FIEMAP_SIZE
+
+        # Allocate a mutable buffer for the FIEMAP ioctl
+        self._buf = array.array('B', [0] * self._buf_size)
 
         self.image_size = os.fstat(self._f_image.fileno()).st_size
 
