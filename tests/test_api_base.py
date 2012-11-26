@@ -13,7 +13,7 @@ import filecmp
 import unittest
 import itertools
 
-from tests import test_helpers
+import tests.helpers
 from bmaptools import BmapCreate, BmapCopy, Fiemap
 
 class Error(Exception):
@@ -127,16 +127,16 @@ class TestCreateCopy(unittest.TestCase):
 
         # Create a 8MiB random sparse file
         size = 8 * 1024 * 1024
-        test_helpers.create_random_sparse_file(f_image, size)
+        tests.helpers.create_random_sparse_file(f_image, size)
 
         # Execute the test on this file
         self._do_test(f_image)
 
         # Do the same for random sparse files of size 8MiB +/- 1 byte
-        test_helpers.create_random_sparse_file(f_image, size + 1)
+        tests.helpers.create_random_sparse_file(f_image, size + 1)
         self._do_test(f_image)
 
-        test_helpers.create_random_sparse_file(f_image, size - 1)
+        tests.helpers.create_random_sparse_file(f_image, size - 1)
         self._do_test(f_image)
 
         f_image.close()

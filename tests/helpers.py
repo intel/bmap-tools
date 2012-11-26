@@ -2,6 +2,7 @@
 tests. """
 
 import os
+import tempfile
 import random
 import itertools
 from bmaptools import BmapHelpers
