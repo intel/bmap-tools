@@ -47,3 +47,28 @@ def create_random_sparse_file(file_obj, size):
     file_obj.flush()
 
     return holes
+
+def generate_test_files():
+    """ This is an iterator which generates files which other tests use as the
+    input for the testing. The iterator tries to generate "interesting" files
+    which cover various corner-cases. For example, a large hole file, a file
+    with no holes, files of unaligned length, etc.
+
+    Returns a tuple consisting of the open file object and a list of unmapped
+    block ranges (holes) in the file. """
+
+    file_obj = tempfile.NamedTemporaryFile("wb+")
+
+    # Generate a 8MiB random sparse file
+    size = 8 * 1024 * 1024
+    holes = create_random_sparse_file(file_obj, size)
+    yield (file_obj, holes)
+
+    # Do the same for random sparse files of size 8MiB +/- 1 byte
+    holes = create_random_sparse_file(file_obj, size + 1)
+    yield (file_obj, holes)
+
+    holes = create_random_sparse_file(file_obj, size - 1)
+    yield (file_obj, holes)
+
+    file_obj.close()

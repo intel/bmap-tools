@@ -44,7 +44,8 @@ class TestCreateCopy(unittest.TestCase):
     original sparse file is generated randomly. The test entry point is the
     'test()' method. """
 
-    def _do_test(self, f_image):
+    @staticmethod
+    def _do_test(f_image):
         """ Run the test for the 'f_image' file object. """
 
         # Create and open a temporary file for a copy of the copy
@@ -121,22 +122,8 @@ class TestCreateCopy(unittest.TestCase):
         f_bmap2.close()
 
     def test(self):
+        """ The test entry point. Executes the create-copy-verify test for
+        files of different sizes, holes distribution and format. """
 
-        # Create and open a temporary file for the image
-        f_image = tempfile.NamedTemporaryFile("wb+")
-
-        # Create a 8MiB random sparse file
-        size = 8 * 1024 * 1024
-        tests.helpers.create_random_sparse_file(f_image, size)
-
-        # Execute the test on this file
-        self._do_test(f_image)
-
-        # Do the same for random sparse files of size 8MiB +/- 1 byte
-        tests.helpers.create_random_sparse_file(f_image, size + 1)
-        self._do_test(f_image)
-
-        tests.helpers.create_random_sparse_file(f_image, size - 1)
-        self._do_test(f_image)
-
-        f_image.close()
+        for f_image, _ in tests.helpers.generate_test_files():
+            self._do_test(f_image)
