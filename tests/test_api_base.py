@@ -125,10 +125,18 @@ class TestCreateCopy(unittest.TestCase):
         # Create and open a temporary file for the image
         f_image = tempfile.NamedTemporaryFile("wb+")
 
-        # Create a 64MiB random sparse file
-        test_helpers.create_random_sparse_file(f_image, 64 * 1024 * 1024)
+        # Create a 8MiB random sparse file
+        size = 8 * 1024 * 1024
+        test_helpers.create_random_sparse_file(f_image, size)
 
         # Execute the test on this file
+        self._do_test(f_image)
+
+        # Do the same for random sparse files of size 8MiB +/- 1 byte
+        test_helpers.create_random_sparse_file(f_image, size + 1)
+        self._do_test(f_image)
+
+        test_helpers.create_random_sparse_file(f_image, size - 1)
         self._do_test(f_image)
 
         f_image.close()
