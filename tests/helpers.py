@@ -4,6 +4,7 @@ tests. """
 import os
 import tempfile
 import random
+import shutil
 import itertools
 from bmaptools import BmapHelpers
 
@@ -105,3 +106,28 @@ def generate_test_files(max_size = 4 * 1024 * 1024):
         yield (file_obj, holes)
 
     file_obj.close()
+
+def compress_test_file(file_obj):
+    """ This is an iterator which generates compressed versions of a file
+    represented by a file object 'file_obj'. """
+
+    import bz2
+    import gzip
+
+    # Generate a .bz2 version of the file
+    tmp_file_obj = tempfile.NamedTemporaryFile('wb+', suffix = '.bz2')
+    bz2_file_obj = bz2.BZ2File(tmp_file_obj.name, 'wb')
+    file_obj.seek(0)
+    shutil.copyfileobj(file_obj, bz2_file_obj)
+    bz2_file_obj.close()
+    yield bz2_file_obj.name
+    tmp_file_obj.close()
+
+    # Generate a .gz version of the file
+    tmp_file_obj = tempfile.NamedTemporaryFile('wb+', suffix = '.gz')
+    gzip_file_obj = gzip.GzipFile(tmp_file_obj.name, 'wb')
+    file_obj.seek(0)
+    shutil.copyfileobj(file_obj, gzip_file_obj)
+    gzip_file_obj.close()
+    yield gzip_file_obj.name
+    tmp_file_obj.close()
