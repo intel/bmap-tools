@@ -12,6 +12,7 @@ def create_random_sparse_file(file_obj, size):
     are filled with random data. Returns a list of unmapped block ranges
     (holes). """
 
+    file_obj.truncate(0)
     block_size = BmapHelpers.get_block_size(file_obj)
     blocks_cnt = (size + block_size - 1) / block_size
 
@@ -48,7 +49,7 @@ def create_random_sparse_file(file_obj, size):
 
     return holes
 
-def generate_test_files():
+def generate_test_files(max_size = 4 * 1024 * 1024):
     """ This is an iterator which generates files which other tests use as the
     input for the testing. The iterator tries to generate "interesting" files
     which cover various corner-cases. For example, a large hole file, a file
@@ -58,17 +59,49 @@ def generate_test_files():
     block ranges (holes) in the file. """
 
     file_obj = tempfile.NamedTemporaryFile("wb+")
+    block_size = BmapHelpers.get_block_size(file_obj)
 
-    # Generate a 8MiB random sparse file
-    size = 8 * 1024 * 1024
-    holes = create_random_sparse_file(file_obj, size)
+    #
+    # Generate sparse files with one single hole spanning the entire file
+    #
+
+    # A block-sized hole
+    file_obj.truncate(block_size)
+    yield (file_obj, [(0, 0)])
+
+    # A block size +/- 1 byte hole
+    file_obj.truncate(block_size + 1)
+    yield (file_obj, [(0, 0)])
+    file_obj.truncate(block_size - 1)
+    yield (file_obj, [(0, 0)])
+
+    # A 1-byte hole
+    file_obj.truncate(1)
+    yield (file_obj, [(0, 0)])
+
+    # And 10 holes of random size
+    for size in [random.randint(1, max_size) for _ in xrange(10)]:
+        file_obj.truncate(size)
+        blocks_cnt = (size + block_size - 1) / block_size
+        yield (file_obj, [(0, blocks_cnt - 1)])
+
+    #
+    # Generate a random sparse files
+    #
+
+    # The maximum size
+    holes = create_random_sparse_file(file_obj, max_size)
     yield (file_obj, holes)
 
-    # Do the same for random sparse files of size 8MiB +/- 1 byte
-    holes = create_random_sparse_file(file_obj, size + 1)
+    # The maximum size +/- 1 byte
+    holes = create_random_sparse_file(file_obj, max_size + 1)
+    yield (file_obj, holes)
+    holes = create_random_sparse_file(file_obj, max_size - 1)
     yield (file_obj, holes)
 
-    holes = create_random_sparse_file(file_obj, size - 1)
-    yield (file_obj, holes)
+    # And 10 files of random size
+    for size in [random.randint(1, max_size) for _ in xrange(10)]:
+        holes = create_random_sparse_file(file_obj, size)
+        yield (file_obj, holes)
 
     file_obj.close()
