@@ -42,6 +42,7 @@ def create_random_sparse_file(file_obj, size):
 
             holes.append((first, last))
 
+    file_obj.truncate(size)
     file_obj.flush()
 
     return holes
