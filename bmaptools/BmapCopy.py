@@ -150,6 +150,12 @@ class BmapCopy:
         self.mapped_size_human = human_size(self.mapped_size)
         self.mapped_percent = (self.mapped_cnt * 100.0) / self.blocks_cnt
 
+        blocks_cnt = (self.image_size + self.block_size - 1) / self.block_size
+        if self.blocks_cnt != blocks_cnt:
+            raise Error("Inconsistent bmap - image size does not match " \
+                        "blocks count (%d bytes != %d blocks * %d bytes)" \
+                        % (self.image_size, self.blocks_cnt, self.block_size))
+
         self._f_bmap.seek(bmap_pos)
 
     def _open_image_file(self):
@@ -197,6 +203,16 @@ class BmapCopy:
                         % (self._image_path, err))
 
         self._f_image_needs_close = True
+
+    def _validate_image_size(self):
+        """ Make sure that image size from bmap matches real image size. """
+
+        image_size = os.fstat(self._f_image.fileno()).st_size
+        if image_size != self.image_size:
+            raise Error("Size mismatch, bmap '%s' was created for an image " \
+                        "of size %d bytes, but image '%s' has size %d bytes" \
+                        % (self._bmap_path, self.image_size,
+                           self._image_path, image_size))
 
     def _open_destination_file(self):
         """ Open the destination file. """
@@ -279,6 +295,7 @@ class BmapCopy:
                 self._bmap_path = bmap
                 self._open_bmap_file()
             self._parse_bmap()
+            self._validate_image_size()
         else:
             # There is no bmap. Initialize user-visible attributes to something
             # sensible with an assumption that we just have all blocks mapped.
@@ -489,6 +506,7 @@ class BmapCopy:
             # a compressed image. Initialize the corresponding class attributes
             # now, when we know the size.
             self._initialize_sizes(bytes_written)
+            self._validate_image_size()
 
         # This is just a sanity check - we should have written exactly
         # 'mapped_cnt' blocks.
