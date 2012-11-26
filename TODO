@@ -2,4 +2,3 @@
    better. Currently we are calling it for each block.
 2. When bmaptool is killed or Ctrl-C'ed half-way through, it should delete
    the files it creates.
-3. Test compressed images as well

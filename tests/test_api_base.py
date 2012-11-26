@@ -122,7 +122,17 @@ def _do_test(f_image):
     assert filecmp.cmp(f_bmap1.name, f_bmap2.name, False)
 
     #
-    # Pass 4: copy the sparse file without bmap and make sure it is
+    # Pass 4: test compressed files copying with bmap
+    #
+
+    for compressed in tests.helpers.compress_test_file(f_image):
+        writer = BmapCopy.BmapCopy(compressed, f_copy, f_bmap1)
+        writer.copy()
+
+        assert _calculate_sha1(f_copy) == image_sha1
+
+    #
+    # Pass 5: copy the sparse file without bmap and make sure it is
     # identical to the original file
     #
 
@@ -133,6 +143,16 @@ def _do_test(f_image):
     writer = BmapCopy.BmapCopy(f_image, f_copy)
     writer.copy(False, True)
     assert _calculate_sha1(f_copy) == image_sha1
+
+    #
+    # Pass 6: test compressed files copying without bmap
+    #
+
+    for compressed in tests.helpers.compress_test_file(f_image):
+        writer = BmapCopy.BmapCopy(compressed, f_copy)
+        writer.copy()
+
+        assert _calculate_sha1(f_copy) == image_sha1
 
     # Close temporary files, which will also remove them
     f_copy.close()
