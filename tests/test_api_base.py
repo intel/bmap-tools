@@ -10,6 +10,7 @@ file and the copy and verifies that they are identical. """
 
 import tempfile
 import filecmp
+import hashlib
 import unittest
 import itertools
 
@@ -37,6 +38,23 @@ def compare_holes(file1, file2):
             raise Error("mismatch for hole %d-%d, it is %d-%d in file2" \
                         % (range1[0], range1[1], range2[0], range2[1]))
 
+def _calculate_sha1(file_obj):
+    """ Calculates SHA1 checksum for the contents of file object
+    'file_obj'.  """
+
+    file_obj.seek(0)
+    hash_obj = hashlib.new("sha1")
+
+    chunk_size = 1024*1024
+
+    while True:
+        chunk = file_obj.read(chunk_size)
+        if not chunk:
+            break
+        hash_obj.update(chunk)
+
+    return hash_obj.hexdigest()
+
 def _do_test(f_image):
     """" A basic test for the bmap creation and copying functionality. It first
     generates a bmap for file object 'f_image', and then copies the sparse file
@@ -49,6 +67,8 @@ def _do_test(f_image):
     # Create and open 2 temporary files for the bmap
     f_bmap1 = tempfile.NamedTemporaryFile("w+")
     f_bmap2 = tempfile.NamedTemporaryFile("w+")
+
+    image_sha1 = _calculate_sha1(f_image)
 
     #
     # Pass 1: generate the bmap, copy and compare
@@ -63,7 +83,8 @@ def _do_test(f_image):
     writer.copy(False, True)
 
     # Compare the original file and the copy are identical
-    assert filecmp.cmp(f_image.name, f_copy.name, False)
+    assert _calculate_sha1(f_copy) == image_sha1
+
     # Make sure that holes in the copy are identical to holes in the random
     # sparse file.
     compare_holes(f_image.name, f_copy.name)
@@ -78,7 +99,7 @@ def _do_test(f_image):
     writer = BmapCopy.BmapCopy(f_image, f_copy, f_bmap2)
     writer.copy(False, True)
 
-    assert filecmp.cmp(f_image.name, f_copy.name, False)
+    assert _calculate_sha1(f_copy) == image_sha1
     compare_holes(f_image, f_copy)
 
     # Make sure the bmap files generated at pass 1 and pass 2 are identical
@@ -96,7 +117,7 @@ def _do_test(f_image):
     writer.copy(True, False)
     writer.copy(False, True)
     writer.sync()
-    assert filecmp.cmp(f_image.name, f_copy.name, False)
+    assert _calculate_sha1(f_copy) == image_sha1
     compare_holes(f_image, f_copy)
     assert filecmp.cmp(f_bmap1.name, f_bmap2.name, False)
 
@@ -107,11 +128,11 @@ def _do_test(f_image):
 
     writer = BmapCopy.BmapCopy(f_image, f_copy.name)
     writer.copy(True, True)
-    assert filecmp.cmp(f_image.name, f_copy.name, False)
+    assert _calculate_sha1(f_copy) == image_sha1
 
     writer = BmapCopy.BmapCopy(f_image, f_copy)
     writer.copy(False, True)
-    assert filecmp.cmp(f_image.name, f_copy.name, False)
+    assert _calculate_sha1(f_copy) == image_sha1
 
     # Close temporary files, which will also remove them
     f_copy.close()
