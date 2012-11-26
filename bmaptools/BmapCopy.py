@@ -295,7 +295,6 @@ class BmapCopy:
                 self._bmap_path = bmap
                 self._open_bmap_file()
             self._parse_bmap()
-            self._validate_image_size()
         else:
             # There is no bmap. Initialize user-visible attributes to something
             # sensible with an assumption that we just have all blocks mapped.
@@ -308,6 +307,9 @@ class BmapCopy:
             if not self._image_is_compressed:
                 image_size = os.fstat(self._f_image.fileno()).st_size
                 self._initialize_sizes(image_size)
+
+        if not self._image_is_compressed:
+            self._validate_image_size()
 
         self._batch_blocks = self._batch_bytes / self.block_size
 
@@ -506,7 +508,6 @@ class BmapCopy:
             # a compressed image. Initialize the corresponding class attributes
             # now, when we know the size.
             self._initialize_sizes(bytes_written)
-            self._validate_image_size()
 
         # This is just a sanity check - we should have written exactly
         # 'mapped_cnt' blocks.
