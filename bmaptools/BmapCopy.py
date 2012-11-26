@@ -381,10 +381,9 @@ class BmapCopy:
 
     def _get_data(self, verify):
         """ This is an iterator which reads the image file in '_batch_blocks'
-        chunks and returns ('start', 'end', 'length', 'buf) tuples, where:
+        chunks and returns ('type', 'start', 'end',  'buf) tuples, where:
           * 'start' is the starting block number of the batch;
           * 'end' is the last block of the batch;
-          * 'length' is batch length (same as 'end' - 'start' + 1);
           * 'buf' a buffer containing the batch data. """
 
         try:
@@ -410,10 +409,9 @@ class BmapCopy:
                     if verify and sha1:
                         hash_obj.update(buf)
 
-                    length = len(buf) + self.block_size - 1
-                    length /= self.block_size
-                    end = start + length - 1
-                    self._batch_queue.put(("range", start, end, length, buf))
+                    blocks = (len(buf) + self.block_size - 1) / self.block_size
+                    self._batch_queue.put(("range", start, start + blocks - 1,
+                                           buf))
 
                 if verify and sha1 and hash_obj.hexdigest() != sha1:
                     raise Error("checksum mismatch for blocks range %d-%d: " \
@@ -462,9 +460,10 @@ class BmapCopy:
                 exc_info = batch[1]
                 raise exc_info[0], exc_info[1], exc_info[2]
 
-            (start, end, length, buf) = batch[1:5]
+            (start, end, buf) = batch[1:4]
 
-            assert len(buf) <= length * self.block_size
+            assert len(buf) <= (end - start + 1) * self.block_size
+            assert len(buf) > (end - start) * self.block_size
 
             self._f_dest.seek(start * self.block_size)
 
@@ -481,7 +480,7 @@ class BmapCopy:
                             % (start, end, self._dest_path, err))
 
             self._batch_queue.task_done()
-            blocks_written += length
+            blocks_written += (end - start + 1)
 
         if not self.image_size:
             # The image size was unknow up until now, probably because this is
