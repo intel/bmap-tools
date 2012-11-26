@@ -9,7 +9,7 @@ setup(
     author_email = "artem.bityutskiy@linux.intel.com",
     version = "0.6",
     scripts = ['bmaptool'],
-    packages = find_packages(),
+    packages = find_packages(exclude = [ "test*" ]),
     license='GPLv2',
     long_description="Tools to generate block map (AKA bmap) and copy " \
                      "images using bmap",
