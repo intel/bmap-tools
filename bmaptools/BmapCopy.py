@@ -144,7 +144,7 @@ class BmapCopy:
         self.block_size = int(xml.find("BlockSize").text.strip())
         self.blocks_cnt = int(xml.find("BlocksCount").text.strip())
         self.mapped_cnt = int(xml.find("MappedBlocksCount").text.strip())
-        self.image_size = self.blocks_cnt * self.block_size
+        self.image_size = int(xml.find("ImageSize").text.strip())
         self.image_size_human = human_size(self.image_size)
         self.mapped_size = self.mapped_cnt * self.block_size
         self.mapped_size_human = human_size(self.mapped_size)
@@ -445,6 +445,7 @@ class BmapCopy:
         thread.start_new_thread(self._get_data, (verify, ))
 
         blocks_written = 0
+        bytes_written = 0
         fsync_last = 0
 
         # Read the image in '_batch_blocks' chunks and write them to the
@@ -481,12 +482,13 @@ class BmapCopy:
 
             self._batch_queue.task_done()
             blocks_written += (end - start + 1)
+            bytes_written += len(buf)
 
         if not self.image_size:
             # The image size was unknow up until now, probably because this is
             # a compressed image. Initialize the corresponding class attributes
             # now, when we know the size.
-            self._initialize_sizes(blocks_written * self.block_size)
+            self._initialize_sizes(bytes_written)
 
         # This is just a sanity check - we should have written exactly
         # 'mapped_cnt' blocks.
