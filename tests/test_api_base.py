@@ -8,7 +8,6 @@ file and the copy and verifies that they are identical. """
 #   *  Too many public methods - R0904
 # pylint: disable=R0902,R0904
 
-import os
 import tempfile
 import filecmp
 import unittest
@@ -57,33 +56,23 @@ class TestCreateCopy(unittest.TestCase):
         self._image_size = IMAGE_SIZE
 
         # Create and open a temporary file for the image
-        (file_obj, self._image_path) = tempfile.mkstemp()
-        self._f_image = os.fdopen(file_obj, "wb+")
+        self._f_image = tempfile.NamedTemporaryFile("wb+")
 
         # Create and open a temporary file for a copy of the copy
-        (file_obj, self._copy_path) = tempfile.mkstemp()
-        self._f_copy = os.fdopen(file_obj, "wb+")
+        self._f_copy = tempfile.NamedTemporaryFile("wb+")
 
         # Create and open 2 temporary files for the bmap
-        (file_obj, self._bmap1_path) = tempfile.mkstemp()
-        self._f_bmap1 = os.fdopen(file_obj, "w+")
-        (file_obj, self._bmap2_path) = tempfile.mkstemp()
-        self._f_bmap2 = os.fdopen(file_obj, "w+")
+        self._f_bmap1 = tempfile.NamedTemporaryFile("w+")
+        self._f_bmap2 = tempfile.NamedTemporaryFile("w+")
 
     def tearDown(self):
         """ The clean-up method - called by the unittest framework when the
         test finishes. """
 
         self._f_image.close()
-        os.remove(self._image_path)
-
         self._f_copy.close()
-        os.remove(self._copy_path)
-
         self._f_bmap1.close()
-        os.remove(self._bmap1_path)
         self._f_bmap2.close()
-        os.remove(self._bmap2_path)
 
     # pylint: enable=C0103
 
@@ -99,19 +88,19 @@ class TestCreateCopy(unittest.TestCase):
         #
 
         # Create bmap for the random sparse file
-        creator = BmapCreate.BmapCreate(self._image_path, self._bmap1_path)
+        creator = BmapCreate.BmapCreate(self._f_image.name, self._f_bmap1.name)
         creator.generate()
 
         # Copy the random sparse file to a different file using bmap
-        writer = BmapCopy.BmapCopy(self._image_path, self._copy_path,
-                                   self._bmap1_path)
+        writer = BmapCopy.BmapCopy(self._f_image.name, self._f_copy.name,
+                                   self._f_bmap1.name)
         writer.copy(False, True)
 
         # Compare the original file and the copy are identical
-        assert filecmp.cmp(self._image_path, self._copy_path, False)
+        assert filecmp.cmp(self._f_image.name, self._f_copy.name, False)
         # Make sure that holes in the copy are identical to holes in the random
         # sparse file.
-        compare_holes(self._image_path, self._copy_path)
+        compare_holes(self._f_image.name, self._f_copy.name)
 
         #
         # Pass 2: same as pass 1, but use file objects instead of paths
@@ -123,11 +112,11 @@ class TestCreateCopy(unittest.TestCase):
         writer = BmapCopy.BmapCopy(self._f_image, self._f_copy, self._f_bmap2)
         writer.copy(False, True)
 
-        assert filecmp.cmp(self._image_path, self._copy_path, False)
+        assert filecmp.cmp(self._f_image.name, self._f_copy.name, False)
         compare_holes(self._f_image, self._f_copy)
 
         # Make sure the bmap files generated at pass 1 and pass 2 are identical
-        assert filecmp.cmp(self._bmap1_path, self._bmap2_path, False)
+        assert filecmp.cmp(self._f_bmap1.name, self._f_bmap2.name, False)
 
         #
         # Pass 3: repeat pass 2 to make sure the same 'BmapCreate' and
@@ -140,18 +129,18 @@ class TestCreateCopy(unittest.TestCase):
         writer.copy(True, False)
         writer.copy(False, True)
         writer.sync()
-        assert filecmp.cmp(self._image_path, self._copy_path, False)
+        assert filecmp.cmp(self._f_image.name, self._f_copy.name, False)
         compare_holes(self._f_image, self._f_copy)
-        assert filecmp.cmp(self._bmap1_path, self._bmap2_path, False)
+        assert filecmp.cmp(self._f_bmap1.name, self._f_bmap2.name, False)
 
         #
         # Pass 4: copy the sparse file without bmap and make sure it is
         # identical to the original file
         #
-        writer = BmapCopy.BmapCopy(self._f_image, self._copy_path)
+        writer = BmapCopy.BmapCopy(self._f_image, self._f_copy.name)
         writer.copy(True, True)
-        assert filecmp.cmp(self._image_path, self._copy_path, False)
+        assert filecmp.cmp(self._f_image.name, self._f_copy.name, False)
 
         writer = BmapCopy.BmapCopy(self._f_image, self._f_copy)
         writer.copy(False, True)
-        assert filecmp.cmp(self._image_path, self._copy_path, False)
+        assert filecmp.cmp(self._f_image.name, self._f_copy.name, False)
