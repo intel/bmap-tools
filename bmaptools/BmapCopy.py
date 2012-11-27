@@ -189,7 +189,7 @@ class BmapCopy:
                     raise Error("the image tarball '%s' is empty (no files)" \
                                 % self._image_path)
                 self._f_image = tar.extractfile(members[0])
-            if self._image_path.endswith('.gz'):
+            elif self._image_path.endswith('.gz'):
                 import gzip
                 self._f_image = gzip.GzipFile(self._image_path, 'rb')
             elif self._image_path.endswith('.bz2'):
