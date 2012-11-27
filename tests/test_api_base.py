@@ -48,6 +48,7 @@ def _generate_compressed_files(file_obj, delete = True):
 
     import bz2
     import gzip
+    import tarfile
     import shutil
 
     # Make sure the temporary files start with the same name as 'file_obj' in
@@ -76,6 +77,26 @@ def _generate_compressed_files(file_obj, delete = True):
     shutil.copyfileobj(file_obj, gzip_file_obj)
     gzip_file_obj.close()
     yield gzip_file_obj.name
+    tmp_file_obj.close()
+
+    # Generate a tar.gz version of the file
+    tmp_file_obj = tempfile.NamedTemporaryFile('wb+', prefix = prefix,
+                                               delete = delete, dir = directory,
+                                               suffix = '.tar.gz')
+    tgz_file_obj = tarfile.open(tmp_file_obj.name, "w:gz")
+    tgz_file_obj.add(file_obj.name)
+    tgz_file_obj.close()
+    yield tgz_file_obj.name
+    tmp_file_obj.close()
+
+    # Generate a tar.bz2 version of the file
+    tmp_file_obj = tempfile.NamedTemporaryFile('wb+', prefix = prefix,
+                                               delete = delete, dir = directory,
+                                               suffix = '.tar.gz')
+    tbz2_file_obj = tarfile.open(tmp_file_obj.name, "w:bz2")
+    tbz2_file_obj.add(file_obj.name)
+    tbz2_file_obj.close()
+    yield tbz2_file_obj.name
     tmp_file_obj.close()
 
 def _calculate_sha1(file_obj):
