@@ -90,7 +90,7 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
                                            delete = delete, dir = directory,
                                            suffix = ".img")
     file_obj.truncate(block_size + 1)
-    yield (file_obj, [], [(0, 0)])
+    yield (file_obj, [], [(0, 1)])
     file_obj.close()
 
     # A block size - 1 byte hole
