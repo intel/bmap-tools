@@ -58,50 +58,79 @@ def generate_test_files(max_size = 4 * 1024 * 1024):
     Returns a tuple consisting of the open file object and a list of unmapped
     block ranges (holes) in the file. """
 
-    file_obj = tempfile.NamedTemporaryFile("wb+")
-    block_size = BmapHelpers.get_block_size(file_obj)
-
     #
     # Generate sparse files with one single hole spanning the entire file
     #
 
     # A block-sized hole
+    file_obj = tempfile.NamedTemporaryFile("wb+", prefix = "4Khole_",
+                                                  suffix = ".img")
+    block_size = BmapHelpers.get_block_size(file_obj)
     file_obj.truncate(block_size)
     yield (file_obj, [(0, 0)])
+    file_obj.close()
 
-    # A block size +/- 1 byte hole
+    # A block size + 1 byte hole
+    file_obj = tempfile.NamedTemporaryFile("wb+", prefix = "4Khole_plus_1_",
+                                                  suffix = ".img")
     file_obj.truncate(block_size + 1)
     yield (file_obj, [(0, 0)])
+    file_obj.close()
+
+    # A block size - 1 byte hole
+    file_obj = tempfile.NamedTemporaryFile("wb+", prefix = "4Khole_minus_1_",
+                                                  suffix = ".img")
     file_obj.truncate(block_size - 1)
     yield (file_obj, [(0, 0)])
+    file_obj.close()
 
     # A 1-byte hole
+    file_obj = tempfile.NamedTemporaryFile("wb+", prefix = "1byte_hole_",
+                                                  suffix = ".img")
     file_obj.truncate(1)
     yield (file_obj, [(0, 0)])
+    file_obj.close()
 
     # And 10 holes of random size
-    for size in [random.randint(1, max_size) for _ in xrange(10)]:
+    for i in xrange(10):
+        size = random.randint(1, max_size)
+        file_obj = tempfile.NamedTemporaryFile("wb+", suffix = ".img",
+                                               prefix = "rand_hole_%d_" % i)
         file_obj.truncate(size)
         blocks_cnt = (size + block_size - 1) / block_size
         yield (file_obj, [(0, blocks_cnt - 1)])
+        file_obj.close()
 
     #
     # Generate a random sparse files
     #
 
     # The maximum size
+    file_obj = tempfile.NamedTemporaryFile("wb+", prefix = "sparse_",
+                                                  suffix = ".img")
     holes = create_random_sparse_file(file_obj, max_size)
     yield (file_obj, holes)
+    file_obj.close()
 
-    # The maximum size +/- 1 byte
+    # The maximum size + 1 byte
+    file_obj = tempfile.NamedTemporaryFile("wb+", prefix = "sparse_plus_1_",
+                                                  suffix = ".img")
     holes = create_random_sparse_file(file_obj, max_size + 1)
     yield (file_obj, holes)
+    file_obj.close()
+
+    # The maximum size - 1 byte
+    file_obj = tempfile.NamedTemporaryFile("wb+", prefix = "sparse_minus_1_",
+                                                  suffix = ".img")
     holes = create_random_sparse_file(file_obj, max_size - 1)
     yield (file_obj, holes)
+    file_obj.close()
 
     # And 10 files of random size
-    for size in [random.randint(1, max_size) for _ in xrange(10)]:
+    for i in xrange(10):
+        size = random.randint(1, max_size)
+        file_obj = tempfile.NamedTemporaryFile("wb+", suffix = ".img",
+                                               prefix = "sparse_%d_" % i)
         holes = create_random_sparse_file(file_obj, size)
         yield (file_obj, holes)
-
-    file_obj.close()
+        file_obj.close()
