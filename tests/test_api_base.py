@@ -38,6 +38,32 @@ def _compare_holes(file1, file2):
             raise Error("mismatch for hole %d-%d, it is %d-%d in file2" \
                         % (range1[0], range1[1], range2[0], range2[1]))
 
+def _generate_compressed_files(file_obj):
+    """ This is an iterator which generates compressed versions of a file
+    represented by a file object 'file_obj'. """
+
+    import bz2
+    import gzip
+    import shutil
+
+    # Generate a .bz2 version of the file
+    tmp_file_obj = tempfile.NamedTemporaryFile('wb+', suffix = '.bz2')
+    bz2_file_obj = bz2.BZ2File(tmp_file_obj.name, 'wb')
+    file_obj.seek(0)
+    shutil.copyfileobj(file_obj, bz2_file_obj)
+    bz2_file_obj.close()
+    yield bz2_file_obj.name
+    tmp_file_obj.close()
+
+    # Generate a .gz version of the file
+    tmp_file_obj = tempfile.NamedTemporaryFile('wb+', suffix = '.gz')
+    gzip_file_obj = gzip.GzipFile(tmp_file_obj.name, 'wb')
+    file_obj.seek(0)
+    shutil.copyfileobj(file_obj, gzip_file_obj)
+    gzip_file_obj.close()
+    yield gzip_file_obj.name
+    tmp_file_obj.close()
+
 def _calculate_sha1(file_obj):
     """ Calculates SHA1 checksum for the contents of file object
     'file_obj'.  """
@@ -125,7 +151,7 @@ def _do_test(f_image):
     # Pass 4: test compressed files copying with bmap
     #
 
-    for compressed in tests.helpers.compress_test_file(f_image):
+    for compressed in _generate_compressed_files(f_image):
         writer = BmapCopy.BmapCopy(compressed, f_copy, f_bmap1)
         writer.copy()
 
@@ -148,7 +174,7 @@ def _do_test(f_image):
     # Pass 6: test compressed files copying without bmap
     #
 
-    for compressed in tests.helpers.compress_test_file(f_image):
+    for compressed in _generate_compressed_files(f_image):
         writer = BmapCopy.BmapCopy(compressed, f_copy)
         writer.copy()
 
