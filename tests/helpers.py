@@ -1,6 +1,10 @@
 """ This module contains independent functions shared between various
 tests. """
 
+# Disable the following pylint recommendations:
+#   * Too many statements (R0915)
+# pylint: disable=R0915
+
 import os
 import tempfile
 import random

@@ -1,6 +1,10 @@
 """ This test verifies Fiemap module functionality. It generates random sparse
 files and make sure FIEMAP returns correct information about the holes. """
 
+# Disable the following pylint recommendations:
+#   *  Too many public methods - R0904
+# pylint: disable=R0904
+
 import unittest
 import itertools
 

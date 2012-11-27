@@ -6,6 +6,10 @@ allows to find holes and mapped areas in a file. """
 # know the FIEMAP interface, which is documented in the
 # Documentation/filesystems/fiemap.txt file in the Linux kernel sources.
 
+# Disable the following pylint recommendations:
+#   * Too many instance attributes (R0902)
+# pylint: disable=R0902
+
 import os
 import struct
 import array
