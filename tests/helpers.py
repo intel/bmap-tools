@@ -55,6 +55,22 @@ def create_random_sparse_file(file_obj, size):
 
     return (mapped, holes)
 
+def _create_random_file(file_obj, size):
+    """ Fill the 'file_obj' file object with random data up to the size
+    'size'. """
+
+    chunk_size = 1024 * 1024
+    written = 0
+
+    while written < size:
+        if written + chunk_size > size:
+            chunk_size = size - written
+
+        file_obj.write(bytearray(os.urandom(chunk_size)))
+        written += chunk_size
+
+    file_obj.flush()
+
 def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
                         delete = True):
     """ This is an iterator which generates files which other tests use as the
@@ -156,4 +172,52 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
                                                prefix = "sparse_%d_" % i)
         mapped, holes = create_random_sparse_file(file_obj, size)
         yield (file_obj, mapped, holes)
+        file_obj.close()
+
+    #
+    # Generate random fully-mapped files
+    #
+
+    # A block-sized file
+    file_obj = tempfile.NamedTemporaryFile("wb+", prefix = "4Kmapped_",
+                                           delete = delete, dir = directory,
+                                           suffix = ".img")
+    _create_random_file(file_obj, block_size)
+    yield (file_obj, [(0, 0)], [])
+    file_obj.close()
+
+    # A block size + 1 byte file
+    file_obj = tempfile.NamedTemporaryFile("wb+", prefix = "4Kmapped_plus_1_",
+                                           delete = delete, dir = directory,
+                                           suffix = ".img")
+    _create_random_file(file_obj, block_size + 1)
+    yield (file_obj, [(0, 1)], [])
+    file_obj.close()
+
+    # A block size - 1 byte file
+    file_obj = tempfile.NamedTemporaryFile("wb+", prefix = "4Kmapped_minus_1_",
+                                           delete = delete, dir = directory,
+                                           suffix = ".img")
+    _create_random_file(file_obj, block_size - 1)
+    yield (file_obj, [(0, 0)], [])
+    file_obj.close()
+
+    # A 1-byte file
+    file_obj = tempfile.NamedTemporaryFile("wb+", prefix = "1byte_mapped_",
+                                           delete = delete, dir = directory,
+                                           suffix = ".img")
+    _create_random_file(file_obj, 1)
+    yield (file_obj, [(0, 0)], [])
+    file_obj.close()
+
+    # And 10 mapped files of random size
+    for i in xrange(10):
+        size = random.randint(1, max_size)
+        file_obj = tempfile.NamedTemporaryFile("wb+", suffix = ".img",
+                                               delete = delete, dir = directory,
+                                               prefix = "rand_mapped_%d_" % i)
+        file_obj.truncate(size)
+        _create_random_file(file_obj, size)
+        blocks_cnt = (size + block_size - 1) / block_size
+        yield (file_obj, [(0, blocks_cnt - 1)], [])
         file_obj.close()
