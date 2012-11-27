@@ -49,11 +49,14 @@ def create_random_sparse_file(file_obj, size):
 
     return holes
 
-def generate_test_files(max_size = 4 * 1024 * 1024):
+def generate_test_files(max_size = 4 * 1024 * 1024, directory = None):
     """ This is an iterator which generates files which other tests use as the
     input for the testing. The iterator tries to generate "interesting" files
     which cover various corner-cases. For example, a large hole file, a file
     with no holes, files of unaligned length, etc.
+
+    The 'directory' argument specifies the directory path where the generated
+    test files should be created.
 
     Returns a tuple consisting of the open file object and a list of unmapped
     block ranges (holes) in the file. """
@@ -64,7 +67,7 @@ def generate_test_files(max_size = 4 * 1024 * 1024):
 
     # A block-sized hole
     file_obj = tempfile.NamedTemporaryFile("wb+", prefix = "4Khole_",
-                                                  suffix = ".img")
+                                           dir = directory, suffix = ".img")
     block_size = BmapHelpers.get_block_size(file_obj)
     file_obj.truncate(block_size)
     yield (file_obj, [(0, 0)])
@@ -72,21 +75,21 @@ def generate_test_files(max_size = 4 * 1024 * 1024):
 
     # A block size + 1 byte hole
     file_obj = tempfile.NamedTemporaryFile("wb+", prefix = "4Khole_plus_1_",
-                                                  suffix = ".img")
+                                           dir = directory, suffix = ".img")
     file_obj.truncate(block_size + 1)
     yield (file_obj, [(0, 0)])
     file_obj.close()
 
     # A block size - 1 byte hole
     file_obj = tempfile.NamedTemporaryFile("wb+", prefix = "4Khole_minus_1_",
-                                                  suffix = ".img")
+                                           dir = directory, suffix = ".img")
     file_obj.truncate(block_size - 1)
     yield (file_obj, [(0, 0)])
     file_obj.close()
 
     # A 1-byte hole
     file_obj = tempfile.NamedTemporaryFile("wb+", prefix = "1byte_hole_",
-                                                  suffix = ".img")
+                                           dir = directory, suffix = ".img")
     file_obj.truncate(1)
     yield (file_obj, [(0, 0)])
     file_obj.close()
@@ -95,7 +98,7 @@ def generate_test_files(max_size = 4 * 1024 * 1024):
     for i in xrange(10):
         size = random.randint(1, max_size)
         file_obj = tempfile.NamedTemporaryFile("wb+", suffix = ".img",
-                                               prefix = "rand_hole_%d_" % i)
+                                dir = directory, prefix = "rand_hole_%d_" % i)
         file_obj.truncate(size)
         blocks_cnt = (size + block_size - 1) / block_size
         yield (file_obj, [(0, blocks_cnt - 1)])
@@ -107,21 +110,21 @@ def generate_test_files(max_size = 4 * 1024 * 1024):
 
     # The maximum size
     file_obj = tempfile.NamedTemporaryFile("wb+", prefix = "sparse_",
-                                                  suffix = ".img")
+                                           dir = directory, suffix = ".img")
     holes = create_random_sparse_file(file_obj, max_size)
     yield (file_obj, holes)
     file_obj.close()
 
     # The maximum size + 1 byte
     file_obj = tempfile.NamedTemporaryFile("wb+", prefix = "sparse_plus_1_",
-                                                  suffix = ".img")
+                                           dir = directory, suffix = ".img")
     holes = create_random_sparse_file(file_obj, max_size + 1)
     yield (file_obj, holes)
     file_obj.close()
 
     # The maximum size - 1 byte
     file_obj = tempfile.NamedTemporaryFile("wb+", prefix = "sparse_minus_1_",
-                                                  suffix = ".img")
+                                           dir = directory, suffix = ".img")
     holes = create_random_sparse_file(file_obj, max_size - 1)
     yield (file_obj, holes)
     file_obj.close()
@@ -130,7 +133,7 @@ def generate_test_files(max_size = 4 * 1024 * 1024):
     for i in xrange(10):
         size = random.randint(1, max_size)
         file_obj = tempfile.NamedTemporaryFile("wb+", suffix = ".img",
-                                               prefix = "sparse_%d_" % i)
+                                   dir = directory, prefix = "sparse_%d_" % i)
         holes = create_random_sparse_file(file_obj, size)
         yield (file_obj, holes)
         file_obj.close()

@@ -50,10 +50,12 @@ def _generate_compressed_files(file_obj):
     # Make sure the temporary files start with the same name as 'file_obj' in
     # order to simplify debugging.
     prefix = os.path.splitext(os.path.basename(file_obj.name))[0] + '.'
+    # Put the temporary files in the directory with 'file_obj'
+    directory = os.path.dirname(file_obj.name)
 
     # Generate a .bz2 version of the file
     tmp_file_obj = tempfile.NamedTemporaryFile('wb+', prefix = prefix,
-                                                      suffix = '.bz2')
+                                               dir = directory, suffix = '.bz2')
     bz2_file_obj = bz2.BZ2File(tmp_file_obj.name, 'wb')
     file_obj.seek(0)
     shutil.copyfileobj(file_obj, bz2_file_obj)
@@ -63,7 +65,7 @@ def _generate_compressed_files(file_obj):
 
     # Generate a .gz version of the file
     tmp_file_obj = tempfile.NamedTemporaryFile('wb+', prefix = prefix,
-                                                      suffix = '.gz')
+                                               dir = directory, suffix = '.gz')
     gzip_file_obj = gzip.GzipFile(tmp_file_obj.name, 'wb')
     file_obj.seek(0)
     shutil.copyfileobj(file_obj, gzip_file_obj)
@@ -97,16 +99,18 @@ def _do_test(f_image):
     # Make sure the temporary files start with the same name as 'f_image' in
     # order to simplify debugging.
     prefix = os.path.splitext(os.path.basename(f_image.name))[0] + '.'
+    # Put the temporary files in the directory with the image
+    directory = os.path.dirname(f_image.name)
 
     # Create and open a temporary file for a copy of the copy
     f_copy = tempfile.NamedTemporaryFile("wb+", prefix = prefix,
-                                                suffix = ".copy")
+                                         dir = directory, suffix = ".copy")
 
     # Create and open 2 temporary files for the bmap
     f_bmap1 = tempfile.NamedTemporaryFile("w+", prefix = prefix,
-                                                suffix = ".bmap1")
+                                          dir = directory, suffix = ".bmap1")
     f_bmap2 = tempfile.NamedTemporaryFile("w+", prefix = prefix,
-                                                suffix = ".bmap2")
+                                          dir = directory, suffix = ".bmap2")
 
     image_sha1 = _calculate_sha1(f_image)
 
