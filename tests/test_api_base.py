@@ -39,9 +39,12 @@ def _compare_holes(file1, file2):
             raise Error("mismatch for hole %d-%d, it is %d-%d in file2" \
                         % (range1[0], range1[1], range2[0], range2[1]))
 
-def _generate_compressed_files(file_obj):
+def _generate_compressed_files(file_obj, delete = True):
     """ This is an iterator which generates compressed versions of a file
-    represented by a file object 'file_obj'. """
+    represented by a file object 'file_obj'.
+
+    The 'delete' argument specifies whether the compressed files that this
+    iterator generates have to be automatically deleted. """
 
     import bz2
     import gzip
@@ -55,7 +58,8 @@ def _generate_compressed_files(file_obj):
 
     # Generate a .bz2 version of the file
     tmp_file_obj = tempfile.NamedTemporaryFile('wb+', prefix = prefix,
-                                               dir = directory, suffix = '.bz2')
+                                               delete = delete, dir = directory,
+                                               suffix = '.bz2')
     bz2_file_obj = bz2.BZ2File(tmp_file_obj.name, 'wb')
     file_obj.seek(0)
     shutil.copyfileobj(file_obj, bz2_file_obj)
@@ -65,7 +69,8 @@ def _generate_compressed_files(file_obj):
 
     # Generate a .gz version of the file
     tmp_file_obj = tempfile.NamedTemporaryFile('wb+', prefix = prefix,
-                                               dir = directory, suffix = '.gz')
+                                               delete = delete, dir = directory,
+                                               suffix = '.gz')
     gzip_file_obj = gzip.GzipFile(tmp_file_obj.name, 'wb')
     file_obj.seek(0)
     shutil.copyfileobj(file_obj, gzip_file_obj)
@@ -90,11 +95,14 @@ def _calculate_sha1(file_obj):
 
     return hash_obj.hexdigest()
 
-def _do_test(f_image):
+def _do_test(f_image, delete = True):
     """" A basic test for the bmap creation and copying functionality. It first
     generates a bmap for file object 'f_image', and then copies the sparse file
     to a different file, and then checks that the original file and the copy
-    are identical. """
+    are identical.
+
+    The 'delete' argument specifies whether the temporary files that this
+    function creates have to be automatically deleted. """
 
     # Make sure the temporary files start with the same name as 'f_image' in
     # order to simplify debugging.
@@ -104,13 +112,16 @@ def _do_test(f_image):
 
     # Create and open a temporary file for a copy of the copy
     f_copy = tempfile.NamedTemporaryFile("wb+", prefix = prefix,
-                                         dir = directory, suffix = ".copy")
+                                        delete = delete, dir = directory,
+                                        suffix = ".copy")
 
     # Create and open 2 temporary files for the bmap
     f_bmap1 = tempfile.NamedTemporaryFile("w+", prefix = prefix,
-                                          dir = directory, suffix = ".bmap1")
+                                          delete = delete, dir = directory,
+                                          suffix = ".bmap1")
     f_bmap2 = tempfile.NamedTemporaryFile("w+", prefix = prefix,
-                                          dir = directory, suffix = ".bmap2")
+                                          delete = delete, dir = directory,
+                                          suffix = ".bmap2")
 
     image_sha1 = _calculate_sha1(f_image)
 
@@ -169,7 +180,7 @@ def _do_test(f_image):
     # Pass 4: test compressed files copying with bmap
     #
 
-    for compressed in _generate_compressed_files(f_image):
+    for compressed in _generate_compressed_files(f_image, delete = delete):
         writer = BmapCopy.BmapCopy(compressed, f_copy, f_bmap1)
         writer.copy()
 
@@ -192,7 +203,7 @@ def _do_test(f_image):
     # Pass 6: test compressed files copying without bmap
     #
 
-    for compressed in _generate_compressed_files(f_image):
+    for compressed in _generate_compressed_files(f_image, delete = delete):
         writer = BmapCopy.BmapCopy(compressed, f_copy)
         writer.copy()
 
@@ -212,5 +223,13 @@ class TestCreateCopy(unittest.TestCase):
         """ The test entry point. Executes the '_do_test()' function for files
         of different sizes, holes distribution and format. """
 
-        for f_image, _ in tests.helpers.generate_test_files():
-            _do_test(f_image)
+        # Delete all the test-related temporary files automatically
+        delete = True
+        # Create all the test-related temporary files in the default directory
+        # (usually /tmp).
+        directory = None
+
+        iterator = tests.helpers.generate_test_files(delete = delete,
+                                                     directory = directory)
+        for f_image, _ in iterator:
+            _do_test(f_image, delete = delete)
