@@ -252,5 +252,5 @@ class TestCreateCopy(unittest.TestCase):
 
         iterator = tests.helpers.generate_test_files(delete = delete,
                                                      directory = directory)
-        for f_image, _ in iterator:
+        for f_image, _, _ in iterator:
             _do_test(f_image, delete = delete)

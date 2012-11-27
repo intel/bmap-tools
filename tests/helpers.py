@@ -9,8 +9,10 @@ from bmaptools import BmapHelpers
 
 def create_random_sparse_file(file_obj, size):
     """ Create a sparse file with randomly distributed holes. The mapped areas
-    are filled with random data. Returns a list of unmapped block ranges
-    (holes). """
+    are filled with random data. Returns a tuple containing 2 lists:
+      1. a list of mapped block ranges, same as 'Fiemap.get_mapped_ranges()'
+      2. a list of unmapped block ranges (holes), same as
+         'Fiemap.get_unmapped_ranges()' """
 
     file_obj.truncate(0)
     block_size = BmapHelpers.get_block_size(file_obj)
@@ -32,22 +34,26 @@ def create_random_sparse_file(file_obj, size):
 
         return map_the_block
 
+    mapped = []
     holes = []
     iterator = xrange(0, blocks_cnt)
     for was_mapped, group in itertools.groupby(iterator, process_block):
-        if not was_mapped:
-            # Start of a hole. Find the last element in the group.
-            first = group.next()
-            last = first
-            for last in group:
-                pass
+        # Start of a mapped region or a hole. Find the last element in the
+        # group.
+        first = group.next()
+        last = first
+        for last in group:
+            pass
 
+        if was_mapped:
+            mapped.append((first, last))
+        else:
             holes.append((first, last))
 
     file_obj.truncate(size)
     file_obj.flush()
 
-    return holes
+    return (mapped, holes)
 
 def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
                         delete = True):
@@ -60,8 +66,11 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
     test files should be created. The 'delete' argument specifies whether the
     generated test files have to be automatically deleted.
 
-    Returns a tuple consisting of the open file object and a list of unmapped
-    block ranges (holes) in the file. """
+    Returns a tuple consisting of the following elements:
+      1. the test file object
+      2. a list of mapped block ranges, same as 'Fiemap.get_mapped_ranges()'
+      3. a list of unmapped block ranges (holes), same as
+         'Fiemap.get_unmapped_ranges()' """
 
     #
     # Generate sparse files with one single hole spanning the entire file
@@ -73,7 +82,7 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
                                            suffix = ".img")
     block_size = BmapHelpers.get_block_size(file_obj)
     file_obj.truncate(block_size)
-    yield (file_obj, [(0, 0)])
+    yield (file_obj, [], [(0, 0)])
     file_obj.close()
 
     # A block size + 1 byte hole
@@ -81,7 +90,7 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
                                            delete = delete, dir = directory,
                                            suffix = ".img")
     file_obj.truncate(block_size + 1)
-    yield (file_obj, [(0, 0)])
+    yield (file_obj, [], [(0, 0)])
     file_obj.close()
 
     # A block size - 1 byte hole
@@ -89,7 +98,7 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
                                            delete = delete, dir = directory,
                                            suffix = ".img")
     file_obj.truncate(block_size - 1)
-    yield (file_obj, [(0, 0)])
+    yield (file_obj, [], [(0, 0)])
     file_obj.close()
 
     # A 1-byte hole
@@ -97,7 +106,7 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
                                            delete = delete, dir = directory,
                                            suffix = ".img")
     file_obj.truncate(1)
-    yield (file_obj, [(0, 0)])
+    yield (file_obj, [], [(0, 0)])
     file_obj.close()
 
     # And 10 holes of random size
@@ -108,7 +117,7 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
                                                prefix = "rand_hole_%d_" % i)
         file_obj.truncate(size)
         blocks_cnt = (size + block_size - 1) / block_size
-        yield (file_obj, [(0, blocks_cnt - 1)])
+        yield (file_obj, [], [(0, blocks_cnt - 1)])
         file_obj.close()
 
     #
@@ -119,24 +128,24 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
     file_obj = tempfile.NamedTemporaryFile("wb+", prefix = "sparse_",
                                            delete = delete, dir = directory,
                                            suffix = ".img")
-    holes = create_random_sparse_file(file_obj, max_size)
-    yield (file_obj, holes)
+    mapped, holes = create_random_sparse_file(file_obj, max_size)
+    yield (file_obj, mapped, holes)
     file_obj.close()
 
     # The maximum size + 1 byte
     file_obj = tempfile.NamedTemporaryFile("wb+", prefix = "sparse_plus_1_",
                                            delete = delete, dir = directory,
                                            suffix = ".img")
-    holes = create_random_sparse_file(file_obj, max_size + 1)
-    yield (file_obj, holes)
+    mapped, holes = create_random_sparse_file(file_obj, max_size + 1)
+    yield (file_obj, mapped, holes)
     file_obj.close()
 
     # The maximum size - 1 byte
     file_obj = tempfile.NamedTemporaryFile("wb+", prefix = "sparse_minus_1_",
                                            delete = delete, dir = directory,
                                            suffix = ".img")
-    holes = create_random_sparse_file(file_obj, max_size - 1)
-    yield (file_obj, holes)
+    mapped, holes = create_random_sparse_file(file_obj, max_size - 1)
+    yield (file_obj, mapped, holes)
     file_obj.close()
 
     # And 10 files of random size
@@ -145,6 +154,6 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
         file_obj = tempfile.NamedTemporaryFile("wb+", suffix = ".img",
                                                delete = delete, dir = directory,
                                                prefix = "sparse_%d_" % i)
-        holes = create_random_sparse_file(file_obj, size)
-        yield (file_obj, holes)
+        mapped, holes = create_random_sparse_file(file_obj, size)
+        yield (file_obj, mapped, holes)
         file_obj.close()
