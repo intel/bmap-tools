@@ -30,8 +30,12 @@ def create_random_sparse_file(file_obj, size):
         map_the_block = random.getrandbits(1)
 
         if map_the_block:
-            file_obj.seek(block * block_size)
-            file_obj.write(chr(random.getrandbits(8)) * block_size)
+            # Randomly select how much we are going to write
+            seek = random.randint(0, block_size - 1)
+            write = random.randint(1, block_size - seek)
+            assert seek + write <= block_size
+            file_obj.seek(block * block_size + seek)
+            file_obj.write(chr(random.getrandbits(8)) * write)
         else:
             file_obj.truncate((block + 1) * block_size)
 
