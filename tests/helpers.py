@@ -10,7 +10,7 @@ import random
 import itertools
 from bmaptools import BmapHelpers
 
-def create_random_sparse_file(file_obj, size):
+def _create_random_sparse_file(file_obj, size):
     """ Create a sparse file with randomly distributed holes. The mapped areas
     are filled with semi-random data. Returns a tuple containing 2 lists:
       1. a list of mapped block ranges, same as 'Fiemap.get_mapped_ranges()'
@@ -151,7 +151,7 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
     file_obj = tempfile.NamedTemporaryFile("wb+", prefix = "sparse_",
                                            delete = delete, dir = directory,
                                            suffix = ".img")
-    mapped, holes = create_random_sparse_file(file_obj, max_size)
+    mapped, holes = _create_random_sparse_file(file_obj, max_size)
     yield (file_obj, mapped, holes)
     file_obj.close()
 
@@ -159,7 +159,7 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
     file_obj = tempfile.NamedTemporaryFile("wb+", prefix = "sparse_plus_1_",
                                            delete = delete, dir = directory,
                                            suffix = ".img")
-    mapped, holes = create_random_sparse_file(file_obj, max_size + 1)
+    mapped, holes = _create_random_sparse_file(file_obj, max_size + 1)
     yield (file_obj, mapped, holes)
     file_obj.close()
 
@@ -167,7 +167,7 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
     file_obj = tempfile.NamedTemporaryFile("wb+", prefix = "sparse_minus_1_",
                                            delete = delete, dir = directory,
                                            suffix = ".img")
-    mapped, holes = create_random_sparse_file(file_obj, max_size - 1)
+    mapped, holes = _create_random_sparse_file(file_obj, max_size - 1)
     yield (file_obj, mapped, holes)
     file_obj.close()
 
@@ -177,7 +177,7 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
         file_obj = tempfile.NamedTemporaryFile("wb+", suffix = ".img",
                                                delete = delete, dir = directory,
                                                prefix = "sparse_%d_" % i)
-        mapped, holes = create_random_sparse_file(file_obj, size)
+        mapped, holes = _create_random_sparse_file(file_obj, size)
         yield (file_obj, mapped, holes)
         file_obj.close()
 
