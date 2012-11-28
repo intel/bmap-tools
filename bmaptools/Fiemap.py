@@ -79,7 +79,7 @@ class Fiemap:
         buf_size -= _FIEMAP_SIZE
         self._fiemap_extent_cnt = buf_size / _FIEMAP_EXTENT_SIZE
         self._buf_size = self._fiemap_extent_cnt * _FIEMAP_EXTENT_SIZE
-        buf_size += _FIEMAP_SIZE
+        self._buf_size += _FIEMAP_SIZE
 
         # Allocate a mutable buffer for the FIEMAP ioctl
         self._buf = array.array('B', [0] * self._buf_size)
