@@ -205,8 +205,11 @@ class Fiemap:
                 assert extent_start % self.block_size == 0
                 assert extent_len % self.block_size == 0
 
+                if extent_block > start + count - 1:
+                    return
+
                 first = max(extent_block, block)
-                last = first + min(extent_count, count) - 1
+                last = min(extent_block + extent_count, start + count) - 1
                 yield (first, last)
 
                 extent += 1
