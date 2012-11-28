@@ -5,7 +5,6 @@ tests. """
 #   * Too many statements (R0915)
 # pylint: disable=R0915
 
-import os
 import tempfile
 import random
 import itertools
@@ -13,7 +12,7 @@ from bmaptools import BmapHelpers
 
 def create_random_sparse_file(file_obj, size):
     """ Create a sparse file with randomly distributed holes. The mapped areas
-    are filled with random data. Returns a tuple containing 2 lists:
+    are filled with semi-random data. Returns a tuple containing 2 lists:
       1. a list of mapped block ranges, same as 'Fiemap.get_mapped_ranges()'
       2. a list of unmapped block ranges (holes), same as
          'Fiemap.get_unmapped_ranges()' """
@@ -32,7 +31,7 @@ def create_random_sparse_file(file_obj, size):
 
         if map_the_block:
             file_obj.seek(block * block_size)
-            file_obj.write(bytearray(os.urandom(block_size)))
+            file_obj.write(chr(random.getrandbits(8)) * block_size)
         else:
             file_obj.truncate((block + 1) * block_size)
 
@@ -60,7 +59,7 @@ def create_random_sparse_file(file_obj, size):
     return (mapped, holes)
 
 def _create_random_file(file_obj, size):
-    """ Fill the 'file_obj' file object with random data up to the size
+    """ Fill the 'file_obj' file object with semi-random data up to the size
     'size'. """
 
     chunk_size = 1024 * 1024
@@ -70,7 +69,7 @@ def _create_random_file(file_obj, size):
         if written + chunk_size > size:
             chunk_size = size - written
 
-        file_obj.write(bytearray(os.urandom(chunk_size)))
+        file_obj.write(chr(random.getrandbits(8)) * chunk_size)
         written += chunk_size
 
     file_obj.flush()
