@@ -1,0 +1,56 @@
+Pre-release 0.7
+~~~~~~~~~~~~~~~
+
+We are approaching the first bmap-tools release 1.0. All the features are
+implemented, automated tests are implemented. We provide nice API modules
+for bmap creation ('BmapCreate.py') and copying with bmap ('BmapCopy.py').
+The 'Fiemap.py' API module provides python API to the FIEMAP Linux ioctl.
+
+The 'bmaptool' command-line tool is a basically a small wrapper over the
+API modules. It implements the 'create' and 'copy' sub-commands, which
+allow creating bmap for a given file and copying a file to another file
+or to a block device using bmap.
+
+The 'bmaptools copy' command (and thus, 'BmapCopy.py' module) support
+accept compressed files and transparently de-compress them. The following
+compression types are supported: .bz2, .gz, .tar.bz2, .tar.gz.
+
+The original user of this project is Tizen IVI where the OS images are
+sparse 2.6GiB files which are distributed as .bz2 file. Since the images
+are only 40% full, the .bz2 file weights about 300MiB. Tizen IVI uses the
+'BmapCreate.py' API module to generate the bmap file for the 2.6GiB images
+(before the image was compressed, because once it is compressed with bzip2,
+the information about holes gets lost). Then the bmap file is distributed
+together with the .bz2 image. And Tizen IVI users are able to flash the
+images to USB stick using the following command:
+
+ $ bmaptool copy --bmap image.bmap image.bz2 /dev/usb_stick
+
+This command decompresses the image (image.bz2) on-the-fly, and copies all
+the mapped blocks (listed in 'image.bmap') to the USB stick (the
+'/dev/usb_stick' block device).
+
+This is a lot faster than the old method:
+
+ $ bzcat image.bz2 | dd of=/dev/usb_stick
+
+Additionally, 'bmaptool copy' verifies the image - the bmap stores SHA1
+checksums for all mapped regions.
+
+However, bmap-tools may be useful for other projects as well - it is generic
+and just implements the idea of fast block-based flashing (as opposed to
+file-based flashing). Block-based flashing has a lot of benefits.
+
+The 'BmapCopy.py' module implements a couple of important optimization when
+copying to block device:
+  1. Switch the block device I/O scheduler to 'Noop', which is a lot faster
+     than 'CFQ' for sequential writes.
+  2. Limits the amount of memory which the kernel uses for buffering, in
+     order to have less impact on the overall system performance.
+  3. Reads in a separate thread, which is a lot faster when copying compressed
+     images, because we read/uncompress/verify SHA1 in parallel to writing
+     to a potentially slow block device.
+
+We support bmap format versioning. The current format is 1.2. The minor version
+number must not break backward compatibility, while the major numbers indicates
+some incompatibility.
