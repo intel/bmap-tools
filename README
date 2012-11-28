@@ -1,0 +1,29 @@
+The project structure
+~~~~~~~~~~~~~~~~~~~~~
+
+--------------------------------------------------------------------------------
+| - bmaptool             | A tools to create bmap and copy with bmap. Based    |
+|                        | on the 'BmapCreate.py' and 'BmapCopy.py' modules.   |
+| - setup.py             | A script to turn the entire bmap-tools project      |
+|                        | into a python egg.                                  |
+| - TODO                 | Just a list of things to be done for the project.   |
+| - tests/               | Contains the project unit-tests.                    |
+|   | - test_api_base.py | Tests the base API modules: 'BmapCreate.py' and     |
+|   |                    | 'BmapCopy.py'.                                      |
+|   | - test_fiemap.py   | Tests the 'Fiemap.py' module.                       |
+|   | - helpers.py       | Helper functions shared between the unit-tests.     |
+| - bmaptools/           | The API modules which implement all the bmap        |
+|   |                    | functionality.                                      |
+|   | - BmapCreate.py    | Creates a bmap for a given file.                    |
+|   | - BmapCopy.py      | Implements copying of an image using its bmap.      |
+|   | - Fiemap.py        | Implements python API to the Linux FIEMAP ioctl.    |
+|   | - BmapHelpers.py   | Just helper functions used all over the project.    |
+| - debian/*             | Debian packaging for the project.                   |
+| - packaging/*          | RPM packaging (Fedora & OpenSuse) for the project.  |
+--------------------------------------------------------------------------------
+
+How to run the tests
+~~~~~~~~~~~~~~~~~~~~
+
+Just install the 'nose' python test framework and run the 'nosetests' command in
+the project root directory.
