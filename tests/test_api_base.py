@@ -92,7 +92,7 @@ def _generate_compressed_files(file_obj, delete = True):
     # Generate a tar.bz2 version of the file
     tmp_file_obj = tempfile.NamedTemporaryFile('wb+', prefix = prefix,
                                                delete = delete, dir = directory,
-                                               suffix = '.tar.gz')
+                                               suffix = '.tar.bz2')
     tbz2_file_obj = tarfile.open(tmp_file_obj.name, "w:bz2")
     tbz2_file_obj.add(file_obj.name)
     tbz2_file_obj.close()
