@@ -27,7 +27,7 @@ def create_random_sparse_file(file_obj, size):
         become a hole. Returns 'True' if the block was mapped and 'False'
         otherwise. """
 
-        map_the_block = bool(random.randint(0, 1))
+        map_the_block = random.getrandbits(1)
 
         if map_the_block:
             file_obj.seek(block * block_size)
