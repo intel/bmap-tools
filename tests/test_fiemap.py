@@ -65,8 +65,10 @@ class TestCreateCopy(unittest.TestCase):
         # Create all the test-related temporary files in the default directory
         # (usually /tmp).
         directory = None
+        # Maximum size of the random files used in this test
+        max_size = 16 * 1024 * 1024
 
-        iterator = tests.helpers.generate_test_files(delete = delete,
-                                                     directory = directory)
+        iterator = tests.helpers.generate_test_files(max_size, directory,
+                                                     delete)
         for f_image, mapped, holes in iterator:
             _do_test(f_image, mapped, holes)
