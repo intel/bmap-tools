@@ -1,7 +1,5 @@
-1. bmaptool create is slow and can be improved if we use the FIEMAP ioctl
-   better. Currently we are calling it for each block.
-2. When bmaptool is killed or Ctrl-C'ed half-way through, it should delete
+1. When bmaptool is killed or Ctrl-C'ed half-way through, it should delete
    the files it creates.
-3. Instead of using extention to identify compression type - use the magic
+2. Instead of using extention to identify compression type - use the magic
    signatures as documented here:
    http://www.garykessler.net/library/file_sigs.html

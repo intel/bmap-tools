@@ -14,7 +14,6 @@ import os
 import struct
 import array
 import fcntl
-import itertools
 from bmaptools import BmapHelpers
 
 # Format string for 'struct fiemap'
@@ -163,29 +162,54 @@ class Fiemap:
 
         return not self.block_is_mapped(block)
 
-    def _get_ranges(self, start, count, test_func):
-        """ Internal helper function which implements 'get_mapped_ranges()' and
-        'get_unmapped_ranges()', depending whethier 'test_func' is a
-        'block_is_mapped()' or 'block_is_unmapped()' object. """
+    def _unpack_fiemap_extent(self, index):
+        """ Unpack a 'struct fiemap_extent' structure object number 'index'
+        from the internal 'self._buf' buffer. """
 
-        if start < 0 or count < 0:
-            raise Error("the 'start' (%d) and 'count' (%d) arguments must be " \
-                        "positive" % (start, count))
+        offset = _FIEMAP_SIZE + _FIEMAP_EXTENT_SIZE * index
+        return struct.unpack(_FIEMAP_EXTENT_FORMAT,
+                             self._buf[offset : offset + _FIEMAP_EXTENT_SIZE])
 
-        if start + count > self.blocks_cnt:
-            raise Error("file '%s' has only %d blocks, which is less than " \
-                        "the specified 'start' + 'count' = %d" \
-                        % (self._image_path, start, count))
+    def _do_get_mapped_ranges(self, start, count):
+        """ Implements most the the 'get_mapped_ranges()' generator
+        functionality: invokes the FIEMAP ioctl, walks through the mapped
+        extents and generate maped block ranges. However, the ranges may be
+        consequtive (e.g., (1, 100), (100, 200)) and 'get_mapped_ranges()'
+        simply merges them. """
 
-        iterator = xrange(start, count)
-        for key, group in itertools.groupby(iterator, test_func):
-            if key:
-                # Find the first and the last elements of the group
-                first = group.next()
-                last = first
-                for last in group:
-                    pass
-                yield first, last
+        block = start
+        while block < start + count:
+            struct_fiemap = self._invoke_fiemap(block, count)
+
+            mapped_extents = struct_fiemap[3]
+            if mapped_extents == 0:
+                # No more mapped blocks
+                return
+
+            extent = 0
+            while extent < mapped_extents:
+                fiemap_extent = self._unpack_fiemap_extent(extent)
+
+                # Start of the extent
+                extent_start = fiemap_extent[0]
+                # Starting block number of the extent
+                extent_block = extent_start / self.block_size
+                # Length of the extent
+                extent_len = fiemap_extent[2]
+                # Count of blocks in the extent
+                extent_count = extent_len / self.block_size
+
+                # Extent length and offset have to be block-aligned
+                assert extent_start % self.block_size == 0
+                assert extent_len % self.block_size == 0
+
+                first = max(extent_block, block)
+                last = first + min(extent_count, count) - 1
+                yield (first, last)
+
+                extent += 1
+
+            block = extent_block + extent_count
 
     def get_mapped_ranges(self, start, count):
         """ Generate ranges of mapped blocks in the file. The ranges are tuples
@@ -195,10 +219,29 @@ class Fiemap:
         The ranges are generated for the area for the file starting from block
         'start' and 'count' blocks in size. """
 
-        return self._get_ranges(start, count, self.block_is_mapped)
+        iterator = self._do_get_mapped_ranges(start, count)
+
+        first_prev, last_prev = iterator.next()
+
+        for first, last in iterator:
+            if last_prev == first - 1:
+                last_prev = last
+            else:
+                yield (first_prev, last_prev)
+                first_prev, last_prev = first, last
+
+        yield (first_prev, last_prev)
 
     def get_unmapped_ranges(self, start, count):
         """ Just like 'get_mapped_ranges()', but for un-mapped blocks
         (holes). """
 
-        return self._get_ranges(start, count, self.block_is_unmapped)
+        hole_first = start
+        for first, last in self._do_get_mapped_ranges(start, count):
+            if first > hole_first:
+                yield (hole_first, first - 1)
+
+            hole_first = last + 1
+
+        if hole_first < start + count:
+            yield (hole_first, start + count - 1)
