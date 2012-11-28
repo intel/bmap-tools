@@ -42,7 +42,7 @@ def _create_random_sparse_file(file_obj, size):
         return map_the_block
 
     mapped = []
-    holes = []
+    unmapped = []
     iterator = xrange(0, blocks_cnt)
     for was_mapped, group in itertools.groupby(iterator, process_block):
         # Start of a mapped region or a hole. Find the last element in the
@@ -55,12 +55,12 @@ def _create_random_sparse_file(file_obj, size):
         if was_mapped:
             mapped.append((first, last))
         else:
-            holes.append((first, last))
+            unmapped.append((first, last))
 
     file_obj.truncate(size)
     file_obj.flush()
 
-    return (mapped, holes)
+    return (mapped, unmapped)
 
 def _create_random_file(file_obj, size):
     """ Fill the 'file_obj' file object with semi-random data up to the size
@@ -151,24 +151,24 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
     file_obj = tempfile.NamedTemporaryFile("wb+", prefix = "sparse_",
                                            delete = delete, dir = directory,
                                            suffix = ".img")
-    mapped, holes = _create_random_sparse_file(file_obj, max_size)
-    yield (file_obj, mapped, holes)
+    mapped, unmapped = _create_random_sparse_file(file_obj, max_size)
+    yield (file_obj, mapped, unmapped)
     file_obj.close()
 
     # The maximum size + 1 byte
     file_obj = tempfile.NamedTemporaryFile("wb+", prefix = "sparse_plus_1_",
                                            delete = delete, dir = directory,
                                            suffix = ".img")
-    mapped, holes = _create_random_sparse_file(file_obj, max_size + 1)
-    yield (file_obj, mapped, holes)
+    mapped, unmapped = _create_random_sparse_file(file_obj, max_size + 1)
+    yield (file_obj, mapped, unmapped)
     file_obj.close()
 
     # The maximum size - 1 byte
     file_obj = tempfile.NamedTemporaryFile("wb+", prefix = "sparse_minus_1_",
                                            delete = delete, dir = directory,
                                            suffix = ".img")
-    mapped, holes = _create_random_sparse_file(file_obj, max_size - 1)
-    yield (file_obj, mapped, holes)
+    mapped, unmapped = _create_random_sparse_file(file_obj, max_size - 1)
+    yield (file_obj, mapped, unmapped)
     file_obj.close()
 
     # And 10 files of random size
@@ -177,8 +177,8 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
         file_obj = tempfile.NamedTemporaryFile("wb+", suffix = ".img",
                                                delete = delete, dir = directory,
                                                prefix = "sparse_%d_" % i)
-        mapped, holes = _create_random_sparse_file(file_obj, size)
-        yield (file_obj, mapped, holes)
+        mapped, unmapped = _create_random_sparse_file(file_obj, size)
+        yield (file_obj, mapped, unmapped)
         file_obj.close()
 
     #
