@@ -40,11 +40,11 @@ def _compare_holes(file1, file2):
                         % (range1[0], range1[1], range2[0], range2[1]))
 
 def _generate_compressed_files(file_obj, delete = True):
-    """ This is an iterator which generates compressed versions of a file
+    """ This is a generator which yields compressed versions of a file
     represented by a file object 'file_obj'.
 
     The 'delete' argument specifies whether the compressed files that this
-    iterator generates have to be automatically deleted. """
+    generator yields have to be automatically deleted. """
 
     import bz2
     import gzip

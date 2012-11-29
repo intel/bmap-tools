@@ -324,33 +324,33 @@ class BmapCopy:
             self._f_bmap.close()
 
     def _get_block_ranges(self):
-        """ This is a helper iterator that parses the bmap XML file and for
-        each block range in the XML file it generates a
-        ('first', 'last', 'sha1') triplet, where:
+        """ This is a helper generator that parses the bmap XML file and for
+        each block range in the XML file it yields ('first', 'last', 'sha1')
+        tuples, where:
           * 'first' is the first block of the range;
           * 'last' is the last block of the range;
           * 'sha1' is the SHA1 checksum of the range ('None' is used if it is
             missing.
 
-        If there is no bmap file, the iterator just generate a single range for
-        entire image file. If the image size is unknown (the image is
-        compressed), the iterator infinitely generates continuous ranges of
+        If there is no bmap file, the generator just yields a single range
+        for entire image file. If the image size is unknown (the image is
+        compressed), the generator infinitely yields continuous ranges of
         size '_batch_blocks'. """
 
         if not self._f_bmap:
-            # We do not have the bmap, generate a tuple with all blocks
+            # We do not have the bmap, yield a tuple with all blocks
             if self.blocks_cnt:
                 yield (0, self.blocks_cnt - 1, None)
             else:
-                # We do not know image size, keep generate tuple with many
-                # blocks infinitely
+                # We do not know image size, keep yielding tuples with many
+                # blocks infinitely.
                 first = 0
                 while True:
                     yield (first, first + self._batch_blocks - 1, None)
                     first += self._batch_blocks
             return
 
-        # We have the bmap, just read it ang generate block ranges
+        # We have the bmap, just read it and yield block ranges
         xml = self._xml
         xml_bmap = xml.find("BlockMap")
 
@@ -377,12 +377,12 @@ class BmapCopy:
             yield (first, last, sha1)
 
     def _get_batches(self, first, last):
-        """ This is a helper iterator which splits block ranges from the bmap
+        """ This is a helper generator which splits block ranges from the bmap
         file to smaller batches. Indeed, we cannot read and write entire block
         ranges from the image file, because a range can be very large. So we
         perform the I/O in batches. Batch size is defined by the
         '_batch_blocks' attribute. Thus, for each (first, last) block range,
-        the iterator returns smaller (start, end, length) batch ranges, where:
+        the generator yields smaller (start, end, length) batch ranges, where:
           * 'start' is the starting batch block number;
           * 'last' is the ending batch block numger;
           * 'length' is the batch length in blocks (same as
@@ -399,8 +399,8 @@ class BmapCopy:
             yield (first, first + batch_blocks - 1, batch_blocks)
 
     def _get_data(self, verify):
-        """ This is an iterator which reads the image file in '_batch_blocks'
-        chunks and returns ('type', 'start', 'end',  'buf) tuples, where:
+        """ This is generator  which reads the image file in '_batch_blocks'
+        chunks and yields ('type', 'start', 'end',  'buf) tuples, where:
           * 'start' is the starting block number of the batch;
           * 'end' is the last block of the batch;
           * 'buf' a buffer containing the batch data. """

@@ -80,16 +80,16 @@ def _create_random_file(file_obj, size):
 
 def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
                         delete = True):
-    """ This is an iterator which generates files which other tests use as the
-    input for the testing. The iterator tries to generate "interesting" files
+    """ This is a generator which yields files which other tests use as the
+    input for the testing. The generator tries to yield "interesting" files
     which cover various corner-cases. For example, a large hole file, a file
     with no holes, files of unaligned length, etc.
 
-    The 'directory' argument specifies the directory path where the generated
+    The 'directory' argument specifies the directory path where the yielded
     test files should be created. The 'delete' argument specifies whether the
-    generated test files have to be automatically deleted.
+    yielded test files have to be automatically deleted.
 
-    Returns a tuple consisting of the following elements:
+    The generator yields tuples consisting of the following elements:
       1. the test file object
       2. a list of mapped block ranges, same as 'Fiemap.get_mapped_ranges()'
       3. a list of unmapped block ranges (holes), same as

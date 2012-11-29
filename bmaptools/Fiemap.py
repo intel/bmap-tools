@@ -173,9 +173,9 @@ class Fiemap:
                              self._buf[offset : offset + _FIEMAP_EXTENT_SIZE])
 
     def _do_get_mapped_ranges(self, start, count):
-        """ Implements most the the 'get_mapped_ranges()' generator
-        functionality: invokes the FIEMAP ioctl, walks through the mapped
-        extents and generate maped block ranges. However, the ranges may be
+        """ Implements most the functionality for the  'get_mapped_ranges()'
+        generator: invokes the FIEMAP ioctl, walks through the mapped
+        extents and yields maped block ranges. However, the ranges may be
         consequtive (e.g., (1, 100), (100, 200)) and 'get_mapped_ranges()'
         simply merges them. """
 
@@ -217,12 +217,12 @@ class Fiemap:
             block = extent_block + extent_count
 
     def get_mapped_ranges(self, start, count):
-        """ Generate ranges of mapped blocks in the file. The ranges are tuples
-        of 2 elements: [first, last], where 'first' is the first mapped block
-        and 'last' is the last mapped block.
+        """ A generator which yields ranges of mapped blocks in the file. The
+        ranges are tuples of 2 elements: [first, last], where 'first' is the
+        first mapped block and 'last' is the last mapped block.
 
-        The ranges are generated for the area for the file starting from block
-        'start' and 'count' blocks in size. """
+        The ranges are yielded for the area of the file of size 'count' blocks,
+        starting from block 'start'. """
 
         iterator = self._do_get_mapped_ranges(start, count)
 
@@ -238,8 +238,8 @@ class Fiemap:
         yield (first_prev, last_prev)
 
     def get_unmapped_ranges(self, start, count):
-        """ Just like 'get_mapped_ranges()', but for un-mapped blocks
-        (holes). """
+        """ Just like 'get_mapped_ranges()', but yields unmapped block ranges
+        instead (holes). """
 
         hole_first = start
         for first, last in self._do_get_mapped_ranges(start, count):
