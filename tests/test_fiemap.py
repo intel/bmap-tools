@@ -3,7 +3,10 @@ files and makes sure FIEMAP returns correct information about the holes. """
 
 # Disable the following pylint recommendations:
 #   *  Too many public methods - R0904
+#   *  Too many arguments - R0913
 # pylint: disable=R0904
+# pylint: disable=R0913
+
 
 import random
 import unittest
