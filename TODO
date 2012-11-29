@@ -1,5 +1,3 @@
-1. When bmaptool is killed or Ctrl-C'ed half-way through, it should delete
-   the files it creates.
-2. Instead of using extention to identify compression type - use the magic
+1. Instead of using extention to identify compression type - use the magic
    signatures as documented here:
    http://www.garykessler.net/library/file_sigs.html
