@@ -1,3 +1,20 @@
+The bmap-tools project implements bmap-related tools and API modules. The
+entire project is written in python, and requires python 2.7+.
+
+Please, search the web for the detailed explanation about what bmap is, how is
+used, what are the benefits, and so on. The main user of this project is Tizen
+IVI.
+
+The project author and maintainer is 'Artem.Bityutskiy@linux.intel.com'.
+Please, feel free to contact me if you have questions about the project or
+patches. Suggestions and comments about the code are welcome as well.
+
+The debianizations and rpmization was done by
+'Ed Bartosh <eduard.bartosh@intel.com>', and he is the only person I know of
+who understands how that works :-). The bmap-tools packages for
+Debian/Ubuntu/Fedora/OpenSuse are built by the "OBS" service.
+
+
 The project structure
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -22,8 +39,52 @@ The project structure
 | - packaging/*          | RPM packaging (Fedora & OpenSuse) for the project.  |
 --------------------------------------------------------------------------------
 
-How to run the tests
-~~~~~~~~~~~~~~~~~~~~
+How to run unit tests
+~~~~~~~~~~~~~~~~~~~~~
 
 Just install the 'nose' python test framework and run the 'nosetests' command in
 the project root directory.
+
+Branches and releases
+~~~~~~~~~~~~~~~~~~~~~
+
+The project uses the following git branches:
+  1. devel - here we do all the development, so this branch contains the latest
+     code. Things may be broken in this branch, although we do not commit
+     anything before it passes the unit-tests. But of course, the unit-tests
+     have limited coverage. Anyway, do not use this branch unless you are a
+     developer or you know what you are doing.
+  2. master - we do not use this branch for anything but pointing to the latest
+     pre-release. This means that you may safely this branch and be sure this
+     is the latest stable code.
+  3. release-x.0 - pre-releases or releases or bug-fix releases of version "x".
+
+Let's take an example. When we start developing the 'bmap-tools' project from
+scratch, and have the first version 1.0-rc1 which somehow works, we create the
+'release-1.0' branch. The idea is that this branch will eventually contain the
+first bmap-tools release version 1.0. But at the moment it contains the
+pre-release version 0.1. As we move forward, we cut pre-releases
+1.0-rc2, 1.0-rc3..., 1.0-rc7, and so on. They are all published in the
+'release-1.0' branch. And of course, the 'master' branch points to the latest
+pre-release (same as release candidate, rc).
+
+Then at some point we finally release the first 'bmap-tools' version 1.0. No
+more features are added to the 1.0 release. At the same time we continue
+developing in the 'devel' branch and add major features for the next '2.0'
+release. We create the 'release-2.0' branch, and publish 2.0 pre-releases
+there: 2.0-rc1, 2.0-rc2, etc.
+
+Meanwhile, users report brown-paperbag flaws in bmap-tools-1.0. We fix the
+issues, and publish bug-fix releases: 1.1, 1.2, etc. They are also published in
+the 'release-1.0' branch. The 'master' branch points to the latest 2.0
+pre-release, though.
+
+Credits
+~~~~~~~
+
+* Ed Bartosh <eduard.bartosh@intel.com> - for helping me with learning python
+  (this is my first python project) and working with the Tizen IVI
+  infrastructure.
+* Alexander Kanevskiy <alexander.kanevskiy@intel.com> and
+  Kevin Wang <kevin.a.wang@intel.com> for helping with integrating this stuff
+  to the Tizen IVI infrastructure
