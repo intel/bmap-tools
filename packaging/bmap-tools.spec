@@ -1,7 +1,13 @@
+%define rc_num 7
+
+%if 0%{?rc_num}
+%define rc_str 0.rc%{rc_num}
+%endif
+
 Name:       bmap-tools
 Summary:    Bmap Tools
-Version:    0.6
-Release:    1
+Version:    1.0
+Release:    %{?rc_str}.<CI_CNT>.<B_CNT>
 Group:      Development/Tools/Other
 License:    GPL-2.0
 BuildArch:  noarch
