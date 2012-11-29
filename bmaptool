@@ -17,13 +17,13 @@ contains a list of mapped blocks of this sparse file. The bmap additionally
 contains some useful information like block size (usually 4KiB), image size,
 mapped blocks count, etc.
 
-The bmap is used for copying the image to a block device or to a regualr file.
+The bmap is used for copying the image to a block device or to a regular file.
 The idea is that we copy quickly with bmap because we copy only mapped blocks
 and ignore the holes, because they are useless. And if the image is generated
 properly (starting with a huge hole and writing all the data), it usually
 contains only little mapped blocks, comparing to the overall image size. And
 such an image compresses very well (because holes are read as all zeroes), so
-it is benefitial to destribute them as compressed files along with the bmap.
+it is beneficial to distribute them as compressed files along with the bmap.
 
 Here is an example. Suppose you have a 4GiB image which contains only 100MiB of
 user data and you need to flash it to a slow USB stick. With bmap you end up

@@ -64,7 +64,7 @@ def _check_ranges(f_image, fiemap, first_block, blocks_cnt,
                            check[0], check[1]))
 
 def _do_test(f_image, mapped, unmapped, buf_size = Fiemap.DEFAULT_BUFFER_SIZE):
-    """ Verifiy that Fiemap reports the correct mapped and unmapped areas for
+    """ Verify that Fiemap reports the correct mapped and unmapped areas for
     the 'f_image' file object. The 'mapped' and 'unmapped' lists contain the
     correct ranges. The 'buf_size' argument specifies the internal buffer size
     of the 'Fiemap' class. """

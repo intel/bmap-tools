@@ -175,8 +175,8 @@ class Fiemap:
     def _do_get_mapped_ranges(self, start, count):
         """ Implements most the functionality for the  'get_mapped_ranges()'
         generator: invokes the FIEMAP ioctl, walks through the mapped
-        extents and yields maped block ranges. However, the ranges may be
-        consequtive (e.g., (1, 100), (100, 200)) and 'get_mapped_ranges()'
+        extents and yields mapped block ranges. However, the ranges may be
+        consecutive (e.g., (1, 100), (100, 200)) and 'get_mapped_ranges()'
         simply merges them. """
 
         block = start

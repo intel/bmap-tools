@@ -14,13 +14,13 @@ contains a list of mapped blocks of this sparse file. The bmap additionally
 contains some useful information like block size (usually 4KiB), image size,
 mapped blocks count, etc.
 
-The bmap is used for copying the image to a block device or to a regualr file.
+The bmap is used for copying the image to a block device or to a regular file.
 The idea is that we copy quickly with bmap because we copy only mapped blocks
 and ignore the holes, because they are useless. And if the image is generated
 properly (starting with a huge hole and writing all the data), it usually
 contains only little mapped blocks, comparing to the overall image size. And
 such an image compresses very well (because holes are read as all zeroes), so
-it is benefitial to destribute them as compressed files along with the bmap.
+it is beneficial to distributor them as compressed files along with the bmap.
 
 Here is an example. Suppose you have a 4GiB image which contains only 100MiB of
 user data and you need to flash it to a slow USB stick. With bmap you end up
@@ -84,11 +84,11 @@ class BmapCopy:
     initialized and available. They are read from the bmap.
 
     However, if bmap was not provided, this is not always the case and some of
-    the 'bmap_*' attributes are not initialize by the class constructore.
+    the 'bmap_*' attributes are not initialize by the class constructor.
     Instead, they are initialized only in the 'copy()' method. The reason for
     this is that when bmap is absent, 'BmapCopy' uses sensible fall-back values
     for the 'bmap_*' attributes assuming the entire image is "mapped". And if
-    the image is compressed, it annot easily find out the image size. Thus,
+    the image is compressed, it cannot easily find out the image size. Thus,
     this is postponed until the 'copy()' method decompresses the image for the
     first time.
 
@@ -384,7 +384,7 @@ class BmapCopy:
         '_batch_blocks' attribute. Thus, for each (first, last) block range,
         the generator yields smaller (start, end, length) batch ranges, where:
           * 'start' is the starting batch block number;
-          * 'last' is the ending batch block numger;
+          * 'last' is the ending batch block number;
           * 'length' is the batch length in blocks (same as
              'end' - 'start' + 1). """
 
@@ -504,7 +504,7 @@ class BmapCopy:
             bytes_written += len(buf)
 
         if not self.image_size:
-            # The image size was unknow up until now, probably because this is
+            # The image size was unknown up until now, probably because this is
             # a compressed image. Initialize the corresponding class attributes
             # now, when we know the size.
             self._initialize_sizes(bytes_written)
@@ -551,7 +551,7 @@ class BmapCopy:
 class BmapBdevCopy(BmapCopy):
     """ This class is a specialized version of 'BmapCopy' which copies the
     image to a block device. Unlike the base 'BmapCopy' class, this class does
-    various optimizations specific to block devices, e.g., switchint to the
+    various optimizations specific to block devices, e.g., switching to the
     'noop' I/O scheduler. """
 
     def _open_destination_file(self):
@@ -655,10 +655,10 @@ class BmapBdevCopy(BmapCopy):
             raise
 
     def __init__(self, image, dest, bmap = None):
-        """ The same as the constructur of the 'BmapCopy' base class, but adds
+        """ The same as the constructor of the 'BmapCopy' base class, but adds
         useful guard-checks specific to block devices. """
 
-        # Call the base class construcor first
+        # Call the base class constructor first
         BmapCopy.__init__(self, image, dest, bmap)
 
         self._batch_bytes = 1024 * 1024
@@ -673,7 +673,7 @@ class BmapBdevCopy(BmapCopy):
         self._old_max_ratio_value = None
 
         # If the image size is known (i.e., it is not compressed) - check that
-        # itfits the block device.
+        # it fits the block device.
         if self.image_size:
             try:
                 bdev_size = os.lseek(self._f_dest.fileno(), 0, os.SEEK_END)
