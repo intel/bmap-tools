@@ -1,10 +1,10 @@
-Pre-release 1.0-rc7
-~~~~~~~~~~~~~~~~~~~
+Release 1.0
+~~~~~~~~~~~
 
-We are approaching the first bmap-tools release 1.0. All the features are
-implemented, automated tests are implemented. We provide nice API modules
-for bmap creation ('BmapCreate.py') and copying with bmap ('BmapCopy.py').
-The 'Fiemap.py' API module provides python API to the FIEMAP Linux ioctl.
+The first bmap-tools release. All the planned features are implemented,
+automated tests are implemented. We provide nice API modules for bmap creation
+('BmapCreate.py') and copying with bmap ('BmapCopy.py'). The 'Fiemap.py' API
+module provides python API to the FIEMAP Linux ioctl.
 
 The 'bmaptool' command-line tool is a basically a small wrapper over the
 API modules. It implements the 'create' and 'copy' sub-commands, which
