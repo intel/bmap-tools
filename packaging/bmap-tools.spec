@@ -10,7 +10,7 @@ Release:    %{rc_str}.<CI_CNT>.<B_CNT>
 Group:      Development/Tools/Other
 License:    GPL-2.0
 BuildArch:  noarch
-URL:        http://otctools.jf.intel.com
+URL:        http://www.tizen.org
 Source0:    %{name}_%{version}.tar.gz
 
 BuildRequires:  python-distribute
