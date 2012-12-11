@@ -2,3 +2,5 @@
    signatures as documented here:
    http://www.garykessler.net/library/file_sigs.html
 2. Add a real man page to the project.
+3. Add a progress indicator: users want to see that the flashing is going on
+   while waiting, because it may take minutes.
