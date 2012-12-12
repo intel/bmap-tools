@@ -78,6 +78,9 @@ def copy_command(args, log):
         log.error(str(err))
         raise SystemExit(1)
 
+    # Print the progress indicator while copying
+    writer.set_progress_indicator(sys.stderr, "bmaptool: info: %d%% copied")
+
     start_time = time.time()
     if not args.bmap:
         log.warning("no bmap, flashing will be slow! (use --bmap option)")

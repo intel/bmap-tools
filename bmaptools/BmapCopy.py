@@ -101,7 +101,30 @@ class BmapCopy:
     not. To explicitly synchronize it, use the 'sync()' method.
 
     This class supports all the bmap format versions up version
-    'SUPPORTED_BMAP_VERSION'. """
+    'SUPPORTED_BMAP_VERSION'.
+
+    It is possible to have a simple progress indicator while copying the image.
+    Use the 'set_progress_indicator()' method. """
+
+    def set_progress_indicator(self, file_obj, format_string):
+        """ Setup the progress indicator which shows how much data has been
+        copied in percent.
+
+        The 'file_obj' argument is the console file object where the progress
+        has to be printed to. Pass 'None' to disable the progress indicator.
+
+        The 'format_string' argument is the format string for the progress
+        indicator. It has to contain a single '%d' placeholder which will be
+        substitutes with copied data in percent.
+
+        The progress indicator is not printed when copying a compressed image
+        without bmap, because the file size is unknown in this case. """
+
+        self._progress_file = file_obj
+        if format_string:
+            self._progress_format = format_string
+        else:
+            self._progress_format = "Copied %d%%"
 
     def _initialize_sizes(self, image_size):
         """ This function is only used when the there is no bmap. It
@@ -270,6 +293,11 @@ class BmapCopy:
         self._f_bmap = None
         self._f_bmap_path = None
 
+        self._progress_started = None
+        self._progress_file = None
+        self._progress_format = None
+        self.set_progress_indicator(None, None)
+
         if hasattr(dest, "write"):
             self._f_dest = dest
             self._dest_path = dest.name
@@ -322,6 +350,31 @@ class BmapCopy:
             self._f_dest.close()
         if self._f_bmap_needs_close:
             self._f_bmap.close()
+
+    def _update_progress(self, blocks_written):
+        """ Print the progress indicator if the mapped area size is known and
+        if the indicator has been enabled by assigning a console file object to
+        the 'progress_file' attribute. """
+
+        if self._progress_file and self.mapped_cnt:
+            assert blocks_written <= self.mapped_cnt
+
+            percent = int((float(blocks_written) / self.mapped_cnt) * 100)
+
+            # This is a little trick we do in order to make sure that the next
+            # message will always start from a new line - we switch to the new
+            # line after each progress update and move the cursor up. As an
+            # example, this is useful when the copying is interrupted by an
+            # exception - the error message will start form new line.
+            if self._progress_started:
+                # The "move cursor up" escape sequence
+                self._progress_file.write('\033[1A')
+            else:
+                self._progress_started = True
+
+            fmt = '\r' + self._progress_format + '\n'
+            self._progress_file.write(fmt % percent)
+            self._progress_file.flush()
 
     def _get_block_ranges(self):
         """ This is a helper generator that parses the bmap XML file and for
@@ -447,7 +500,7 @@ class BmapCopy:
         self._batch_queue.put(None)
 
     def copy(self, sync = True, verify = True):
-        """ Copy the image to the destination file using bmap. The sync
+        """ Copy the image to the destination file using bmap. The 'sync'
         argument defines whether the destination file has to be synchronized
         upon return.  The 'verify' argument defines whether the SHA1 checksum
         has to be verified while copying. """
@@ -466,6 +519,7 @@ class BmapCopy:
         blocks_written = 0
         bytes_written = 0
         fsync_last = 0
+        self._progress_started = False
 
         # Read the image in '_batch_blocks' chunks and write them to the
         # destination file
@@ -502,6 +556,8 @@ class BmapCopy:
             self._batch_queue.task_done()
             blocks_written += (end - start + 1)
             bytes_written += len(buf)
+
+            self._update_progress(blocks_written)
 
         if not self.image_size:
             # The image size was unknown up until now, probably because this is
