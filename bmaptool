@@ -83,7 +83,7 @@ def copy_command(args, log):
 
     start_time = time.time()
     if not args.bmap:
-        log.warning("no bmap, flashing will be slow! (use --bmap option)")
+        log.warning("no bmap, copying will be slow! (use --bmap option)")
         log.info("falling-back to copying entire image to '%s'" % args.dest)
     else:
         log.info("block map format version %s" % writer.bmap_version)
