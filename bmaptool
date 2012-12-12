@@ -80,7 +80,7 @@ def copy_command(args, log):
 
     start_time = time.time()
     if not args.bmap:
-        log.info("no block map given (see the --bmap option)")
+        log.warning("no bmap, flashing will be slow! (use --bmap option)")
         log.info("falling-back to copying entire image to '%s'" % args.dest)
     else:
         log.info("block map format version %s" % writer.bmap_version)
@@ -228,10 +228,15 @@ def setup_logger(loglevel):
     """ A helper function which sets up and configures the logger. The log
     level is initialized to 'loglevel'. Returns the logger object. """
 
+    # Esc-sequences for coloured output
+    esc_red = '\033[91m'
+    esc_yellow = '\033[93m'
+    esc_end = '\033[0m'
+
     # Change log level names to something less nicer than the default
     # all-capital 'INFO' etc.
-    logging.addLevelName(logging.ERROR, "error!")
-    logging.addLevelName(logging.WARNING, "warning!")
+    logging.addLevelName(logging.ERROR, esc_red + "ERROR" + esc_end)
+    logging.addLevelName(logging.WARNING, esc_yellow + "WARNING" + esc_end)
     logging.addLevelName(logging.DEBUG, "debug")
     logging.addLevelName(logging.INFO, "info")
 
