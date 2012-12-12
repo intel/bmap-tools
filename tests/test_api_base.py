@@ -9,6 +9,7 @@ file and the copy and verifies that they are identical. """
 # pylint: disable=R0902,R0904
 
 import os
+import sys
 import tempfile
 import filecmp
 import hashlib
@@ -190,7 +191,9 @@ def _do_test(f_image, delete = True):
     creator.generate()
     f_bmap2.seek(0)
     creator.generate()
+    writer.progress_file = sys.stdout
     writer.copy(True, False)
+    writer.progress_format = "Done %d percent"
     writer.copy(False, True)
     writer.sync()
     assert _calculate_sha1(f_copy) == image_sha1
