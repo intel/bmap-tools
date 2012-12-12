@@ -58,7 +58,7 @@ The project uses the following git branches:
      have limited coverage. Anyway, do not use this branch unless you are a
      developer or you know what you are doing.
   2. master - we do not use this branch for anything but pointing to the latest
-     pre-release. This means that you may safely this branch and be sure this
+     release. This means that you may safely this branch and be sure this
      is the latest stable code.
   3. release-x.0 - pre-releases or releases or bug-fix releases of version "x".
 
@@ -69,7 +69,7 @@ first bmap-tools release version 1.0. But at the moment it contains the
 pre-release version 0.1. As we move forward, we cut pre-releases
 1.0-rc2, 1.0-rc3..., 1.0-rc7, and so on. They are all published in the
 'release-1.0' branch. And of course, the 'master' branch points to the latest
-pre-release (same as release candidate, rc).
+release (same as release candidate, rc).
 
 Then at some point we finally release the first 'bmap-tools' version 1.0. No
 more features are added to the 1.0 release. At the same time we continue
@@ -80,7 +80,7 @@ there: 2.0-rc1, 2.0-rc2, etc.
 Meanwhile, users report brown-paperbag flaws in bmap-tools-1.0. We fix the
 issues, and publish bug-fix releases: 1.1, 1.2, etc. They are also published in
 the 'release-1.0' branch. The 'master' branch points to the latest 2.0
-pre-release, though.
+release, though.
 
 Credits
 ~~~~~~~
