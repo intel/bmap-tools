@@ -46,9 +46,10 @@ import Queue
 import thread
 from xml.etree import ElementTree
 from bmaptools.BmapHelpers import human_size
+from bmaptools import TransRead
 
 # A list of supported image formats
-SUPPORTED_IMAGE_FORMATS = ('bz2', 'gz', 'tar.gz', 'tgz', 'tar.bz2')
+SUPPORTED_IMAGE_FORMATS = TransRead.SUPPORTED_COMPRESSION_TYPES
 
 # The highest supported bmap format version
 SUPPORTED_BMAP_VERSION = 1
@@ -141,7 +142,7 @@ class BmapCopy:
         possible, because this adds several useful sanity checks. """
 
         if self.image_size is not None and self.image_size != image_size:
-            raise Error("Cannot set image size to %d bytes, it is known to " \
+            raise Error("cannot set image size to %d bytes, it is known to " \
                         "be %d bytes (%s)" % (image_size, self.image_size,
                                               self.image_size_human))
         self.image_size = image_size
@@ -194,62 +195,6 @@ class BmapCopy:
 
         self._f_bmap.seek(bmap_pos)
 
-    def _open_image_file(self):
-        """ Open the image file which may be compressed or not. The compression
-        type is recognized by the file extension. Supported types are defined
-        by 'SUPPORTED_IMAGE_FORMATS'. """
-
-        try:
-            is_regular_file = stat.S_ISREG(os.stat(self._image_path).st_mode)
-        except OSError as err:
-            raise Error("cannot access image file '%s': %s" \
-                        % (self._image_path, err.strerror))
-
-        if not is_regular_file:
-            raise Error("image file '%s' is not a regular file" \
-                        % self._image_path)
-
-        try:
-            if self._image_path.endswith('.tar.gz') \
-               or self._image_path.endswith('.tar.bz2') \
-               or self._image_path.endswith('.tgz'):
-                import tarfile
-
-                tar = tarfile.open(self._image_path, 'r')
-                # The tarball is supposed to contain only one single member
-                members = tar.getnames()
-                if len(members) > 1:
-                    raise Error("the image tarball '%s' contains more than " \
-                                "one file" % self._image_path)
-                elif len(members) == 0:
-                    raise Error("the image tarball '%s' is empty (no files)" \
-                                % self._image_path)
-                self._f_image = tar.extractfile(members[0])
-            elif self._image_path.endswith('.gz'):
-                import gzip
-                self._f_image = gzip.GzipFile(self._image_path, 'rb')
-            elif self._image_path.endswith('.bz2'):
-                import bz2
-                self._f_image = bz2.BZ2File(self._image_path, 'rb')
-            else:
-                self._image_is_compressed = False
-                self._f_image = open(self._image_path, 'rb')
-        except IOError as err:
-            raise Error("cannot open image file '%s': %s" \
-                        % (self._image_path, err))
-
-        self._f_image_needs_close = True
-
-    def _validate_image_size(self):
-        """ Make sure that image size from bmap matches real image size. """
-
-        image_size = os.fstat(self._f_image.fileno()).st_size
-        if image_size != self.image_size:
-            raise Error("Size mismatch, bmap '%s' was created for an image " \
-                        "of size %d bytes, but image '%s' has size %d bytes" \
-                        % (self._bmap_path, self.image_size,
-                           self._image_path, image_size))
-
     def _open_destination_file(self):
         """ Open the destination file. """
 
@@ -281,7 +226,6 @@ class BmapCopy:
                     copying """
 
         self._xml = None
-        self._image_is_compressed = True
 
         self._dest_fsync_watermark = None
         self._batch_blocks = None
@@ -321,9 +265,11 @@ class BmapCopy:
         if hasattr(image, "read"):
             self._f_image = image
             self._image_path = image.name
+            real_image_size = None
         else:
             self._image_path = image
-            self._open_image_file()
+            self._f_image = TransRead.TransRead(image)
+            real_image_size = self._f_image.size
 
         st_mode = os.fstat(self._f_dest.fileno()).st_mode
         self._dest_is_regfile = stat.S_ISREG(st_mode)
@@ -335,6 +281,7 @@ class BmapCopy:
             else:
                 self._bmap_path = bmap
                 self._open_bmap_file()
+
             self._parse_bmap()
         else:
             # There is no bmap. Initialize user-visible attributes to something
@@ -343,14 +290,8 @@ class BmapCopy:
             self.block_size = 4096
             self.mapped_percent = 100
 
-            # We can initialize size-related attributes only if the image is
-            # not compressed.
-            if not self._image_is_compressed:
-                image_size = os.fstat(self._f_image.fileno()).st_size
-                self.set_image_size(image_size)
-
-        if not self._image_is_compressed:
-            self._validate_image_size()
+        if real_image_size:
+            self.set_image_size(real_image_size)
 
         self._batch_blocks = self._batch_bytes / self.block_size
 

@@ -37,6 +37,8 @@ The project structure
 |   | - BmapCopy.py      | Implements copying of an image using its bmap.      |
 |   | - Fiemap.py        | Implements python API to the Linux FIEMAP ioctl.    |
 |   | - BmapHelpers.py   | Just helper functions used all over the project.    |
+|   | - TransRead.py     | Provides a transparent way to read various kind of  |
+|   |                    | files (compressed, etc)                             |
 | - debian/*             | Debian packaging for the project.                   |
 | - packaging/*          | RPM packaging (Fedora & OpenSuse) for the project.  |
 --------------------------------------------------------------------------------
