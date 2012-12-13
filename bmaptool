@@ -83,8 +83,11 @@ def copy_command(args, log):
 
     start_time = time.time()
     if not args.bmap:
-        log.warning("no bmap, copying will be slow! (use --bmap option)")
-        log.info("falling-back to copying entire image to '%s'" % args.dest)
+        if args.nobmap:
+            log.info("no bmap given, copy entire image to '%s'" % args.dest)
+        else:
+            log.error("please, specify the bmap file using --bmap option")
+            raise SystemExit(1)
     else:
         log.info("block map format version %s" % writer.bmap_version)
         log.info("%d blocks of size %d (%s), mapped %d blocks (%s or %.1f%%)" \
@@ -220,6 +223,10 @@ def parse_arguments():
     # The --bmap option
     text = "the block map file for the image"
     parser_copy.add_argument("--bmap", help = text)
+
+    # The --nobmap option
+    text = "allow copying without a bmap file"
+    parser_copy.add_argument("--nobmap", action="store_true", help = text)
 
     # The --no-verify option
     text = "do not verify the data checksum while writing"
