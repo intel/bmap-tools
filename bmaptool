@@ -33,6 +33,10 @@ all 4GiB of data. We say that it is a bit more than 100MiB because things like
 file-system meta-data (inode tables, superblocks, etc), partition table, etc
 also contribute to the mapped blocks and are also copied. """
 
+# Disable the following pylint recommendation:
+#   * Too many statements (R0915)
+# pylint: disable=R0915
+
 VERSION = "1.0"
 
 import argparse
