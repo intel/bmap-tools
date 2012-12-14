@@ -180,6 +180,7 @@ def _do_test(f_image, image_size, delete = True):
     creator = BmapCreate.BmapCreate(f_image, f_bmap2)
     creator.generate()
 
+    f_bmap2.seek(0)
     writer = BmapCopy.BmapCopy(f_image, f_copy, f_bmap2)
     writer.copy(False, True)
 
@@ -197,28 +198,12 @@ def _do_test(f_image, image_size, delete = True):
     assert _calculate_sha1(f_copy) == image_sha1
 
     #
-    # Pass 3: repeat pass 2 to make sure the same 'BmapCreate' and
-    # 'BmapCopy' objects can be used more than once.
-    #
-
-    f_bmap2.seek(0)
-    creator.generate()
-    f_bmap2.seek(0)
-    creator.generate()
-    writer.copy(True, False)
-    writer.set_progress_indicator(sys.stdout, "Done %d percent")
-    writer.copy(False, True)
-    writer.sync()
-    assert _calculate_sha1(f_copy) == image_sha1
-    _compare_holes(f_image, f_copy)
-    assert filecmp.cmp(f_bmap1.name, f_bmap2.name, False)
-
-    #
-    # Pass 4: test compressed files copying with bmap
+    # Pass 3: test compressed files copying with bmap
     #
 
     for compressed in _generate_compressed_files(f_image, delete = delete):
         # Test without setting the size
+        f_bmap1.seek(0)
         writer = BmapCopy.BmapCopy(compressed, f_copy, f_bmap1)
         writer.copy()
         assert _calculate_sha1(f_copy) == image_sha1

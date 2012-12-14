@@ -158,9 +158,6 @@ class BmapCopy:
     def _parse_bmap(self):
         """ Parse the bmap file and initialize the 'bmap_*' attributes. """
 
-        bmap_pos = self._f_bmap.tell()
-        self._f_bmap.seek(0)
-
         try:
             self._xml = ElementTree.parse(self._f_bmap)
         except  ElementTree.ParseError as err:
@@ -192,8 +189,6 @@ class BmapCopy:
             raise Error("Inconsistent bmap - image size does not match " \
                         "blocks count (%d bytes != %d blocks * %d bytes)" \
                         % (self.image_size, self.blocks_cnt, self.block_size))
-
-        self._f_bmap.seek(bmap_pos)
 
     def _open_destination_file(self):
         """ Open the destination file. """
@@ -459,12 +454,6 @@ class BmapCopy:
         upon return.  The 'verify' argument defines whether the SHA1 checksum
         has to be verified while copying. """
 
-        # Save file positions in order to restore them at the end
-        image_pos = self._f_image.tell()
-        dest_pos = self._f_dest.tell()
-        if self._f_bmap:
-            bmap_pos = self._f_bmap.tell()
-
         # Create the queue for block batches and start the reader thread, which
         # will read the image in batches and put the results to '_batch_queue'.
         self._batch_queue = Queue.Queue(self._batch_queue_len)
@@ -540,12 +529,6 @@ class BmapCopy:
 
         if sync:
             self.sync()
-
-        # Restore file positions
-        self._f_image.seek(image_pos)
-        self._f_dest.seek(dest_pos)
-        if self._f_bmap:
-            self._f_bmap.seek(bmap_pos)
 
     def sync(self):
         """ Synchronize the destination file to make sure all the data are
