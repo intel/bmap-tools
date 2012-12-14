@@ -126,20 +126,33 @@ class BmapCopy:
         else:
             self._progress_format = "Copied %d%%"
 
-    def _initialize_sizes(self, image_size):
-        """ This function is only used when the there is no bmap. It
-        initializes attributes like 'blocks_cnt', 'mapped_cnt', etc. Normally,
-        the values are read from the bmap file, but in this case they are just
-        set to something reasonable. """
+    def set_image_size(self, image_size):
+        """ Set image size, which is necessary in the following cases:
+            * The 'BmapCopy' class instance was initialized by a file-like
+              object of the image, not full path to the image
+            * The image was initialized by full path to the image, but the
+              image is compressed
 
+        In other cases the constructor of 'BmapCopy' automatically finds out
+        the image size, and it is not necessary to call this function.
+
+        Setting image size is necessary if you need a progress bar, otherwise
+        it is not necessary. However, it is recommended to always do this when
+        possible, because this adds several useful sanity checks. """
+
+        if self.image_size is not None and self.image_size != image_size:
+            raise Error("Cannot set image size to %d bytes, it is known to " \
+                        "be %d bytes (%s)" % (image_size, self.image_size,
+                                              self.image_size_human))
         self.image_size = image_size
         self.image_size_human = human_size(image_size)
         self.blocks_cnt = self.image_size + self.block_size - 1
         self.blocks_cnt /= self.block_size
-        self.mapped_cnt = self.blocks_cnt
-        self.mapped_size = self.image_size
-        self.mapped_size_human = self.image_size_human
 
+        if self.mapped_cnt is None:
+            self.mapped_cnt = self.blocks_cnt
+            self.mapped_size = self.image_size
+            self.mapped_size_human = self.image_size_human
 
     def _parse_bmap(self):
         """ Parse the bmap file and initialize the 'bmap_*' attributes. """
@@ -330,11 +343,11 @@ class BmapCopy:
             self.block_size = 4096
             self.mapped_percent = 100
 
-            # We can initialize size-related attributes only if we the image is
-            # uncompressed.
+            # We can initialize size-related attributes only if the image is
+            # not compressed.
             if not self._image_is_compressed:
                 image_size = os.fstat(self._f_image.fileno()).st_size
-                self._initialize_sizes(image_size)
+                self.set_image_size(image_size)
 
         if not self._image_is_compressed:
             self._validate_image_size()
@@ -563,7 +576,7 @@ class BmapCopy:
             # The image size was unknown up until now, probably because this is
             # a compressed image. Initialize the corresponding class attributes
             # now, when we know the size.
-            self._initialize_sizes(bytes_written)
+            self.set_image_size(bytes_written)
 
         # This is just a sanity check - we should have written exactly
         # 'mapped_cnt' blocks.
