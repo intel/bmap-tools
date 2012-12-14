@@ -33,7 +33,7 @@ class TransRead:
 
                 tar = tarfile.open(self.filepath, 'r')
                 # The tarball is supposed to contain only one single member
-                members = tar.getnames()
+                members = tar.getmembers()
                 if len(members) > 1:
                     raise Error("tarball '%s' contains more than one file" \
                                 % self.filepath)
@@ -42,6 +42,7 @@ class TransRead:
                                 % self.filepath)
 
                 self._transfile_obj = tar.extractfile(members[0])
+                self.size = members[0].size
             elif self.filepath.endswith('.gz'):
                 import gzip
 
