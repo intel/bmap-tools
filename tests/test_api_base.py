@@ -167,6 +167,12 @@ def _do_test(f_image, image_size, delete = True):
     # sparse file.
     _compare_holes(f_image.name, f_copy.name)
 
+    # And do another copy, but this time use 'set_image_size()'
+    writer = BmapCopy.BmapCopy(f_image.name, f_copy.name, f_bmap1.name)
+    writer.set_image_size(image_size)
+    writer.copy(True, False)
+    assert _calculate_sha1(f_copy) == image_sha1
+
     #
     # Pass 2: same as pass 1, but use file objects instead of paths
     #
@@ -183,6 +189,13 @@ def _do_test(f_image, image_size, delete = True):
     # Make sure the bmap files generated at pass 1 and pass 2 are identical
     assert filecmp.cmp(f_bmap1.name, f_bmap2.name, False)
 
+    # And do another time, but involve 'set_image_size()'
+    f_bmap2.seek(0)
+    writer = BmapCopy.BmapCopy(f_image, f_copy, f_bmap2)
+    writer.set_image_size(image_size)
+    writer.copy(False, False)
+    assert _calculate_sha1(f_copy) == image_sha1
+
     #
     # Pass 3: repeat pass 2 to make sure the same 'BmapCreate' and
     # 'BmapCopy' objects can be used more than once.
@@ -192,9 +205,8 @@ def _do_test(f_image, image_size, delete = True):
     creator.generate()
     f_bmap2.seek(0)
     creator.generate()
-    writer.progress_file = sys.stdout
     writer.copy(True, False)
-    writer.progress_format = "Done %d percent"
+    writer.set_progress_indicator(sys.stdout, "Done %d percent")
     writer.copy(False, True)
     writer.sync()
     assert _calculate_sha1(f_copy) == image_sha1
@@ -206,21 +218,29 @@ def _do_test(f_image, image_size, delete = True):
     #
 
     for compressed in _generate_compressed_files(f_image, delete = delete):
+        # Test without setting the size
         writer = BmapCopy.BmapCopy(compressed, f_copy, f_bmap1)
         writer.copy()
+        assert _calculate_sha1(f_copy) == image_sha1
 
+        # Test with setting the size and the progress bar
+        writer = BmapCopy.BmapCopy(compressed, f_copy.name, f_bmap1.name)
+        writer.set_progress_indicator(sys.stderr, None)
+        writer.set_image_size(image_size)
+        writer.copy()
         assert _calculate_sha1(f_copy) == image_sha1
 
     #
-    # Pass 5: copy the sparse file without bmap and make sure it is
-    # identical to the original file
-    #
+    # Pass 5: copy without bmap and make sure it is identical to the original
+    # file.
 
     writer = BmapCopy.BmapCopy(f_image, f_copy.name)
     writer.copy(True, True)
     assert _calculate_sha1(f_copy) == image_sha1
 
+    # Another time with setting image size
     writer = BmapCopy.BmapCopy(f_image, f_copy)
+    writer.set_image_size(image_size)
     writer.copy(False, True)
     assert _calculate_sha1(f_copy) == image_sha1
 
@@ -231,7 +251,12 @@ def _do_test(f_image, image_size, delete = True):
     for compressed in _generate_compressed_files(f_image, delete = delete):
         writer = BmapCopy.BmapCopy(compressed, f_copy)
         writer.copy()
+        assert _calculate_sha1(f_copy) == image_sha1
 
+        # Another time with setting image size
+        writer = BmapCopy.BmapCopy(compressed, f_copy)
+        writer.set_image_size(image_size)
+        writer.copy()
         assert _calculate_sha1(f_copy) == image_sha1
 
     # Close temporary files, which will also remove them
