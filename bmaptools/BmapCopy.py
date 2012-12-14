@@ -266,8 +266,16 @@ class BmapCopy:
             self._f_image = TransRead.TransRead(image)
             real_image_size = self._f_image.size
 
-        st_mode = os.fstat(self._f_dest.fileno()).st_mode
-        self._dest_is_regfile = stat.S_ISREG(st_mode)
+        st_data = os.fstat(self._f_dest.fileno())
+        self._dest_is_regfile = stat.S_ISREG(st_data.st_mode)
+
+        # Special quirk for /dev/null which does not support fsync()
+        if stat.S_ISCHR(st_data.st_mode) and \
+           os.major(st_data.st_rdev) == 1 and \
+           os.minor(st_data.st_rdev) == 3:
+            self._dest_supports_fsync = False
+        else:
+            self._dest_supports_fsync = True
 
         if bmap:
             if hasattr(bmap, "read"):
@@ -534,11 +542,12 @@ class BmapCopy:
         """ Synchronize the destination file to make sure all the data are
         actually written to the disk. """
 
-        try:
-            os.fsync(self._f_dest.fileno()),
-        except OSError as err:
-            raise Error("cannot synchronize '%s': %s " \
-                        % (self._dest_path, err.strerror))
+        if self._dest_supports_fsync:
+            try:
+                os.fsync(self._f_dest.fileno()),
+            except OSError as err:
+                raise Error("cannot synchronize '%s': %s " \
+                            % (self._dest_path, err.strerror))
 
 
 class BmapBdevCopy(BmapCopy):
