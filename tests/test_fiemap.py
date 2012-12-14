@@ -112,7 +112,7 @@ class TestCreateCopy(unittest.TestCase):
 
         iterator = tests.helpers.generate_test_files(max_size, directory,
                                                      delete)
-        for f_image, mapped, unmapped in iterator:
+        for f_image, _, mapped, unmapped in iterator:
             _do_test(f_image, mapped, unmapped)
             _do_test(f_image, mapped, unmapped, Fiemap.MIN_BUFFER_SIZE)
             _do_test(f_image, mapped, unmapped, Fiemap.MIN_BUFFER_SIZE * 2)

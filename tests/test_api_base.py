@@ -117,14 +117,15 @@ def _calculate_sha1(file_obj):
 
     return hash_obj.hexdigest()
 
-def _do_test(f_image, delete = True):
+def _do_test(f_image, image_size, delete = True):
     """" A basic test for the bmap creation and copying functionality. It first
     generates a bmap for file object 'f_image', and then copies the sparse file
     to a different file, and then checks that the original file and the copy
     are identical.
 
-    The 'delete' argument specifies whether the temporary files that this
-    function creates have to be automatically deleted. """
+    The 'image_size' argument is size of the image in bytes. The 'delete'
+    argument specifies whether the temporary files that this function creates
+    have to be automatically deleted. """
 
     # Make sure the temporary files start with the same name as 'f_image' in
     # order to simplify debugging.
@@ -255,5 +256,5 @@ class TestCreateCopy(unittest.TestCase):
 
         iterator = tests.helpers.generate_test_files(delete = delete,
                                                      directory = directory)
-        for f_image, _, _ in iterator:
-            _do_test(f_image, delete = delete)
+        for f_image, size, _, _ in iterator:
+            _do_test(f_image, size, delete = delete)

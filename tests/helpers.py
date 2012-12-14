@@ -91,8 +91,9 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
 
     The generator yields tuples consisting of the following elements:
       1. the test file object
-      2. a list of mapped block ranges, same as 'Fiemap.get_mapped_ranges()'
-      3. a list of unmapped block ranges (holes), same as
+      2. file size in bytes
+      3. a list of mapped block ranges, same as 'Fiemap.get_mapped_ranges()'
+      4. a list of unmapped block ranges (holes), same as
          'Fiemap.get_unmapped_ranges()' """
 
     #
@@ -105,7 +106,7 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
                                            suffix = ".img")
     block_size = BmapHelpers.get_block_size(file_obj)
     file_obj.truncate(block_size)
-    yield (file_obj, [], [(0, 0)])
+    yield (file_obj, block_size, [], [(0, 0)])
     file_obj.close()
 
     # A block size + 1 byte hole
@@ -113,7 +114,7 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
                                            delete = delete, dir = directory,
                                            suffix = ".img")
     file_obj.truncate(block_size + 1)
-    yield (file_obj, [], [(0, 1)])
+    yield (file_obj, block_size + 1, [], [(0, 1)])
     file_obj.close()
 
     # A block size - 1 byte hole
@@ -121,7 +122,7 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
                                            delete = delete, dir = directory,
                                            suffix = ".img")
     file_obj.truncate(block_size - 1)
-    yield (file_obj, [], [(0, 0)])
+    yield (file_obj, block_size - 1, [], [(0, 0)])
     file_obj.close()
 
     # A 1-byte hole
@@ -129,7 +130,7 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
                                            delete = delete, dir = directory,
                                            suffix = ".img")
     file_obj.truncate(1)
-    yield (file_obj, [], [(0, 0)])
+    yield (file_obj, 1, [], [(0, 0)])
     file_obj.close()
 
     # And 10 holes of random size
@@ -140,7 +141,7 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
                                                prefix = "rand_hole_%d_" % i)
         file_obj.truncate(size)
         blocks_cnt = (size + block_size - 1) / block_size
-        yield (file_obj, [], [(0, blocks_cnt - 1)])
+        yield (file_obj, size, [], [(0, blocks_cnt - 1)])
         file_obj.close()
 
     #
@@ -152,7 +153,7 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
                                            delete = delete, dir = directory,
                                            suffix = ".img")
     mapped, unmapped = _create_random_sparse_file(file_obj, max_size)
-    yield (file_obj, mapped, unmapped)
+    yield (file_obj, max_size, mapped, unmapped)
     file_obj.close()
 
     # The maximum size + 1 byte
@@ -160,7 +161,7 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
                                            delete = delete, dir = directory,
                                            suffix = ".img")
     mapped, unmapped = _create_random_sparse_file(file_obj, max_size + 1)
-    yield (file_obj, mapped, unmapped)
+    yield (file_obj, max_size + 1, mapped, unmapped)
     file_obj.close()
 
     # The maximum size - 1 byte
@@ -168,7 +169,7 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
                                            delete = delete, dir = directory,
                                            suffix = ".img")
     mapped, unmapped = _create_random_sparse_file(file_obj, max_size - 1)
-    yield (file_obj, mapped, unmapped)
+    yield (file_obj, max_size - 1, mapped, unmapped)
     file_obj.close()
 
     # And 10 files of random size
@@ -178,7 +179,7 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
                                                delete = delete, dir = directory,
                                                prefix = "sparse_%d_" % i)
         mapped, unmapped = _create_random_sparse_file(file_obj, size)
-        yield (file_obj, mapped, unmapped)
+        yield (file_obj, size, mapped, unmapped)
         file_obj.close()
 
     #
@@ -190,7 +191,7 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
                                            delete = delete, dir = directory,
                                            suffix = ".img")
     _create_random_file(file_obj, block_size)
-    yield (file_obj, [(0, 0)], [])
+    yield (file_obj, block_size, [(0, 0)], [])
     file_obj.close()
 
     # A block size + 1 byte file
@@ -198,7 +199,7 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
                                            delete = delete, dir = directory,
                                            suffix = ".img")
     _create_random_file(file_obj, block_size + 1)
-    yield (file_obj, [(0, 1)], [])
+    yield (file_obj, block_size + 1, [(0, 1)], [])
     file_obj.close()
 
     # A block size - 1 byte file
@@ -206,7 +207,7 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
                                            delete = delete, dir = directory,
                                            suffix = ".img")
     _create_random_file(file_obj, block_size - 1)
-    yield (file_obj, [(0, 0)], [])
+    yield (file_obj, block_size - 1, [(0, 0)], [])
     file_obj.close()
 
     # A 1-byte file
@@ -214,7 +215,7 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
                                            delete = delete, dir = directory,
                                            suffix = ".img")
     _create_random_file(file_obj, 1)
-    yield (file_obj, [(0, 0)], [])
+    yield (file_obj, 1, [(0, 0)], [])
     file_obj.close()
 
     # And 10 mapped files of random size
@@ -226,5 +227,5 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
         file_obj.truncate(size)
         _create_random_file(file_obj, size)
         blocks_cnt = (size + block_size - 1) / block_size
-        yield (file_obj, [(0, blocks_cnt - 1)], [])
+        yield (file_obj, size, [(0, blocks_cnt - 1)], [])
         file_obj.close()
