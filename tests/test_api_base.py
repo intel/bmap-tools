@@ -144,7 +144,7 @@ def _copy_image(image, f_dest, f_bmap, image_sha1, image_size):
     writer = BmapCopy.BmapCopy(f_image, f_dest, f_bmap, image_size)
     # Randomly decide whether we want the progress bar or not
     if bool(random.getrandbits(1)):
-        writer.set_progress_indicator(sys.stderr, None)
+        writer.set_progress_indicator(sys.stdout, None)
     writer.copy(bool(random.getrandbits(1)), bool(random.getrandbits(1)))
 
     # Compare the original file and the copy are identical
