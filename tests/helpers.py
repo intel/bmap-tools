@@ -224,7 +224,6 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
         file_obj = tempfile.NamedTemporaryFile("wb+", suffix = ".img",
                                                delete = delete, dir = directory,
                                                prefix = "rand_mapped_%d_" % i)
-        file_obj.truncate(size)
         _create_random_file(file_obj, size)
         blocks_cnt = (size + block_size - 1) / block_size
         yield (file_obj, size, [(0, blocks_cnt - 1)], [])
