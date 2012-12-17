@@ -58,6 +58,16 @@ def _generate_compressed_files(file_obj, delete = True):
     # Put the temporary files in the directory with 'file_obj'
     directory = os.path.dirname(file_obj.name)
 
+    # Generate an uncompressed version of the file
+    tmp_file_obj = tempfile.NamedTemporaryFile('wb+', prefix = prefix,
+                                               delete = delete, dir = directory,
+                                               suffix = '.uncompressed')
+    file_obj.seek(0)
+    shutil.copyfileobj(file_obj, tmp_file_obj)
+    tmp_file_obj.flush()
+    yield tmp_file_obj.name
+    tmp_file_obj.close()
+
     # Generate a .bz2 version of the file
     tmp_file_obj = tempfile.NamedTemporaryFile('wb+', prefix = prefix,
                                                delete = delete, dir = directory,
