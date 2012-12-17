@@ -221,6 +221,11 @@ def _do_test(f_image, image_size, delete = True):
         # Test without setting the size
         _copy_image(compressed, f_copy, f_bmap1, image_sha1, None)
 
+        # Append a "file:" prefixe to make BmapCopy use urllib
+        compressed = "file:" + compressed
+        _copy_image(compressed, f_copy, f_bmap1, image_sha1, image_size)
+        _copy_image(compressed, f_copy, f_bmap1, image_sha1, None)
+
     #
     # Pass 5: copy without bmap and make sure it is identical to the original
     # file.
@@ -236,6 +241,10 @@ def _do_test(f_image, image_size, delete = True):
         _copy_image(compressed, f_copy, f_bmap1, image_sha1, image_size)
 
         # Test without setting the size
+        _copy_image(compressed, f_copy, f_bmap1, image_sha1, None)
+
+        # Append a "file:" prefixe to make BmapCopy use urllib
+        _copy_image(compressed, f_copy, f_bmap1, image_sha1, image_size)
         _copy_image(compressed, f_copy, f_bmap1, image_sha1, None)
 
     # Close temporary files, which will also remove them
