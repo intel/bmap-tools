@@ -261,4 +261,5 @@ class TestCreateCopy(unittest.TestCase):
         iterator = tests.helpers.generate_test_files(delete = delete,
                                                      directory = directory)
         for f_image, image_size, _, _ in iterator:
+            assert image_size == os.path.getsize(f_image.name)
             _do_test(f_image, image_size, delete = delete)
