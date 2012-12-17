@@ -33,10 +33,6 @@ all 4GiB of data. We say that it is a bit more than 100MiB because things like
 file-system meta-data (inode tables, superblocks, etc), partition table, etc
 also contribute to the mapped blocks and are also copied. """
 
-# Disable the following pylint recommendation:
-#   * Too many statements (R0915)
-# pylint: disable=R0915
-
 VERSION = "1.0"
 
 import argparse
@@ -45,39 +41,91 @@ import os
 import stat
 import time
 import logging
-from bmaptools import BmapCreate, BmapCopy, BmapHelpers
+from bmaptools import BmapCreate, BmapCopy, BmapHelpers, TransRead
 
-def copy_command(args, log):
-    """ Copy an image to a block device or a regular file using bmap. """
+def copy_command_open_blkdev(path, log):
+    """ Open a block device specified by 'path' in exclusive mode. Returns
+    opened file object. """
+
+    try:
+        descriptor = os.open(path, os.O_WRONLY | os.O_EXCL)
+    except OSError as err:
+        log.error("cannot open block device '%s' in exclusive mode: %s" \
+                  % (path, err))
+        raise SystemExit(1)
+
+    # Turn the block device file descriptor into a file object
+    try:
+        file_obj = os.fdopen(descriptor, "wb")
+    except OSError as err:
+        os.close(descriptor)
+        log.error("cannot open block device '%s': %s" % (path, err))
+        raise SystemExit(1)
+
+    return file_obj
+
+def copy_command_open_all(args, log):
+    """ Open the image/bmap/destination files for the "copy" command. Returns a
+    tuple of 5 elements:
+        1 file-like object for the image
+        2 file object for the destination file
+        3 file-like object for the bmap
+        4 image size in bytes
+        5 'True' if the destination file is a block device and 'False' otherwise
+    """
+
+    # Open the image file using the TransRead module, which will automatically
+    # recognize whether it is compressed or whether file path is an URL, etc.
+    try:
+        image_obj = TransRead.TransRead(args.image)
+    except TransRead.Error as err:
+        log.error("cannot open image: %s" % str(err))
+        raise SystemExit(1)
+
+    # Do the same for the bmap file
+    if args.bmap:
+        try:
+            bmap_obj = TransRead.TransRead(args.bmap)
+        except TransRead.Error as err:
+            log.error("cannot open bmap: %s" % str(err))
+            raise SystemExit(1)
+    else:
+        bmap_obj = None
 
     # Try to open the destination file. If it does not exist, a new regular
     # file will be created. If it exists and it is a regular file - it'll be
     # truncated. If this is a block device, it'll just be opened.
     try:
-        dest_file = open(args.dest, 'wb+')
+        dest_obj = open(args.dest, 'wb+')
     except IOError as err:
         log.error("cannot open destination file '%s': %s" \
                   % (args.dest, err))
         raise SystemExit(1)
 
-    dest_file.close()
-
     # Check whether the destination file is a block device
-    try:
-        is_block_device = stat.S_ISBLK(os.stat(args.dest).st_mode)
-    except OSError as err:
-        log.error("cannot access destination file '%s': %s" \
-                   % (args.bdev, err.strerror))
-        raise SystemExit(1)
+    dest_is_blkdev = stat.S_ISBLK(os.fstat(dest_obj.fileno()).st_mode)
+    if dest_is_blkdev:
+        dest_obj.close()
+        dest_obj = copy_command_open_blkdev(args.dest, log)
 
+    return (image_obj, dest_obj, bmap_obj, image_obj.size, dest_is_blkdev)
+
+
+def copy_command(args, log):
+    """ Copy an image to a block device or a regular file using bmap. """
+
+    image_obj, dest_obj, bmap_obj, image_size, dest_is_blkdev = \
+                                          copy_command_open_all(args, log)
     try:
-        if is_block_device:
-            # For block devices, use the specialized class
+        if dest_is_blkdev:
             destination_type = "block device"
-            writer = BmapCopy.BmapBdevCopy(args.image, args.dest, args.bmap)
+            # For block devices, use the specialized class
+            writer = BmapCopy.BmapBdevCopy(image_obj, dest_obj, bmap_obj,
+                                           image_size)
         else:
             destination_type = "file"
-            writer = BmapCopy.BmapCopy(args.image, args.dest, args.bmap)
+            writer = BmapCopy.BmapCopy(image_obj, dest_obj, bmap_obj,
+                                       image_size)
     except BmapCopy.Error as err:
         log.error(str(err))
         raise SystemExit(1)
@@ -124,6 +172,11 @@ def copy_command(args, log):
     log.info("copying time: %s, copying speed %s/sec" \
              % (BmapHelpers.human_time(copying_time), \
                 BmapHelpers.human_size(copying_speed)))
+
+    dest_obj.close()
+    if bmap_obj:
+        bmap_obj.close()
+    image_obj.close()
 
 def create_command(args, log):
     """ Generate block map (AKA bmap) for an image. The idea is that while
@@ -217,7 +270,7 @@ def parse_arguments():
 
     # The first positional argument - image file
     text = "the image file to copy. Supported formats: uncompressed, " + \
-           ", ".join(BmapCopy.SUPPORTED_IMAGE_FORMATS)
+           ", ".join(TransRead.SUPPORTED_COMPRESSION_TYPES)
     parser_copy.add_argument("image", help = text)
 
     # The second positional argument - block device node

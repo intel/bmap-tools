@@ -32,11 +32,7 @@ also contribute to the mapped blocks and are also copied. """
 
 # Disable the following pylint recommendations:
 #   * Too many instance attributes (R0902)
-#   * Too many statements (R0915)
-#   * Too many branches (R0912)
 # pylint: disable=R0902
-# pylint: disable=R0915
-# pylint: disable=R0912
 
 import os
 import stat
@@ -46,10 +42,6 @@ import Queue
 import thread
 from xml.etree import ElementTree
 from bmaptools.BmapHelpers import human_size
-from bmaptools import TransRead
-
-# A list of supported image formats
-SUPPORTED_IMAGE_FORMATS = TransRead.SUPPORTED_COMPRESSION_TYPES
 
 # The highest supported bmap format version
 SUPPORTED_BMAP_VERSION = 1
@@ -68,33 +60,30 @@ class BmapCopy:
     * full path or a file-like object of the image to copy
     * full path or a file-like object of the destination file copy the image to
     * full path or a file-like object of the bmap file (optional)
+    * image size in bytes (optional)
 
     Although the main purpose of this class is to use bmap, the bmap is not
     required, and if it was not provided then the entire image will be copied
     to the destination file.
 
-    The image file may either be an uncompressed raw image or a compressed
-    image. Compression type is defined by the image file extension.  Supported
-    types are listed by 'SUPPORTED_IMAGE_FORMATS'.
+    TODO: describe requirements for the file-like objects
 
-    IMPORTANT: if the image is given as a file-like object, the compression
-    type recognition is not performed - the file-like object's 'read()' method
-    is used directly instead.
+    When the bmap is provided, it is not necessary to specify image size,
+    because the size is contained in the bmap. Otherwise, it is benefitial to
+    specify the size because it enables extra sanity checks and makes it
+    possible to provide the progress bar.
 
-    Once an instance of 'BmapCopy' is created, all the 'bmap_*' attributes are
-    initialized and available. They are read from the bmap.
+    When the image size is known either from the bmap or the caller specified
+    it to the class constructor, all the image geometry description attributes
+    ('blocks_cnt', etc) are initialized by the class constructor and available
+    for the user.
 
-    However, if bmap was not provided, this is not always the case and some of
-    the 'bmap_*' attributes are not initialize by the class constructor.
-    Instead, they are initialized only in the 'copy()' method. The reason for
-    this is that when bmap is absent, 'BmapCopy' uses sensible fall-back values
-    for the 'bmap_*' attributes assuming the entire image is "mapped". And if
-    the image is compressed, it cannot easily find out the image size. Thus,
-    this is postponed until the 'copy()' method decompresses the image for the
-    first time.
+    However, when the size is not known, some of  the image geometry
+    description attributes are not initialized by the class constructor.
+    Instead, they are initialized only by the 'copy()' method.
 
-    The 'copy()' method implements the copying. You may choose whether to
-    verify the SHA1 checksum while copying or not.  Note, this is done only in
+    The 'copy()' method implements image copying. You may choose whether to
+    verify the SHA1 checksum while copying or not. Note, this is done only in
     case of bmap-based copying and only if bmap contains the SHA1 checksums
     (e.g., bmap version 1.0 did not have SHA1 checksums).
 
@@ -107,7 +96,7 @@ class BmapCopy:
     It is possible to have a simple progress indicator while copying the image.
     Use the 'set_progress_indicator()' method.
 
-    You can copy only onces with an instance of this class. This means that in
+    You can copy only once with an instance of this class. This means that in
     order to copy the image for the second time, you have to create a new class
     instance. """
 
@@ -120,10 +109,7 @@ class BmapCopy:
 
         The 'format_string' argument is the format string for the progress
         indicator. It has to contain a single '%d' placeholder which will be
-        substitutes with copied data in percent.
-
-        The progress indicator is not printed when copying a compressed image
-        without bmap, because the file size is unknown in this case. """
+        substitutes with copied data in percent. """
 
         self._progress_file = file_obj
         if format_string:
@@ -131,24 +117,15 @@ class BmapCopy:
         else:
             self._progress_format = "Copied %d%%"
 
-    def set_image_size(self, image_size):
-        """ Set image size, which is necessary in the following cases:
-            * The 'BmapCopy' class instance was initialized by a file-like
-              object of the image, not full path to the image
-            * The image was initialized by full path to the image, but the
-              image is compressed
-
-        In other cases the constructor of 'BmapCopy' automatically finds out
-        the image size, and it is not necessary to call this function.
-
-        Setting image size is necessary if you need a progress bar, otherwise
-        it is not necessary. However, it is recommended to always do this when
-        possible, because this adds several useful sanity checks. """
+    def _set_image_size(self, image_size):
+        """ Set image size and initialize various other geometry-related
+        attributes. """
 
         if self.image_size is not None and self.image_size != image_size:
             raise Error("cannot set image size to %d bytes, it is known to " \
                         "be %d bytes (%s)" % (image_size, self.image_size,
                                               self.image_size_human))
+
         self.image_size = image_size
         self.image_size_human = human_size(image_size)
         self.blocks_cnt = self.image_size + self.block_size - 1
@@ -160,7 +137,8 @@ class BmapCopy:
             self.mapped_size_human = self.image_size_human
 
     def _parse_bmap(self):
-        """ Parse the bmap file and initialize the 'bmap_*' attributes. """
+        """ Parse the bmap file and initialize corresponding class instance
+        attributs. """
 
         try:
             self._xml = ElementTree.parse(self._f_bmap)
@@ -194,35 +172,13 @@ class BmapCopy:
                         "blocks count (%d bytes != %d blocks * %d bytes)" \
                         % (self.image_size, self.blocks_cnt, self.block_size))
 
-    def _open_destination_file(self):
-        """ Open the destination file. """
-
-        try:
-            self._f_dest = open(self._dest_path, 'w')
-        except IOError as err:
-            raise Error("cannot open destination file '%s': %s" \
-                        % (self._dest_path, err))
-
-        self._f_dest_needs_close = True
-
-    def _open_bmap_file(self):
-        """ Open the bmap file. """
-
-        try:
-            self._f_bmap = open(self._bmap_path, 'r')
-        except IOError as err:
-            raise Error("cannot open bmap file '%s': %s" \
-                        % (self._bmap_path, err.strerror))
-
-        self._f_bmap_needs_close = True
-
-    def __init__(self, image, dest, bmap = None):
+    def __init__(self, image, dest, bmap = None, image_size = None):
         """ The class constructor. The parameters are:
-            image - full path or file object of the image which should be copied
-            dest  - full path or file-like object of the destination file to
-                    copy the image to
-            bmap  - full path or file-like object of the bmap file to use for
-                    copying """
+            image      - file-like object of the image which should be copied
+            dest       - file-like object of the destination file to copy the
+                         image to
+            bmap       - file-like object of the bmap file to use for copying
+            image_size - size of the image in bytes """
 
         self._xml = None
 
@@ -242,10 +198,6 @@ class BmapCopy:
         self.mapped_size_human = None
         self.mapped_percent = None
 
-        self._f_dest_needs_close = False
-        self._f_image_needs_close = False
-        self._f_bmap_needs_close = False
-
         self._f_bmap = None
         self._f_bmap_path = None
 
@@ -254,22 +206,11 @@ class BmapCopy:
         self._progress_format = None
         self.set_progress_indicator(None, None)
 
-        if hasattr(dest, "write"):
-            self._f_dest = dest
-            self._dest_path = dest.name
-        else:
-            self._dest_path = dest
-            self._open_destination_file()
+        self._f_image = image
+        self._image_path = image.name
 
-        if hasattr(image, "read"):
-            self._f_image = image
-            self._image_path = image.name
-            real_image_size = None
-        else:
-            self._image_path = image
-            self._f_image = TransRead.TransRead(image)
-            real_image_size = self._f_image.size
-
+        self._f_dest = dest
+        self._dest_path = dest.name
         st_data = os.fstat(self._f_dest.fileno())
         self._dest_is_regfile = stat.S_ISREG(st_data.st_mode)
 
@@ -282,13 +223,8 @@ class BmapCopy:
             self._dest_supports_fsync = True
 
         if bmap:
-            if hasattr(bmap, "read"):
-                self._f_bmap = bmap
-                self._bmap_path = bmap.name
-            else:
-                self._bmap_path = bmap
-                self._open_bmap_file()
-
+            self._f_bmap = bmap
+            self._bmap_path = bmap.name
             self._parse_bmap()
         else:
             # There is no bmap. Initialize user-visible attributes to something
@@ -297,20 +233,10 @@ class BmapCopy:
             self.block_size = 4096
             self.mapped_percent = 100
 
-        if real_image_size:
-            self.set_image_size(real_image_size)
+        if image_size:
+            self._set_image_size(image_size)
 
         self._batch_blocks = self._batch_bytes / self.block_size
-
-    def __del__(self):
-        """ The class destructor which closes the opened files. """
-
-        if self._f_image_needs_close:
-            self._f_image.close()
-        if self._f_dest_needs_close:
-            self._f_dest.close()
-        if self._f_bmap_needs_close:
-            self._f_bmap.close()
 
     def _update_progress(self, blocks_written):
         """ Print the progress indicator if the mapped area size is known and
@@ -347,9 +273,8 @@ class BmapCopy:
             missing.
 
         If there is no bmap file, the generator just yields a single range
-        for entire image file. If the image size is unknown (the image is
-        compressed), the generator infinitely yields continuous ranges of
-        size '_batch_blocks'. """
+        for entire image file. If the image size is unknown, the generator
+        infinitely yields continuous ranges of size '_batch_blocks'. """
 
         if not self._f_bmap:
             # We do not have the bmap, yield a tuple with all blocks
@@ -515,10 +440,8 @@ class BmapCopy:
             self._update_progress(blocks_written)
 
         if not self.image_size:
-            # The image size was unknown up until now, probably because this is
-            # a compressed image. Initialize the corresponding class attributes
-            # now, when we know the size.
-            self.set_image_size(bytes_written)
+            # The image size was unknown up until now, set it
+            self._set_image_size(bytes_written)
 
         # This is just a sanity check - we should have written exactly
         # 'mapped_cnt' blocks.
@@ -559,31 +482,6 @@ class BmapBdevCopy(BmapCopy):
     image to a block device. Unlike the base 'BmapCopy' class, this class does
     various optimizations specific to block devices, e.g., switching to the
     'noop' I/O scheduler. """
-
-    def _open_destination_file(self):
-        """ Open the block device in exclusive mode. """
-
-        try:
-            self._f_dest = os.open(self._dest_path, os.O_WRONLY | os.O_EXCL)
-        except OSError as err:
-            raise Error("cannot open block device '%s' in exclusive mode: %s" \
-                        % (self._dest_path, err.strerror))
-
-        try:
-            os.fstat(self._f_dest).st_mode
-        except OSError as err:
-            raise Error("cannot access block device '%s': %s" \
-                        % (self._dest_path, err.strerror))
-
-        # Turn the block device file descriptor into a file object
-        try:
-            self._f_dest = os.fdopen(self._f_dest, "wb")
-        except OSError as err:
-            os.close(self._f_dest)
-            raise Error("cannot open block device '%s': %s" \
-                        % (self._dest_path, err))
-
-        self._f_dest_needs_close = True
 
     def _tune_block_device(self):
         """" Tune the block device for better performance:
@@ -678,8 +576,7 @@ class BmapBdevCopy(BmapCopy):
         self._old_scheduler_value = None
         self._old_max_ratio_value = None
 
-        # If the image size is known (i.e., it is not compressed) - check that
-        # it fits the block device.
+        # If the image size is known, check that it fits the block device
         if self.image_size:
             try:
                 bdev_size = os.lseek(self._f_dest.fileno(), 0, os.SEEK_END)
