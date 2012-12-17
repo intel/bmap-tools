@@ -163,9 +163,9 @@ class TransRead:
         compressed. """
 
         try:
-            if self.filepath.endswith('.tar.gz') \
-               or self.filepath.endswith('.tar.bz2') \
-               or self.filepath.endswith('.tgz'):
+            if self.name.endswith('.tar.gz') \
+               or self.name.endswith('.tar.bz2') \
+               or self.name.endswith('.tgz'):
                 import tarfile
 
                 tar = tarfile.open(fileobj = self._file_obj, mode = 'r')
@@ -173,19 +173,19 @@ class TransRead:
                 members = tar.getmembers()
                 if len(members) > 1:
                     raise Error("tarball '%s' contains more than one file" \
-                                % self.filepath)
+                                % self.name)
                 elif len(members) == 0:
                     raise Error("tarball '%s' is empty (no files)" \
-                                % self.filepath)
+                                % self.name)
 
                 self._transfile_obj = tar.extractfile(members[0])
                 self.size = members[0].size
-            elif self.filepath.endswith('.gz'):
+            elif self.name.endswith('.gz'):
                 import gzip
 
                 self._transfile_obj = gzip.GzipFile(fileobj = self._file_obj,
                                                     mode = 'rb')
-            elif self.filepath.endswith('.bz2'):
+            elif self.name.endswith('.bz2'):
                 self._transfile_obj = _Bzip2Read(self._file_obj)
             else:
                 self.is_compressed = False
@@ -193,7 +193,7 @@ class TransRead:
                 self.size = os.fstat(self._file_obj.fileno()).st_size
                 self._file_obj = None
         except IOError as err:
-            raise Error("cannot open file '%s': %s" % (self.filepath, err))
+            raise Error("cannot open file '%s': %s" % (self.name, err))
 
     def close(self):
         """ Close the file-like object. """
@@ -204,20 +204,20 @@ class TransRead:
         """ Class constructor. The 'filepath' argument is the full path to the
         file to read transparently. """
 
-        self.filepath = filepath
+        self.name = filepath
         self.size = None
         self.is_compressed = True
 
         self._transfile_obj = None
 
         try:
-            self._file_obj = open(filepath, "rb")
+            self._file_obj = open(self.name, "rb")
         except IOError as err:
-            raise Error("cannot open file '%s': %s" % (filepath, err))
+            raise Error("cannot open file '%s': %s" % (self.name, err))
 
         st_mode = os.fstat(self._file_obj.fileno()).st_mode
         if not stat.S_ISREG(st_mode):
-            raise Error("file '%s' is not a regular file" % self.filepath)
+            raise Error("file '%s' is not a regular file" % self.name)
 
         self._open_compressed_file()
 
