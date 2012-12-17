@@ -105,7 +105,11 @@ class BmapCopy:
     'SUPPORTED_BMAP_VERSION'.
 
     It is possible to have a simple progress indicator while copying the image.
-    Use the 'set_progress_indicator()' method. """
+    Use the 'set_progress_indicator()' method.
+
+    You can copy only onces with an instance of this class. This means that in
+    order to copy the image for the second time, you have to create a new class
+    instance. """
 
     def set_progress_indicator(self, file_obj, format_string):
         """ Setup the progress indicator which shows how much data has been
