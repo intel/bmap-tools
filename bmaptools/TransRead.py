@@ -3,9 +3,6 @@ decompress them on-the-fly if needed. Remote files are read using urllib2.
 Supported compression types are: 'bz2', 'gz', 'tar.gz', 'tgz', 'tar.bz2'. """
 
 import os
-import stat
-import types
-import urllib
 import errno
 
 # A list of supported compression types
