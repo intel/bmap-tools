@@ -64,6 +64,34 @@ def copy_command_open_blkdev(path, log):
 
     return file_obj
 
+def find_and_open_bmap(image_path):
+    """ When the user does not specify the bmap file, we try to find it at the
+    same place where the image file is located. We search for a file with the
+    same path and basename, but with a ".bmap" extension. Since the image may
+    contain more than one extension (e.g., image.raw.bz2), try to remove them
+    one-by-one.
+
+    This function returns a file-like object for the bmap file if it has been
+    found, and 'None' otherwise. """
+
+    bmap_path = None
+
+    while True:
+        bmap_path = image_path + ".bmap"
+
+        try:
+            bmap_obj = TransRead.TransRead(bmap_path)
+            bmap_obj.close()
+            break
+        except TransRead.Error as err:
+            pass
+
+        image_path, ext = os.path.splitext(image_path)
+        if ext == '':
+            break
+
+    return bmap_path
+
 def copy_command_open_all(args, log):
     """ Open the image/bmap/destination files for the "copy" command. Returns a
     tuple of 5 elements:
@@ -82,15 +110,20 @@ def copy_command_open_all(args, log):
         log.error("cannot open image: %s" % str(err))
         raise SystemExit(1)
 
-    # Do the same for the bmap file
-    if args.bmap:
+    # Open the bmap file. Try to discover the bmap file automatically if it
+    # was not specified.
+    bmap_path = args.bmap
+    if not bmap_path:
+        bmap_path = find_and_open_bmap(args.image)
+        if bmap_path:
+            log.info("discovered bmap file '%s'" % bmap_path)
+
+    if bmap_path:
         try:
-            bmap_obj = TransRead.TransRead(args.bmap)
+            bmap_obj = TransRead.TransRead(bmap_path)
         except TransRead.Error as err:
-            log.error("cannot open bmap: %s" % str(err))
+            log.error("cannot open bmap file '%s': %s" % (bmap_path, str(err)))
             raise SystemExit(1)
-    else:
-        bmap_obj = None
 
     # Try to open the destination file. If it does not exist, a new regular
     # file will be created. If it exists and it is a regular file - it'll be
@@ -134,7 +167,7 @@ def copy_command(args, log):
     writer.set_progress_indicator(sys.stderr, "bmaptool: info: %d%% copied")
 
     start_time = time.time()
-    if not args.bmap:
+    if not bmap_obj:
         if args.nobmap:
             log.info("no bmap given, copy entire image to '%s'" % args.dest)
         else:

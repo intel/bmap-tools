@@ -1,7 +1,3 @@
-1. Make bmaptool fail if --bmap option was not specified, and allow bmap-less
-   copying only if --nobmap option is specified.
-2. Try to automatically find for the bmap file in the same directory where the
-   image is stored.
 3. Support URL paths to the image and bmap.
 4. Add a real man page to the project.
 5. In block device optimizations - print a warning when something cannot be
