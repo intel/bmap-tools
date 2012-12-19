@@ -243,9 +243,10 @@ class TransRead:
         if self._file_obj:
             self._file_obj.close()
 
-    def __getattr__(self, name):
-        """ Called for all attributes that do not exist in the 'TransRead'
-        class. We are pretending to be file-like objects, so we just return the
-        attributes of the '_transfile_obj' file-like object. """
+    def seek(self, offset, whence = os.SEEK_SET):
+        """ The 'seek()' method, similar to the one file objects have. """
+        self._transfile_obj.seek(offset, whence)
 
-        return getattr(self._transfile_obj, name)
+    def tell(self):
+        """ The 'tell()' method, similar to the one file objects have. """
+        return self._transfile_obj.tell()
