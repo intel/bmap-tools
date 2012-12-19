@@ -4,7 +4,6 @@ decompress the contents on-the-fly. """
 
 import os
 import stat
-import bz2
 import types
 import urllib
 import errno
@@ -66,35 +65,23 @@ class Error(Exception):
     description in case of errors. """
     pass
 
-class _Bzip2Read:
-    """ This class implements transparent reading from a bzip2-compressed
-    file-like object and decompressing the contents on-the-fly. The only reason
-    this class exists is that the standard python 2 bz2.Bzip2File() class does
-    not accept file-like objects and requires a file name.
+class _CompressedFile:
+    """ This class implements transparent reading from a compressed file-like
+    object and decompressing its contents on-the-fly. """
 
-    To read a bzip2-compressed file-like object, create an instance of this
-    class and use its 'read()' method. In other words, the instances of this
-    class are "read-only" file-like objects. 'seek()' is supported, but only
-    forward.
-
-    Note, this class is very simple and does not implement many things, e.g.,
-    there is no locking.  """
-
-    def __init__(self, file_obj):
-        """ Class constructor. The 'file_ojb' argument is the bzip2-compressed
-        file-like object to read from. """
+    def __init__(self, file_obj, decompress_func):
+        """ Class constructor. The 'file_ojb' argument is the compressed
+        file-like object to read from. The 'decompress_func()' function is a
+        function to use for decompression. """
 
         self._file_obj = file_obj
-        self._decompressor = bz2.BZ2Decompressor()
+        self._decompress_func = decompress_func
         self._buffer = ''
         self._buffer_pos = 0
         self._eof = False
 
-        _add_fake_seek(self)
-
     def _read_from_buffer(self, length):
-        """ Read from the internal buffer which contains the extra data we read
-        last time. """
+        """ Read from the internal buffer. """
 
         buffer_len = len(self._buffer)
         if buffer_len - self._buffer_pos > length:
@@ -108,10 +95,9 @@ class _Bzip2Read:
         return data
 
     def read(self, size):
-        """ Read the bzip2-compressed file, uncompress the data on-the-fly, and
+        """ Read the compressed file, uncompress the data on-the-fly, and
         return 'size' bytes of the uncompressed data. """
 
-        assert self._pos >= 0
         assert self._buffer_pos >= 0
         assert self._buffer_pos <= len(self._buffer)
 
@@ -131,13 +117,16 @@ class _Bzip2Read:
                 self._eof = True
                 break
 
-            buf = self._decompressor.decompress(buf)
-            if not buf:
-                continue
+            if self._decompress_func:
+                buf = self._decompress_func(buf)
+                if not buf:
+                    continue
 
             assert len(self._buffer) == 0
             assert self._buffer_pos == 0
 
+            # The decompressor may return more data than we requested. Save the
+            # extra data in an internal buffer.
             if len(buf) >= size:
                 self._buffer = buf
                 data += self._read_from_buffer(size)
@@ -146,11 +135,13 @@ class _Bzip2Read:
 
             size -= len(buf)
 
-        self._pos += len(data)
+        if hasattr(self, "_pos"):
+            self._pos += len(data)
+
         return data
 
     def close(self):
-        """ Close the file-like object. """
+        """ Close the '_CompressedFile' file-like object. """
         pass
 
 class TransRead:
@@ -188,7 +179,11 @@ class TransRead:
                 self._transfile_obj = gzip.GzipFile(fileobj = self._file_obj,
                                                     mode = 'rb')
             elif self.name.endswith('.bz2'):
-                self._transfile_obj = _Bzip2Read(self._file_obj)
+                import bz2
+
+                self._transfile_obj = _CompressedFile(self._file_obj,
+                                              bz2.BZ2Decompressor().decompress)
+                _add_fake_seek(self._transfile_obj)
             else:
                 self.is_compressed = False
                 self._transfile_obj = self._file_obj
