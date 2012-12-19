@@ -161,18 +161,10 @@ class TransRead:
                or self.name.endswith('.tgz'):
                 import tarfile
 
-                tar = tarfile.open(fileobj = self._file_obj, mode = 'r')
-                # The tarball is supposed to contain only one single member
-                members = tar.getmembers()
-                if len(members) > 1:
-                    raise Error("tarball '%s' contains more than one file" \
-                                % self.name)
-                elif len(members) == 0:
-                    raise Error("tarball '%s' is empty (no files)" \
-                                % self.name)
-
-                self._transfile_obj = tar.extractfile(members[0])
-                self.size = members[0].size
+                tar = tarfile.open(fileobj = self._file_obj, mode = 'r|*')
+                member = tar.next()
+                self._transfile_obj = tar.extractfile(member)
+                self.size = member.size
             elif self.name.endswith('.gz'):
                 import zlib
 
