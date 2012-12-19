@@ -373,8 +373,9 @@ class BmapCopy:
 
                 if verify and sha1 and hash_obj.hexdigest() != sha1:
                     raise Error("checksum mismatch for blocks range %d-%d: " \
-                                "calculated %s, should be %s" \
-                                % (first, last, hash_obj.hexdigest(), sha1))
+                                "calculated %s, should be %s (image file %s)" \
+                                % (first, last, hash_obj.hexdigest(), \
+                                   sha1, self._image_path))
         # Silence pylint warning about catching too general exception
         # pylint: disable=W0703
         except Exception:
