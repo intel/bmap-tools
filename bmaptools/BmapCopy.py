@@ -447,8 +447,10 @@ class BmapCopy:
         # This is just a sanity check - we should have written exactly
         # 'mapped_cnt' blocks.
         if blocks_written != self.mapped_cnt:
-            raise Error("wrote %u blocks, but should have %u - inconsistent " \
-                       "bmap file" % (blocks_written, self.mapped_cnt))
+            raise Error("wrote %u blocks from image '%s' to '%s', but should " \
+                        "have %u - inconsistent bmap file '%s'" \
+                        % (blocks_written, self._image_path, self._dest_path, \
+                           self.mapped_cnt, self._bmap_path))
 
         if self._dest_is_regfile:
             # Make sure the destination file has the same size as the image
