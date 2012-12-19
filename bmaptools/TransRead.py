@@ -1,6 +1,6 @@
-""" This module allows opening and reading various kind of files irrespectively
-on whether the file is compressed or not. If it is compressed, this module will
-decompress the contents on-the-fly. """
+""" This module allows opening and reading local and remote files and
+decompress them on-the-fly if needed. Remote files are read using urllib2.
+Supported compression types are: 'bz2', 'gz', 'tar.gz', 'tgz', 'tar.bz2'. """
 
 import os
 import stat
@@ -13,7 +13,7 @@ SUPPORTED_COMPRESSION_TYPES = ('bz2', 'gz', 'tar.gz', 'tgz', 'tar.bz2')
 
 def _fake_seek_forward(file_obj, cur_pos, offset, whence = os.SEEK_SET):
     """ This function implements the 'seek()' method for file object
-    'file_obj'. Oonly seeking forward and is allowed, and 'whence' may be
+    'file_obj'. Only seeking forward and is allowed, and 'whence' may be
     either 'os.SEEK_SET' or 'os.SEEK_CUR'. """
 
     if whence == os.SEEK_SET:
