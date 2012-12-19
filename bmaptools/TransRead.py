@@ -174,10 +174,12 @@ class TransRead:
                 self._transfile_obj = tar.extractfile(members[0])
                 self.size = members[0].size
             elif self.name.endswith('.gz'):
-                import gzip
+                import zlib
 
-                self._transfile_obj = gzip.GzipFile(fileobj = self._file_obj,
-                                                    mode = 'rb')
+                decompressor = zlib.decompressobj(16 + zlib.MAX_WBITS)
+                self._transfile_obj = _CompressedFile(self._file_obj,
+                                                      decompressor.decompress)
+                _add_fake_seek(self._transfile_obj)
             elif self.name.endswith('.bz2'):
                 import bz2
 
