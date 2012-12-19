@@ -66,8 +66,6 @@ class BmapCopy:
     required, and if it was not provided then the entire image will be copied
     to the destination file.
 
-    TODO: describe requirements for the file-like objects
-
     When the bmap is provided, it is not necessary to specify image size,
     because the size is contained in the bmap. Otherwise, it is benefitial to
     specify the size because it enables extra sanity checks and makes it
@@ -174,11 +172,13 @@ class BmapCopy:
 
     def __init__(self, image, dest, bmap = None, image_size = None):
         """ The class constructor. The parameters are:
-            image      - file-like object of the image which should be copied
+            image      - file-like object of the image which should be copied,
+                         should only support 'read()' and 'seek()' methods,
+                         and only seeking forward has to be supported.
             dest       - file-like object of the destination file to copy the
-                         image to
-            bmap       - file-like object of the bmap file to use for copying
-            image_size - size of the image in bytes """
+                         image to.
+            bmap       - file-like object of the bmap file to use for copying.
+            image_size - size of the image in bytes. """
 
         self._xml = None
 
