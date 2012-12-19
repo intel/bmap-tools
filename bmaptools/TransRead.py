@@ -202,10 +202,10 @@ class TransRead:
                 try:
                     import urllib2
 
-                    proxy_support = urllib2.ProxyHandler({})
-                    opener = urllib2.build_opener(proxy_support)
+                    opener = urllib2.build_opener()
+                    opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
                     urllib2.install_opener(opener)
-                    self._file_obj = urllib2.urlopen(filepath)
+                    self._file_obj = opener.open(filepath)
                 except IOError as err:
                     raise Error("cannot open URL '%s': %s" % (filepath, err))
 
