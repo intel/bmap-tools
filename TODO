@@ -1,4 +1,3 @@
-3. Support URL paths to the image and bmap.
 4. Add a real man page to the project.
 5. In block device optimizations - print a warning when something cannot be
    done. Currently we ignore any kind of error and do not print anything. It is
