@@ -112,11 +112,12 @@ def copy_command_open_all(args, log):
     # Open the bmap file. Try to discover the bmap file automatically if it
     # was not specified.
     bmap_path = args.bmap
-    if not bmap_path:
+    if not bmap_path and not args.nobmap:
         bmap_path = find_and_open_bmap(args.image)
         if bmap_path:
             log.info("discovered bmap file '%s'" % bmap_path)
 
+    bmap_obj = None
     if bmap_path:
         try:
             bmap_obj = TransRead.TransRead(bmap_path)
