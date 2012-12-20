@@ -1,3 +1,13 @@
+bmap-tools (2.0-0.rc1) unstable; urgency=low
+
+  * Allow copying without bmap only if --nobmap was specified.
+  * Auto-discover the bmap file.
+  * Support reading from URLs.
+  * Implement progress bar.
+  * Highlight error and warning messages with red and yellow labels.
+
+ -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com> Thu, 20 Dec 2012 10:47:00 +0200
+
 bmap-tools (1.0-1) unstable; urgency=low
 
   * Release version 1.0 of the tools - almost identical to 1.0-rc7 except of few

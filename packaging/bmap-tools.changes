@@ -1,3 +1,10 @@
+Thu Dec 20 08:48:26 UTC 2012 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 2.0-0.rc1
+- Allow copying without bmap only if --nobmap was specified.
+- Auto-discover the bmap file.
+- Support reading from URLs.
+- Implement progress bar.
+- Highlight error and warning messages with red and yellow labels.
+
 Mon Dec  3 08:02:03 UTC 2012 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 1.0-1
 - Release version 1.0 of the tools - almost identical to 1.0-rc7 except of few
   minor differences like spelling fixes.

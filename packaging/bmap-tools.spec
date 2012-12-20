@@ -1,11 +1,11 @@
 # We follow the Fedora guide for versioning. Fedora recommends to use something
 # like '1.0-0.rc7' for release candidate rc7 and '1.0-1' for the '1.0' release.
-#%%define rc_num 7
-%define rc_str 1%{?rc_num:0.rc%{rc_num}}
+%define rc_num 1
+%define rc_str %{?rc_num:0.rc%{rc_num}}%{!?rc_num:1}
 
 Name:       bmap-tools
 Summary:    Bmap Tools
-Version:    1.0
+Version:    2.0
 Release:    %{rc_str}.<CI_CNT>.<B_CNT>
 Group:      Development/Tools/Other
 License:    GPL-2.0

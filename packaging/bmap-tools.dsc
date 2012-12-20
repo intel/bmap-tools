@@ -2,7 +2,7 @@ Format: 1.0
 Source: bmap-tools
 Binary: bmap-tools
 Architecture: all
-Version: 1.0-1
+Version: 2.0-0.rc1
 Maintainer: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 Standards-Version: 3.8.4
 Build-Depends: debhelper (>= 7), python-all, python-distribute
