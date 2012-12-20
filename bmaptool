@@ -163,7 +163,8 @@ def copy_command(args, log):
         raise SystemExit(1)
 
     # Print the progress indicator while copying
-    writer.set_progress_indicator(sys.stderr, "bmaptool: info: %d%% copied")
+    if not args.quiet:
+        writer.set_progress_indicator(sys.stderr, "bmaptool: info: %d%% copied")
 
     start_time = time.time()
     if not bmap_obj:
