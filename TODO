@@ -5,5 +5,3 @@
    better to know if something is not exactly as expected.
 6. When file size is unknown, implement a "wheel" instead of progress bar
 7. Add locking to all classes
-8. bmaptool: no need to print lengthy docstring in --help - provide the
-   documentation URL

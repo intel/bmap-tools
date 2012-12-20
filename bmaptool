@@ -4,7 +4,6 @@
 # License: GPLv2
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
-# Note! We use the below docstring for the program help text as well.
 """ This is a tool to generate block map files (bmap) and to copy files using
 bmap. Generally speaking, these tools are about writing large image files
 quickly.
@@ -262,7 +261,10 @@ def create_command(args, log):
 def parse_arguments():
     """ A helper function which parses the input arguments. """
 
-    parser = argparse.ArgumentParser(description = __doc__, prog = 'bmaptool')
+    text = "Create block map (bmap) and copy files using bmap. The " \
+           "documentation can be found here: " \
+           "source.tizen.org/documentation/reference/bmaptool"
+    parser = argparse.ArgumentParser(description = text, prog = 'bmaptool')
 
     # The --version option
     parser.add_argument("--version", action = "version", \
