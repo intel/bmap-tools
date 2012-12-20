@@ -1,3 +1,38 @@
+Pre-release 2.0-rc1
+~~~~~~~~~~~~~~~~~~~
+
+There are several user-visible changes in 'bmaptool copy':
+
+1. In order to copy an image without bmap, the user now has to explicitly
+   specify the "--nobmap" option. In v1.0 this was not necessary. The reason
+   for this change is that users forget to use --bmap and do not realize that
+   they are copying entire the image. IOW, this is a usability improvement.
+
+2. The bmap file auto-discovery feature has been added. Now when the user does
+   not specify the bmap file using the --bmap option, 'bmaptool copy' will try
+   to find it at the same place where the image resides. It will look for files
+   with a similar base name and ".bmap" extension. This should make it easier
+   to use bmaptool.
+
+3. 'bmaptool copy' now can open remote files, so it is not necessary to
+   download the images anymore, and you can specify the URL to bmaptool. For
+   example:
+
+   bmaptool copy download.tizen.org/snapshots/ivi/.../ivi-2.0.raw.bz2
+
+   The tool will automatically discover the bmap file, read from the image from
+   the 'download.tizen.org' server, decompress it on-the-fly, and copy to the
+   target file/device. The proxy is supported via the standard environment
+   variables like 'http_proxy', 'https_proxy', 'no_proxy', etc.
+
+4. Now 'bmaptool' prints the progress while copying. This improves usability
+   as well: copying may take minutes, and it is nice to let the user know how
+   much has already been copied.
+
+5. Warnings and errors are high-lighted using yellow and red labels now.
+
+'bmaptool create' has no changes comparing to release v1.0.
+
 Release 1.0
 ~~~~~~~~~~~
 
