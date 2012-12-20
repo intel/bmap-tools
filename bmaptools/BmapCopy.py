@@ -40,6 +40,7 @@ import sys
 import hashlib
 import Queue
 import thread
+import datetime
 from xml.etree import ElementTree
 from bmaptools.BmapHelpers import human_size
 
@@ -202,6 +203,8 @@ class BmapCopy:
         self._f_bmap_path = None
 
         self._progress_started = None
+        self._progress_index = None
+        self._progress_time = None
         self._progress_file = None
         self._progress_format = None
         self.set_progress_indicator(None, None)
@@ -243,25 +246,38 @@ class BmapCopy:
         if the indicator has been enabled by assigning a console file object to
         the 'progress_file' attribute. """
 
-        if self._progress_file and self.mapped_cnt:
+        if not self._progress_file:
+            return
+
+        if self.mapped_cnt:
             assert blocks_written <= self.mapped_cnt
-
             percent = int((float(blocks_written) / self.mapped_cnt) * 100)
+            progress = '\r' + self._progress_format % percent + '\n'
+        else:
+            # Do not rotate the wheel too fast
+            now = datetime.datetime.now()
+            min_delta = datetime.timedelta(milliseconds = 250)
+            if now - self._progress_time < min_delta:
+                return
+            self._progress_time = now
 
-            # This is a little trick we do in order to make sure that the next
-            # message will always start from a new line - we switch to the new
-            # line after each progress update and move the cursor up. As an
-            # example, this is useful when the copying is interrupted by an
-            # exception - the error message will start form new line.
-            if self._progress_started:
-                # The "move cursor up" escape sequence
-                self._progress_file.write('\033[1A')
-            else:
-                self._progress_started = True
+            progress_wheel = ('-', '\\', '|', '/')
+            progress = '\r' + progress_wheel[self._progress_index % 4] + '\n'
+            self._progress_index += 1
 
-            fmt = '\r' + self._progress_format + '\n'
-            self._progress_file.write(fmt % percent)
-            self._progress_file.flush()
+        # This is a little trick we do in order to make sure that the next
+        # message will always start from a new line - we switch to the new
+        # line after each progress update and move the cursor up. As an
+        # example, this is useful when the copying is interrupted by an
+        # exception - the error message will start form new line.
+        if self._progress_started:
+            # The "move cursor up" escape sequence
+            self._progress_file.write('\033[1A')
+        else:
+            self._progress_started = True
+
+        self._progress_file.write(progress)
+        self._progress_file.flush()
 
     def _get_block_ranges(self):
         """ This is a helper generator that parses the bmap XML file and for
@@ -400,7 +416,10 @@ class BmapCopy:
         blocks_written = 0
         bytes_written = 0
         fsync_last = 0
+
         self._progress_started = False
+        self._progress_index = 0
+        self._progress_time = datetime.datetime.now()
 
         # Read the image in '_batch_blocks' chunks and write them to the
         # destination file
