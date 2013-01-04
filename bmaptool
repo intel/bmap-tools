@@ -97,8 +97,9 @@ def copy_command_open_all(args, log):
         1 file-like object for the image
         2 file object for the destination file
         3 file-like object for the bmap
-        4 image size in bytes
-        5 'True' if the destination file is a block device and 'False' otherwise
+        4 full path to the bmap file
+        5 image size in bytes
+        6 'True' if the destination file is a block device and 'False' otherwise
     """
 
     # Open the image file using the TransRead module, which will automatically
@@ -141,13 +142,14 @@ def copy_command_open_all(args, log):
         dest_obj.close()
         dest_obj = copy_command_open_blkdev(args.dest, log)
 
-    return (image_obj, dest_obj, bmap_obj, image_obj.size, dest_is_blkdev)
+    return (image_obj, dest_obj, bmap_obj, bmap_path, image_obj.size,
+            dest_is_blkdev)
 
 
 def copy_command(args, log):
     """ Copy an image to a block device or a regular file using bmap. """
 
-    image_obj, dest_obj, bmap_obj, image_size, dest_is_blkdev = \
+    image_obj, dest_obj, bmap_obj, bmap_path, image_size, dest_is_blkdev = \
                                           copy_command_open_all(args, log)
     try:
         if dest_is_blkdev:
@@ -181,7 +183,7 @@ def copy_command(args, log):
                     writer.image_size_human, writer.mapped_cnt,
                     writer.mapped_size_human, writer.mapped_percent))
         log.info("copying the image to %s '%s' using bmap file '%s'" \
-                 % (destination_type, args.dest, args.bmap))
+                 % (destination_type, args.dest, bmap_path))
 
     try:
         try:
