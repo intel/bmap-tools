@@ -580,12 +580,12 @@ class BmapBdevCopy(BmapCopy):
             self._restore_bdev_settings()
             raise
 
-    def __init__(self, image, dest, bmap = None):
+    def __init__(self, image, dest, bmap = None, image_size = None):
         """ The same as the constructor of the 'BmapCopy' base class, but adds
         useful guard-checks specific to block devices. """
 
         # Call the base class constructor first
-        BmapCopy.__init__(self, image, dest, bmap)
+        BmapCopy.__init__(self, image, dest, bmap, image_size)
 
         self._batch_bytes = 1024 * 1024
         self._batch_blocks = self._batch_bytes / self.block_size
