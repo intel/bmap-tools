@@ -153,12 +153,12 @@ def copy_command(args, log):
                                           copy_command_open_all(args, log)
     try:
         if dest_is_blkdev:
-            destination_type = "block device"
+            dest_str = "block device '%s'" % args.dest
             # For block devices, use the specialized class
             writer = BmapCopy.BmapBdevCopy(image_obj, dest_obj, bmap_obj,
                                            image_size)
         else:
-            destination_type = "file"
+            dest_str = "file '%s'" % os.path.basename(args.dest)
             writer = BmapCopy.BmapCopy(image_obj, dest_obj, bmap_obj,
                                        image_size)
     except BmapCopy.Error as err:
@@ -182,8 +182,9 @@ def copy_command(args, log):
                  % (writer.blocks_cnt, writer.block_size,
                     writer.image_size_human, writer.mapped_cnt,
                     writer.mapped_size_human, writer.mapped_percent))
-        log.info("copying the image to %s '%s' using bmap file '%s'" \
-                 % (destination_type, args.dest, bmap_path))
+        log.info("copying image '%s' to %s using bmap file '%s'" \
+                 % (os.path.basename(args.image), dest_str,
+                    os.path.basename(bmap_path)))
 
     try:
         try:
