@@ -206,7 +206,7 @@ class TransRead:
                     opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
                     urllib2.install_opener(opener)
                     self._file_obj = opener.open(filepath)
-                except IOError as err:
+                except (IOError, ValueError) as err:
                     raise Error("cannot open URL '%s': %s" % (filepath, err))
 
                 self.is_url = True
