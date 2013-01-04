@@ -1,3 +1,7 @@
+Fri Jan  4 07:55:05 UTC 2013 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 2.0-0.rc2
+- Fix writing to block devices, which was broken in rc1.
+- Make the informational messages a bit nicer.
+
 Thu Dec 20 08:48:26 UTC 2012 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 2.0-0.rc1
 - Allow copying without bmap only if --nobmap was specified.
 - Auto-discover the bmap file.
