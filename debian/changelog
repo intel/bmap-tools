@@ -1,3 +1,9 @@
+bmap-tools (2.0-0.rc3) unstable; urgency=low
+
+  * Fix uncaught urllib2 exception bug introduced in rc1.
+
+ -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com> Mon, 07 Jan 2013 10:19:49 +0200
+
 bmap-tools (2.0-0.rc2) unstable; urgency=low
 
   * Fix writing to block devices, which was broken in rc1.

@@ -1,3 +1,6 @@
+Mon Jan  7 08:20:37 UTC 2013 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 2.0-0.rc3
+- Fix uncaught urllib2 exception bug introduced in rc1.
+
 Fri Jan  4 07:55:05 UTC 2013 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 2.0-0.rc2
 - Fix writing to block devices, which was broken in rc1.
 - Make the informational messages a bit nicer.
