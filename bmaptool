@@ -174,7 +174,7 @@ def copy_command(args, log):
         if args.nobmap:
             log.info("no bmap given, copy entire image to '%s'" % args.dest)
         else:
-            log.error("please, specify the bmap file using --bmap option")
+            log.error("please, use --nobmap option to flash without bmap")
             raise SystemExit(1)
     else:
         log.info("block map format version %s" % writer.bmap_version)
