@@ -81,7 +81,7 @@ def find_and_open_bmap(image_path):
         try:
             bmap_obj = TransRead.TransRead(bmap_path)
             bmap_obj.close()
-            break
+            return bmap_path
         except TransRead.Error as err:
             pass
 
@@ -89,7 +89,7 @@ def find_and_open_bmap(image_path):
         if ext == '':
             break
 
-    return bmap_path
+    return None
 
 def copy_command_open_all(args, log):
     """ Open the image/bmap/destination files for the "copy" command. Returns a
