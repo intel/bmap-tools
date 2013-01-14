@@ -574,12 +574,14 @@ class BmapBdevCopy(BmapCopy):
         very bad user experience, and we work around this effect by
         synchronizing from time to time. """
 
+        self._tune_block_device()
+
         try:
-            self._tune_block_device()
             BmapCopy.copy(self, sync, verify)
         except:
-            self._restore_bdev_settings()
             raise
+        finally:
+            self._restore_bdev_settings()
 
     def __init__(self, image, dest, bmap = None, image_size = None):
         """ The same as the constructor of the 'BmapCopy' base class, but adds
