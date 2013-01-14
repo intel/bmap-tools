@@ -1,9 +1,11 @@
 The bmap-tools project implements bmap-related tools and API modules. The
 entire project is written in python, and requires python 2.7+.
 
-Please, search the web for the detailed explanation about what bmap is, how is
-used, what are the benefits, and so on. The main user of this project is Tizen
-IVI.
+The project is documented here:
+https://source.tizen.org/documentation/reference/bmaptool
+
+Currently the main user of this project is Tizen IVI, but the project is
+generic and can be used everywhere, when dealing with raw images.
 
 The project author and maintainer is 'Artem.Bityutskiy@linux.intel.com'.
 Please, feel free to contact me if you have questions about the project or
@@ -13,7 +15,6 @@ The debianizations and rpmization was done by
 'Ed Bartosh <eduard.bartosh@intel.com>', and he is the only person I know of
 who understands how that works :-). The bmap-tools packages for
 Debian/Ubuntu/Fedora/OpenSuse are built by the "OBS" service.
-
 
 The project structure
 ~~~~~~~~~~~~~~~~~~~~~
@@ -92,4 +93,4 @@ Credits
   infrastructure.
 * Alexander Kanevskiy <alexander.kanevskiy@intel.com> and
   Kevin Wang <kevin.a.wang@intel.com> for helping with integrating this stuff
-  to the Tizen IVI infrastructure
+  to the Tizen IVI infrastructure.
