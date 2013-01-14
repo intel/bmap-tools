@@ -621,12 +621,8 @@ class BmapBdevCopy(BmapCopy):
         # Check if the 'queue' sub-directory exists. If yes, then our block
         # device is entire disk. Otherwise, it is a partition, in which case we
         # need to go one level up in the sysfs hierarchy.
-        try:
-            if not os.path.exists(self._sysfs_base + "queue"):
-                self._sysfs_base = self._sysfs_base + "../"
-        except OSError:
-            # No problem, this is just an optimization.
-            pass
+        if not os.path.exists(self._sysfs_base + "queue"):
+            self._sysfs_base = self._sysfs_base + "../"
 
         self._sysfs_scheduler_path = self._sysfs_base + "queue/scheduler"
         self._sysfs_max_ratio_path = self._sysfs_base + "bdi/max_ratio"
