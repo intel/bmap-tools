@@ -521,9 +521,9 @@ class BmapBdevCopy(BmapCopy):
                 contents = f_scheduler.read()
                 f_scheduler.seek(0)
                 f_scheduler.write("noop")
-        except IOError:
-            # No problem, this is just an optimization.
-            return
+        except IOError as err:
+            # No problem, this is just an optimization
+            raise Error("cannot enable the 'noop' I/O scheduler: %s" % err)
 
         # The file contains a list of scheduler with the current
         # scheduler in square brackets, e.g., "noop deadline [cfq]".
@@ -539,8 +539,8 @@ class BmapBdevCopy(BmapCopy):
                 self._old_max_ratio_value = f_ratio.read()
                 f_ratio.seek(0)
                 f_ratio.write("1")
-        except IOError:
-            return
+        except IOError as err:
+            raise Error("cannot set max. I/O ratio to '1': %s" % err)
 
     def _restore_bdev_settings(self):
         """ Restore old block device settings which we changed in
@@ -550,16 +550,17 @@ class BmapBdevCopy(BmapCopy):
             try:
                 with open(self._sysfs_scheduler_path, "w") as f_scheduler:
                     f_scheduler.write(self._old_scheduler_value)
-            except IOError:
-                # No problem, this is just an optimization.
-                return
+            except IOError as err:
+                raise Error("cannot restore the '%s' I/O scheduler: %s" \
+                            % (self._old_scheduler_value, err))
 
         if self._old_max_ratio_value is not None:
             try:
                 with open(self._sysfs_max_ratio_path, "w") as f_ratio:
                     f_ratio.write(self._old_max_ratio_value)
-            except IOError:
-                return
+            except IOError as err:
+                raise Error("cannot set the max. I/O ratio back to '%s': %s" \
+                            % (self._old_max_ratio_value, err))
 
     def copy(self, sync = True, verify = True):
         """ The same as in the base class but tunes the block device for better
