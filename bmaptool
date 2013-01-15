@@ -32,7 +32,7 @@ all 4GiB of data. We say that it is a bit more than 100MiB because things like
 file-system meta-data (inode tables, superblocks, etc), partition table, etc
 also contribute to the mapped blocks and are also copied. """
 
-VERSION = "2.0-rc4"
+VERSION = "2.0-rc5"
 
 import argparse
 import sys

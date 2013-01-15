@@ -1,3 +1,11 @@
+bmap-tools (2.0-0.rc5) unstable; urgency=low
+
+  * When block device optimzations fail - raise an exception except of muting
+    the error, because we really want to know about these failures and possibly
+    fix them.
+
+ -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com> Tue, 15 Jan 2013 14:51:27 +0200
+
 bmap-tools (2.0-0.rc4) unstable; urgency=low
 
   * Fix bmap autodiscovery.

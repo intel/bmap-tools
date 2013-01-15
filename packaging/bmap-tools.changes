@@ -1,3 +1,8 @@
+Tue Jan 15 12:52:25 UTC 2013 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 2.0-0.rc5
+- When block device optimzations fail - raise an exception except of muting
+  the error, because we really want to know about these failures and possibly
+  fix them.
+
 Thu Jan 10 11:58:57 UTC 2013 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 2.0-0.rc4
 - Fix bmap autodiscovery.
 
