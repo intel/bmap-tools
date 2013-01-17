@@ -104,7 +104,15 @@ class _CompressedFile:
 
         # If the buffers did not contain all the requested data, read them,
         # decompress, and buffer.
-        chunk_size = max(size, 128 * 1024)
+
+        if self._decompress_func:
+            # The file is compressed, in which case we should not read too much
+            # data at a time, because we may run out of memory when trying to
+            # decompress the data.
+            chunk_size = min(size, 128 * 1024)
+        else:
+            chunk_size = size
+
         while size > 0:
             buf = self._file_obj.read(chunk_size)
             if not buf:
