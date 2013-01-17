@@ -1,3 +1,9 @@
+bmap-tools (2.0-1) unstable; urgency=low
+
+  * Fix the an issue with running out of memory in TransRead.py.
+
+ -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com> Thu, 17 Jan 2013 11:33:15 +0200
+
 bmap-tools (2.0-0.rc5) unstable; urgency=low
 
   * When block device optimzations fail - raise an exception except of muting
