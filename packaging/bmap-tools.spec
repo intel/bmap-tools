@@ -33,9 +33,12 @@ Bmap-tools - tools to generate block map (AKA bmap) and flash images using bmap
 %build
 
 %install
-rm -rf $RPM_BUILD_ROOT
+rm -rf %{buildroot}
 
 python setup.py install --prefix=%{_prefix} --root=%{buildroot}
+
+mkdir -p %{buildroot}/%{_mandir}/man1
+install -m644 docs/man1/bmaptool.1 %{buildroot}/%{_mandir}/man1
 
 %files
 %defattr(-,root,root,-)
@@ -45,5 +48,6 @@ python setup.py install --prefix=%{_prefix} --root=%{buildroot}
 %{_bindir}/*
 
 %doc docs/RELEASE_NOTES
+%{_mandir}/man1/*
 
 %changelog
