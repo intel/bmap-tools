@@ -44,6 +44,6 @@ python setup.py install --prefix=%{_prefix} --root=%{buildroot}
 /usr/lib/python*/site-packages/bmaptools/*
 %{_bindir}/*
 
-%doc RELEASE_NOTES
+%doc docs/RELEASE_NOTES
 
 %changelog
