@@ -51,13 +51,29 @@ class _CompressedFile:
     """ This class implements transparent reading from a compressed file-like
     object and decompressing its contents on-the-fly. """
 
-    def __init__(self, file_obj, decompress_func = None):
+    def __init__(self, file_obj, decompress_func = None, chunk_size = None):
         """ Class constructor. The 'file_ojb' argument is the compressed
         file-like object to read from. The 'decompress_func()' function is a
-        function to use for decompression. """
+        function to use for decompression.
+
+        The 'chunk_size' parameter may be used to limit the amount of data read
+        from the input file at a time and it is assumed to be used with
+        compressed files. This parameter has a big effect on the memory
+        consumption in case the input file is a compressed stream of all
+        zeroes. If we read a big chunk of such a compressed stream and
+        decompress it, the length of the decompressed buffer may be huge. For
+        example, when 'chunk_size' is 128KiB, the output buffer for a 4GiB .gz
+        file filled with all zeroes is about 31MiB. Bzip2 is more dangerous -
+        when 'chunk_size' is only 1KiB, the output buffer for a 4GiB .bz2 file
+        filled with all zeroes is about 424MiB and when 'chunk_size' is 128
+        bytes it is about 77MiB. """
 
         self._file_obj = file_obj
         self._decompress_func = decompress_func
+        if chunk_size:
+            self._chunk_size = chunk_size
+        else:
+            self._chunk_size = 128 * 1024
         self._pos = 0
         self._buffer = ''
         self._buffer_pos = 0
@@ -105,16 +121,8 @@ class _CompressedFile:
         # If the buffers did not contain all the requested data, read them,
         # decompress, and buffer.
 
-        if self._decompress_func:
-            # The file is compressed, in which case we should not read too much
-            # data at a time, because we may run out of memory when trying to
-            # decompress the data.
-            chunk_size = min(size, 128 * 1024)
-        else:
-            chunk_size = size
-
         while size > 0:
-            buf = self._file_obj.read(chunk_size)
+            buf = self._file_obj.read(self._chunk_size)
             if not buf:
                 self._eof = True
                 break
@@ -176,7 +184,8 @@ class TransRead:
                 import bz2
 
                 self._transfile_obj = _CompressedFile(self._file_obj,
-                                              bz2.BZ2Decompressor().decompress)
+                                              bz2.BZ2Decompressor().decompress,
+                                              128)
             else:
                 self.is_compressed = False
                 self._transfile_obj = self._file_obj
