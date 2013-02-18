@@ -35,6 +35,9 @@ There are several user-visible changes in 'bmaptool copy':
 
 'bmaptool create' has no changes comparing to release v1.0.
 
+Bug-fix release 2.1: fixed the out of memory problem when copying .bz2 files.
+
+
 Release 1.0
 ~~~~~~~~~~~
 

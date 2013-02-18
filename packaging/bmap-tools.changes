@@ -1,3 +1,6 @@
+Mon Feb 18 14:39:11 UTC 2013 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 2.1-1
+- Fix out of memory issues when copying .bz2 files.
+
 Thu Jan 17 09:34:00 UTC 2013 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 2.0-1
 - Fix the an issue with running out of memory in TransRead.py.
 
