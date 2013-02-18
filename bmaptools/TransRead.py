@@ -51,7 +51,7 @@ class _CompressedFile:
     """ This class implements transparent reading from a compressed file-like
     object and decompressing its contents on-the-fly. """
 
-    def __init__(self, file_obj, decompress_func):
+    def __init__(self, file_obj, decompress_func = None):
         """ Class constructor. The 'file_ojb' argument is the compressed
         file-like object to read from. The 'decompress_func()' function is a
         function to use for decompression. """
