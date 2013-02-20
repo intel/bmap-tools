@@ -4,7 +4,7 @@
 
 Name:       bmap-tools
 Summary:    Bmap Tools
-Version:    2.0
+Version:    2.1
 Release:    %{rc_str}.<CI_CNT>.<B_CNT>
 Group:      Development/Tools/Other
 License:    GPL-2.0
