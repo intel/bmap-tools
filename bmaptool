@@ -336,9 +336,9 @@ def setup_logger(loglevel):
     level is initialized to 'loglevel'. Returns the logger object. """
 
     # Esc-sequences for coloured output
-    esc_red = '\033[91m'
-    esc_yellow = '\033[93m'
-    esc_end = '\033[0m'
+    esc_red = '\033[91m'    # pylint: disable=W1401
+    esc_yellow = '\033[93m' # pylint: disable=W1401
+    esc_end = '\033[0m'     # pylint: disable=W1401
 
     # Change log level names to something less nicer than the default
     # all-capital 'INFO' etc.
