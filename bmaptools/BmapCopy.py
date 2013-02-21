@@ -272,7 +272,7 @@ class BmapCopy:
         # exception - the error message will start form new line.
         if self._progress_started:
             # The "move cursor up" escape sequence
-            self._progress_file.write('\033[1A')
+            self._progress_file.write('\033[1A') # pylint: disable=W1401
         else:
             self._progress_started = True
 
