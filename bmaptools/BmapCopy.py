@@ -531,7 +531,8 @@ class BmapBdevCopy(BmapCopy):
         import re
 
         match = re.match(r'.*\[(.+)\].*', contents)
-        self._old_scheduler_value = match.group(1)
+        if match:
+            self._old_scheduler_value = match.group(1)
 
         # Limit the write buffering
         try:
