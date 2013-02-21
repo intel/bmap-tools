@@ -82,7 +82,7 @@ def find_and_open_bmap(image_path):
             bmap_obj = TransRead.TransRead(bmap_path)
             bmap_obj.close()
             return bmap_path
-        except TransRead.Error as err:
+        except TransRead.Error:
             pass
 
         image_path, ext = os.path.splitext(image_path)
