@@ -286,7 +286,7 @@ def parse_arguments():
     #
     text = "generate bmap for an image file (which should be a sparse file)"
     parser_create = subparsers.add_parser("create", help = text)
-    parser_create.set_defaults(func=create_command)
+    parser_create.set_defaults(func = create_command)
 
     # Mandatory command-line argument - image file
     text = "the image to generate bmap for"
@@ -306,7 +306,7 @@ def parse_arguments():
     #
     text = "write an image to a block device using bmap"
     parser_copy = subparsers.add_parser("copy", help = text)
-    parser_copy.set_defaults(func=copy_command)
+    parser_copy.set_defaults(func = copy_command)
 
     # The first positional argument - image file
     text = "the image file to copy. Supported formats: uncompressed, " + \
