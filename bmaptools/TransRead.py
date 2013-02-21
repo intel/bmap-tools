@@ -30,7 +30,8 @@ def _fake_seek_forward(file_obj, cur_pos, offset, whence = os.SEEK_SET):
     length = new_pos - cur_pos
     to_read = length
     while to_read > 0:
-        buf = file_obj.read(to_read)
+        chunk_size = min(to_read, 1024 * 1024)
+        buf = file_obj.read(chunk_size)
         if not buf:
             break
         to_read -= len(buf)
