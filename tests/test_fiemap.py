@@ -42,9 +42,8 @@ def _check_ranges(f_image, fiemap, first_block, blocks_cnt,
     # starting from block 'first_block'. Create an iterator which filters
     # those block ranges from the 'ranges' list, that are out of the
     # 'first_block'/'blocks_cnt' file region.
-    filter_func = lambda x: x[1] >= first_block and x[0] <= last_block
-    ranges_iterator = filter(filter_func, ranges)
-
+    ranges_iterator = ( x for x in ranges if x[1] >= first_block and \
+                                             x[0] <= last_block )
     iterator = itertools.izip_longest(ranges_iterator, fiemap_iterator)
 
     # Iterate over both - the (filtered) 'ranges' list which contains correct
