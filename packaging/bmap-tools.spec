@@ -24,6 +24,11 @@ Requires:	python-xml
 Requires:	python-libs
 %endif
 
+# We need the argparse module which is not available in Centos6
+%if 0%{?centos_version} == 600
+Requires:	python-argparse
+%endif
+
 %description
 Bmap-tools - tools to generate block map (AKA bmap) and flash images using bmap
 
