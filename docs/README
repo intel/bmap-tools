@@ -61,7 +61,7 @@ The project uses the following git branches:
      have limited coverage. Anyway, do not use this branch unless you are a
      developer or you know what you are doing.
   2. master - we do not use this branch for anything but pointing to the latest
-     release. This means that you may safely this branch and be sure this
+     release. This means that you may safely take this branch and be sure this
      is the latest stable code.
   3. release-x.0 - pre-releases or releases or bug-fix releases of version "x".
 
