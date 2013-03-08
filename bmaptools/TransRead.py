@@ -196,6 +196,21 @@ class TransRead:
         except IOError as err:
             raise Error("cannot open file '%s': %s" % (self.name, err))
 
+    def _open_url(self, url):
+        """ Open an URL 'url' and return the file-like object of the opened
+        URL. """
+
+        import urllib2
+
+        try:
+            opener = urllib2.build_opener()
+            opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
+            urllib2.install_opener(opener)
+            self._file_obj = opener.open(url)
+            self.is_url = True
+        except (IOError, ValueError) as err:
+            raise Error("cannot open URL '%s': %s" % (url, err))
+
     def __init__(self, filepath):
         """ Class constructor. The 'filepath' argument is the full path to the
         file to read transparently. """
@@ -212,17 +227,8 @@ class TransRead:
             self._file_obj = open(self.name, "rb")
         except IOError as err:
             if err.errno == errno.ENOENT:
-                try:
-                    import urllib2
-
-                    opener = urllib2.build_opener()
-                    opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
-                    urllib2.install_opener(opener)
-                    self._file_obj = opener.open(filepath)
-                except (IOError, ValueError) as err:
-                    raise Error("cannot open URL '%s': %s" % (filepath, err))
-
-                self.is_url = True
+                # This is probably an URL
+                self._open_url(filepath)
             else:
                 raise Error("cannot open file '%s': %s" % (filepath, err))
 
