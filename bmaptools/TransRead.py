@@ -196,11 +196,6 @@ class TransRead:
         except IOError as err:
             raise Error("cannot open file '%s': %s" % (self.name, err))
 
-    def close(self):
-        """ Close the file-like object. """
-
-        self.__del__()
-
     def __init__(self, filepath):
         """ Class constructor. The 'filepath' argument is the full path to the
         file to read transparently. """
@@ -266,3 +261,9 @@ class TransRead:
             return self._transfile_obj.tell()
         else:
             return self._pos
+
+    def close(self):
+        """ Close the file-like object. """
+
+        self.__del__()
+
