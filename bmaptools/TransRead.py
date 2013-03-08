@@ -202,11 +202,39 @@ class TransRead:
 
         import urllib2
         import httplib
+        import urlparse
+        import re
+
+        # Unfortunately, in order to handle URLs which contain user name and
+        # password (e.g., http://user:password@my.site.org), we need to do
+        # things a bit differently. The following code tries to find out if
+        # the URL contains user name and password.
+
+        parsed_url = urlparse.urlparse(url)
+        username = parsed_url.username
+        password = parsed_url.password
+
+        if username and password:
+            # Construct a new URL without user name and password
+            new_url = list(parsed_url)
+            if parsed_url.port:
+                new_url[1] = "%s:%s" % (parsed_url.hostname, parsed_url.port)
+            else:
+                new_url[1] = parsed_url.hostname
+            url = urlparse.urlunparse(new_url)
+
+            # Build an URL opener which will do the authentication
+            password_manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
+            password_manager.add_password(None, url, username, password)
+            auth_handler = urllib2.HTTPBasicAuthHandler(password_manager)
+            opener = urllib2.build_opener(auth_handler)
+        else:
+            opener = urllib2.build_opener()
+
+        opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
+        urllib2.install_opener(opener)
 
         try:
-            opener = urllib2.build_opener()
-            opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
-            urllib2.install_opener(opener)
             self._file_obj = opener.open(url)
             self.is_url = True
         except (IOError, ValueError, httplib.InvalidURL) as err:
