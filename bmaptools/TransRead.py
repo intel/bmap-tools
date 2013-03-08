@@ -201,6 +201,7 @@ class TransRead:
         URL. """
 
         import urllib2
+        import httplib
 
         try:
             opener = urllib2.build_opener()
@@ -208,8 +209,11 @@ class TransRead:
             urllib2.install_opener(opener)
             self._file_obj = opener.open(url)
             self.is_url = True
-        except (IOError, ValueError) as err:
+        except (IOError, ValueError, httplib.InvalidURL) as err:
             raise Error("cannot open URL '%s': %s" % (url, err))
+        except httplib.BadStatusLine:
+            raise Error("cannot open URL '%s': server responds with an HTTP " \
+                        "status code that we don't understand" % url)
 
     def __init__(self, filepath):
         """ Class constructor. The 'filepath' argument is the full path to the
