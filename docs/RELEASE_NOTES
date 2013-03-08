@@ -1,3 +1,17 @@
+Bug-fix release 2.2
+~~~~~~~~~~~~~~~~~~~
+
+1. Taught bmaptool understand URLs which include user name and password
+   (https://user:password@server.com)
+
+
+Bug-fix release 2.1
+~~~~~~~~~~~~~~~~~~~
+
+1. Fixed the out of memory problems when copying .bz2 files.
+2. Added CentOS 6 support in packaging.
+
+
 Release 2.0
 ~~~~~~~~~~~
 
@@ -34,8 +48,6 @@ There are several user-visible changes in 'bmaptool copy':
 6. Added bmaptool man page.
 
 'bmaptool create' has no changes comparing to release v1.0.
-
-Bug-fix release 2.1: fixed the out of memory problem when copying .bz2 files.
 
 
 Release 1.0
