@@ -1,8 +1,8 @@
 Bug-fix release 2.2
 ~~~~~~~~~~~~~~~~~~~
 
-1. Taught bmaptool understand URLs which include user name and password
-   (https://user:password@server.com)
+1. Made bmaptool understand URLs which include user name and password
+   (the format is: https://user:password@server.com)
 
 
 Bug-fix release 2.1

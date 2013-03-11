@@ -1,3 +1,6 @@
+Mon Mar 11 12:42:03 UTC 2013 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 2.2-1
+- Support username and password in URLs.
+
 Mon Feb 18 14:39:11 UTC 2013 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 2.1-1
 - Fix out of memory issues when copying .bz2 files.
 
