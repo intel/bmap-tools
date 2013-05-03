@@ -44,6 +44,7 @@ import os
 import stat
 import time
 import logging
+import tempfile
 import traceback
 from bmaptools import BmapCreate, BmapCopy, BmapHelpers, TransRead
 
@@ -265,7 +266,12 @@ def create_command(args, log):
                       % (args.output, err))
             raise SystemExit(1)
     else:
-        output = sys.stdout
+        try:
+            # Create a temporary file for the bmap
+            output = tempfile.TemporaryFile("w+")
+        except IOError as err:
+            log.error("cannot create a temporary file: %s" % err)
+            raise SystemExit(1)
 
     try:
         creator = BmapCreate.BmapCreate(args.image, output)
@@ -273,6 +279,10 @@ def create_command(args, log):
     except BmapCreate.Error as err:
         log.error(str(err))
         raise SystemExit(1)
+
+    if not args.output:
+        output.seek(0)
+        sys.stdout.write(output.read())
 
     if creator.mapped_cnt == creator.blocks_cnt:
         log.warning("all %s are mapped, no holes in '%s'" \
