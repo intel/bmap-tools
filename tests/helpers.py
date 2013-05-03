@@ -37,7 +37,7 @@ def _create_random_sparse_file(file_obj, size):
             file_obj.seek(block * block_size + seek)
             file_obj.write(chr(random.getrandbits(8)) * write)
         else:
-            file_obj.truncate((block + 1) * block_size)
+            file_obj.truncate(block * block_size)
 
         return map_the_block
 
