@@ -59,8 +59,8 @@ class BmapCopy:
     the following:
 
     * full path or a file-like object of the image to copy
-    * full path or a file-like object of the destination file copy the image to
-    * full path or a file-like object of the bmap file (optional)
+    * full path or a file object of the destination file copy the image to
+    * full path or a file object of the bmap file (optional)
     * image size in bytes (optional)
 
     Although the main purpose of this class is to use bmap, the bmap is not
@@ -177,9 +177,9 @@ class BmapCopy:
             image      - file-like object of the image which should be copied,
                          should only support 'read()' and 'seek()' methods,
                          and only seeking forward has to be supported.
-            dest       - file-like object of the destination file to copy the
-                         image to.
-            bmap       - file-like object of the bmap file to use for copying.
+            dest       - file object of the destination file to copy the image
+                         to.
+            bmap       - file object of the bmap file to use for copying.
             image_size - size of the image in bytes. """
 
         self._xml = None

@@ -88,7 +88,7 @@ class BmapCreate:
     create an instance of 'BmapCreate' and provide:
 
     * full path or a file-like object of the image to create bmap for
-    * full path or a file-like object to use for writing the results to
+    * full path or a file object to use for writing the results to
 
     Then you should invoke the 'generate()' method of this class. It will use
     the FIEMAP ioctl to generate the bmap. """
@@ -119,8 +119,8 @@ class BmapCreate:
         """ Initialize a class instance:
         * image - full path or a file-like object of the image to create bmap
                   for
-        * bmap  - full path or a file-like object to use for writing the
-                  resulting bmap to """
+        * bmap  - full path or a file object to use for writing the resulting
+                  bmap to """
 
         self.image_size = None
         self.image_size_human = None
