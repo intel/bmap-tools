@@ -149,11 +149,12 @@ class BmapCopy:
         self.bmap_version = str(xml.getroot().attrib.get('version'))
 
         # Make sure we support this version
-        major = int(self.bmap_version.split('.', 1)[0])
-        if major > SUPPORTED_BMAP_VERSION:
+        self.bmap_version_major = int(self.bmap_version.split('.', 1)[0])
+        self.bmap_version_minor = int(self.bmap_version.split('.', 1)[1])
+        if self.bmap_version_major > SUPPORTED_BMAP_VERSION:
             raise Error("only bmap format version up to %d is supported, " \
                         "version %d is not supported" \
-                        % (SUPPORTED_BMAP_VERSION, major))
+                        % (SUPPORTED_BMAP_VERSION, self.bmap_version_major))
 
         # Fetch interesting data from the bmap XML file
         self.block_size = int(xml.find("BlockSize").text.strip())
@@ -190,6 +191,8 @@ class BmapCopy:
         self._batch_queue_len = 2
 
         self.bmap_version = None
+        self.bmap_version_major = None
+        self.bmap_version_minor = None
         self.block_size = None
         self.blocks_cnt = None
         self.mapped_cnt = None
