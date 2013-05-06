@@ -129,6 +129,7 @@ class BmapCreate:
 
         self._mapped_count_pos1 = None
         self._mapped_count_pos2 = None
+        self._sha1_pos = None
 
         self._f_image_needs_close = False
         self._f_bmap_needs_close = False
@@ -186,6 +187,14 @@ class BmapCreate:
         xml  = "%s </MappedBlocksCount>\n\n" % mapped_count
 
         # pylint: disable=C0301
+        xml += "    <!-- The checksum of this bmap file. When it is calculated, the value of\n"
+        xml += "         the SHA1 checksum has be zeoro (40 ASCII \"0\" symbols). -->\n"
+        xml += "    <BmapFileSHA1> "
+
+        self._f_bmap.write(xml)
+        self._sha1_pos = self._f_bmap.tell()
+
+        xml = "0" * 40 + " </BmapFileSHA1>\n\n"
         xml += "    <!-- The block map which consists of elements which may either be a\n"
         xml += "         range of blocks or a single block. The 'sha1' attribute (if present)\n"
         xml += "         is the SHA1 checksum of this blocks range. -->\n"
@@ -210,6 +219,11 @@ class BmapCreate:
 
         self._f_bmap.seek(self._mapped_count_pos2)
         self._f_bmap.write("%u" % self.mapped_cnt)
+
+        self._f_bmap.seek(0)
+        sha1 = hashlib.sha1(self._f_bmap.read()).hexdigest()
+        self._f_bmap.seek(self._sha1_pos)
+        self._f_bmap.write("%s" % sha1)
 
     def _calculate_sha1(self, first, last):
         """ A helper function which calculates SHA1 checksum for the range of
