@@ -135,6 +135,33 @@ class BmapCopy:
             self.mapped_size = self.image_size
             self.mapped_size_human = self.image_size_human
 
+    def _verify_bmap_checksum(self):
+        """ This is a helper function which verifies SHA1 checksum of the bmap
+        file. """
+
+        import mmap
+
+        correct_sha1 = self._xml.find("BmapFileSHA1").text.strip()
+
+        # Before verifying the shecksum, we have to substitute the SHA1 value
+        # stored in the file with all zeroes. For these purposes we create
+        # private memory mapping of the bmap file.
+        mapped_bmap = mmap.mmap(self._f_bmap.fileno(), 0,
+                                access = mmap.ACCESS_COPY)
+
+        sha1_pos = mapped_bmap.find(correct_sha1)
+        assert sha1_pos != -1
+
+        mapped_bmap[sha1_pos:sha1_pos + 40] = '0' * 40
+        calculated_sha1 = hashlib.sha1(mapped_bmap).hexdigest()
+
+        mapped_bmap.close()
+
+        if calculated_sha1 != correct_sha1:
+            raise Error("checksum mismatch for bmap file '%s': calculated " \
+                        "'%s', should be '%s'" % \
+                        (self._bmap_path, calculated_sha1, correct_sha1))
+
     def _parse_bmap(self):
         """ Parse the bmap file and initialize corresponding class instance
         attributs. """
@@ -171,6 +198,10 @@ class BmapCopy:
             raise Error("Inconsistent bmap - image size does not match " \
                         "blocks count (%d bytes != %d blocks * %d bytes)" \
                         % (self.image_size, self.blocks_cnt, self.block_size))
+
+        if self.bmap_version_major >= 1 and self.bmap_version_minor >= 3:
+            # Bmap file checksum appeard in format 1.3
+            self._verify_bmap_checksum()
 
     def __init__(self, image, dest, bmap = None, image_size = None):
         """ The class constructor. The parameters are:
