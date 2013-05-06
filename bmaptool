@@ -139,7 +139,9 @@ def copy_command_open_all(args, log):
     bmap_obj = None
     if bmap_path:
         try:
-            bmap_obj = TransRead.TransRead(bmap_path)
+            # The current implementation of BmapCopy requires a local file for
+            # the bmap file.
+            bmap_obj = TransRead.TransRead(bmap_path, local = True)
         except TransRead.Error as err:
             log.error("cannot open bmap file '%s': %s" % (bmap_path, str(err)))
             raise SystemExit(1)

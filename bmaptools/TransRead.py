@@ -243,9 +243,42 @@ class TransRead:
             raise Error("cannot open URL '%s': server responds with an HTTP " \
                         "status code that we don't understand" % url)
 
-    def __init__(self, filepath):
+    def _create_local_copy(self):
+        """ Create a local copy of a remote or compressed file. """
+
+        import tempfile
+
+        try:
+            tmp_file_obj = tempfile.NamedTemporaryFile("w+")
+        except IOError as err:
+            raise Error("cannot create a temporary file: %s" % err)
+
+        while True:
+            chunk = self.read(1024 * 1024)
+            if not chunk:
+                break
+
+            tmp_file_obj.write(chunk)
+
+        tmp_file_obj.flush()
+        self.close()
+        self.is_compressed = False
+        self.is_url = False
+        self._file_obj = tmp_file_obj
+
+        try:
+            self._transfile_obj = open(tmp_file_obj.name, "rb")
+        except IOError as err:
+            raise Error("cannot open own temporary file '%s': %s" \
+                        % (tmp_file_obj.name, err))
+
+    def __init__(self, filepath, local = False):
         """ Class constructor. The 'filepath' argument is the full path to the
-        file to read transparently. """
+        file to read transparently. If 'local' is True, then the file-like
+        object is guaranteed to be backed by a local file. This means that if
+        the source file is compressed or an URL, then it will first be copied
+        to a temporary local file, and then all the subsequent operations will
+        be done with the local copy. """
 
         self.name = filepath
         self.size = None
@@ -265,6 +298,9 @@ class TransRead:
                 raise Error("cannot open file '%s': %s" % (filepath, err))
 
         self._open_compressed_file()
+
+        if local:
+            self._create_local_copy()
 
     def read(self, size = -1):
         """ Read the data from the file or URL and and uncompress it on-the-fly
@@ -308,3 +344,11 @@ class TransRead:
 
         self.__del__()
 
+    def __getattr__(self, name):
+        """ If we are backed by a local uncompressed file, then fall-back to
+        using its operations. """
+
+        if not self.is_compressed and not self.is_url:
+            return getattr(self._transfile_obj, name)
+        else:
+            raise AttributeError
