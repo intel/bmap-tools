@@ -203,7 +203,6 @@ class TransRead:
         import urllib2
         import httplib
         import urlparse
-        import re
 
         # Unfortunately, in order to handle URLs which contain user name and
         # password (e.g., http://user:password@my.site.org), we need to do
