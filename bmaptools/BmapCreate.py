@@ -34,7 +34,7 @@ from bmaptools.BmapHelpers import human_size
 from bmaptools import Fiemap
 
 # The bmap format version we generate
-SUPPORTED_BMAP_VERSION = "1.2"
+SUPPORTED_BMAP_VERSION = "1.3"
 
 _BMAP_START_TEMPLATE = \
 """<?xml version="1.0" ?>
@@ -61,7 +61,7 @@ _BMAP_START_TEMPLATE = \
      in case of minor backward-compatible changes. -->
 
 <bmap version="%s">
-    <!-- Image size in bytes (%s) -->
+    <!-- Image size in bytes: %s -->
     <ImageSize> %u </ImageSize>
 
     <!-- Size of a block in bytes -->
@@ -70,10 +70,6 @@ _BMAP_START_TEMPLATE = \
     <!-- Count of blocks in the image file -->
     <BlocksCount> %u </BlocksCount>
 
-    <!-- The block map which consists of elements which may either be a
-         range of blocks or a single block. The 'sha1' attribute (if present)
-         is the SHA1 checksum of this blocks range. -->
-    <BlockMap>
 """
 
 class Error(Exception):
@@ -131,6 +127,9 @@ class BmapCreate:
         self.mapped_size_human = None
         self.mapped_percent = None
 
+        self._mapped_count_pos1 = None
+        self._mapped_count_pos2 = None
+
         self._f_image_needs_close = False
         self._f_bmap_needs_close = False
 
@@ -163,10 +162,35 @@ class BmapCreate:
         """ A helper function which generates the starting contents of the
         block map file: the header comment, image size, block size, etc. """
 
+        # We do not know the amount of mapped blocks at the moment, so just put
+        # whitespaces instead of real numbers. Assume the longest possible
+        # numbers.
+        mapped_count = ' ' * len(str(self.image_size))
+        mapped_size_human = ' ' * len(self.image_size_human)
+
         xml = _BMAP_START_TEMPLATE \
-               % (SUPPORTED_BMAP_VERSION,
-                  self.image_size_human, self.image_size,
-                  self.block_size, self.blocks_cnt)
+               % (SUPPORTED_BMAP_VERSION, self.image_size_human,
+                  self.image_size, self.block_size, self.blocks_cnt)
+        xml += "    <!-- Count of mapped blocks: "
+
+        self._f_bmap.write(xml)
+        self._mapped_count_pos1 = self._f_bmap.tell()
+
+        # Just put white-spaces instead of real information about mapped blocks
+        xml  = "%s or %.1f    -->\n" % (mapped_size_human, 100.0)
+        xml += "    <MappedBlocksCount> "
+
+        self._f_bmap.write(xml)
+        self._mapped_count_pos2 = self._f_bmap.tell()
+
+        xml  = "%s </MappedBlocksCount>\n\n" % mapped_count
+
+        # pylint: disable=C0301
+        xml += "    <!-- The block map which consists of elements which may either be a\n"
+        xml += "         range of blocks or a single block. The 'sha1' attribute (if present)\n"
+        xml += "         is the SHA1 checksum of this blocks range. -->\n"
+        xml += "    <BlockMap>\n"
+        # pylint: enable=C0301
 
         self._f_bmap.write(xml)
 
@@ -175,14 +199,17 @@ class BmapCreate:
         file: the ending tags and the information about the amount of mapped
         blocks. """
 
-        xml =  "    </BlockMap>\n\n"
-        xml += "    <!-- Count of mapped blocks (%s or %.1f%% mapped) -->\n" \
-               % (self.mapped_size_human, self.mapped_percent)
-        xml += "    <MappedBlocksCount> %u </MappedBlocksCount>\n" \
-               % self.mapped_cnt
+        xml =  "    </BlockMap>\n"
         xml += "</bmap>\n"
 
         self._f_bmap.write(xml)
+
+        self._f_bmap.seek(self._mapped_count_pos1)
+        self._f_bmap.write("%s or %.1f%%" % \
+                           (self.mapped_size_human, self.mapped_percent))
+
+        self._f_bmap.seek(self._mapped_count_pos2)
+        self._f_bmap.write("%u" % self.mapped_cnt)
 
     def _calculate_sha1(self, first, last):
         """ A helper function which calculates SHA1 checksum for the range of
