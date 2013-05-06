@@ -32,6 +32,10 @@ all 4GiB of data. We say that it is a bit more than 100MiB because things like
 file-system meta-data (inode tables, superblocks, etc), partition table, etc
 also contribute to the mapped blocks and are also copied. """
 
+# Disable the following pylint recommendations:
+#   * Too few public methods (R0903)
+# pylint: disable=R0903
+
 VERSION = "2.2"
 
 import argparse
@@ -46,6 +50,18 @@ from bmaptools import BmapCreate, BmapCopy, BmapHelpers, TransRead
 def copy_command_open_blkdev(path, log):
     """ Open a block device specified by 'path' in exclusive mode. Returns
     opened file object. """
+
+    class NamedFile:
+        """ This simple class allows us to override the 'name' attribute of a
+        file object. The problem is that 'os.fdopen()' sets the name to
+        "<fdopen>", which is not very user-friendly. """
+
+        def __init__(self, file_obj, name):
+            self._file_obj = file_obj
+            self.name = name
+
+        def __getattr__(self, name):
+            return getattr(self._file_obj, name)
 
     try:
         descriptor = os.open(path, os.O_WRONLY | os.O_EXCL)
@@ -62,7 +78,7 @@ def copy_command_open_blkdev(path, log):
         log.error("cannot open block device '%s': %s" % (path, err))
         raise SystemExit(1)
 
-    return file_obj
+    return NamedFile(file_obj, path)
 
 def find_and_open_bmap(image_path):
     """ When the user does not specify the bmap file, we try to find it at the
