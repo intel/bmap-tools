@@ -266,9 +266,12 @@ class TransRead:
 
         self._open_compressed_file()
 
-    def read(self, size):
+    def read(self, size = -1):
         """ Read the data from the file or URL and and uncompress it on-the-fly
         if necessary. """
+
+        if size < 0:
+            size = 0xFFFFFFFFFFFFFFFF
 
         buf = self._transfile_obj.read(size)
         self._pos += len(buf)
