@@ -3,19 +3,27 @@ Bug-fix release 2.3
 
 1. Add bmap file SHA1 checksum into the bmap file itself in order to improve
    robustness of bmaptool. Now we verify bmap file integrity before using it,
-   and if it is corrupted on incomplete, we should be able to detect this.
+   and if it is corrupted or incomplete, we should be able to detect this.
 
-   This also means that if one changes the bmap file manually, bmaptool will
-   detect SHA1 mismatch and fail. In order to prevent the failure, one has to
-   update the bmap file's SHA1 by putting all ASCII 0 symbols (should be 40
-   zeroes) to the bmap file "sha1" attribute, and then generating SHA1 of that,
-   and putting the result back to the bmap file (by substituting the zeroes).
+   The reason for this change was a bug report from a user who somehow ended
+   up with a corrupted bmap file and experienced weird issues.
+
+   This also means that manual changes the bmap file will end up with a SHA1
+   mismatch failure. In order to prevent the failure, one has to update the bmap
+   file's SHA1 by putting all ASCII "0" symbols (should be 40 zeroes) to the
+   "BmapFileSHA1" tag, then generating SHA1 of the resulting file, and then
+   put the calculated real SHA1 back to the "BmapFileSHA1" tag.
+
+   In the future, if needed, we can create a "bmaptool checksum" command which
+   could update SHA1s in the bmap file.
 
 2. Re-structure the bmap file layout and put information about mapped blocks
    count at the beginning of the bmap XML file, not after the block map table.
-   This will make it possible to optimize bmap file parsing in the future.
+   This will make it possible to optimize bmap file parsing in the future. This
+   also makes the bmap file a little bit more human-readable.
 
 2. Make the test-suite work on btrfs.
+
 
 Bug-fix release 2.2
 ~~~~~~~~~~~~~~~~~~~
