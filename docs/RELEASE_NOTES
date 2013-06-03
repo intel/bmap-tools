@@ -1,3 +1,16 @@
+Bug-fix release 2.4
+~~~~~~~~~~~~~~~~~~~
+
+1. Add SSH URLs support. These URLs start with "ssh://" and have the following
+   format: ssh://user:password@host:path, where
+   * user - user name (optional)
+   * password - the password (optional)
+   * host - hostname
+   * path - path to the image file on the remote host
+
+   If the password was given in the URL, bmaptool will use password-based SSH
+   authentication, otherwise key-based SSH authentication will be used.
+
 Bug-fix release 2.3
 ~~~~~~~~~~~~~~~~~~~
 
