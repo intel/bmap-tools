@@ -4,6 +4,15 @@ Supported compression types are: 'bz2', 'gz', 'tar.gz', 'tgz', 'tar.bz2'. """
 
 import os
 import errno
+import urlparse
+
+# Disable the following pylint errors and recommendations:
+#   * Instance of X has no member Y (E1101), because it produces
+#     false-positives for many of 'subprocess' class members, e.g.
+#     "Instance of 'Popen' has no 'wait' member".
+#   * Too many instance attributes (R0902)
+# pylint: disable=E1101
+# pylint: disable=R0902
 
 # A list of supported compression types
 SUPPORTED_COMPRESSION_TYPES = ('bz2', 'gz', 'tar.gz', 'tgz', 'tar.bz2')
@@ -154,6 +163,31 @@ class _CompressedFile:
         """ Close the '_CompressedFile' file-like object. """
         pass
 
+def _decode_sshpass_exit_code(code):
+    """ A helper function which converts "sshpass" comman-line tool's exit code
+    into a human-readable string. See "man sshpass". """
+
+    if code == 1:
+        result = "invalid command line argument"
+    elif code == 2:
+        result = "conflicting arguments given"
+    elif code == 3:
+        result = "general runtime error"
+    elif code == 4:
+        result = "unrecognized response from ssh (parse error)"
+    elif code == 5:
+        result = "invalid/incorrect password"
+    elif code == 6:
+        result = "host public key is unknown. sshpass exits without " \
+                 "confirming the new key"
+    elif code == 255:
+        # SSH result =s 255 on any error
+        result = "ssh error"
+    else:
+        result = "unknown"
+
+    return result
+
 class TransRead:
     """ This class implement the transparent reading functionality. Instances
     of this class are file-like objects which you can read and seek only
@@ -196,25 +230,110 @@ class TransRead:
         except IOError as err:
             raise Error("cannot open file '%s': %s" % (self.name, err))
 
+    def _open_url_ssh(self, url):
+        """ This function opens a file on a remote host using SSH. The URL has
+        to have this format: "ssh://username@hostname:path". Currently we only
+        support password-based authentication. """
+
+        import subprocess
+
+        # Parse the URL
+        parsed_url = urlparse.urlparse(url)
+        username = parsed_url.username
+        password = parsed_url.password
+        path = parsed_url.path
+        hostname = parsed_url.hostname
+        if username:
+            hostname = username + "@" + hostname
+
+        # Make sure the ssh client program is installed
+        try:
+            subprocess.Popen("ssh", stderr = subprocess.PIPE,
+                             stdout = subprocess.PIPE).wait()
+        except OSError as err:
+            if err.errno == os.errno.ENOENT:
+                raise Error("\"sshpass\" program not found, but it is " \
+                            "required for downloading over SSH")
+
+        # Prepare the commands that we are going to run
+        if password:
+            # In case of password we have to use the sshpass tool to pass the
+            # password to the ssh client utility
+            popen_args = ["sshpass",
+                          "-p" + password,
+                          "ssh",
+                          "-o StrictHostKeyChecking=no",
+                          "-o PubkeyAuthentication=no",
+                          "-o PasswordAuthentication=yes",
+                          hostname]
+
+            # Make sure the sshpass program is installed
+            try:
+                subprocess.Popen("sshpass", stderr = subprocess.PIPE,
+                                 stdout = subprocess.PIPE).wait()
+            except OSError as err:
+                if err.errno == os.errno.ENOENT:
+                    raise Error("\"sshpass\" program not found, but it is " \
+                                "required for password SSH authentication")
+        else:
+            popen_args = ["ssh",
+                          "-o StrictHostKeyChecking=no",
+                          "-o PubkeyAuthentication=yes",
+                          "-o PasswordAuthentication=no",
+                          "-o BatchMode=yes",
+                          hostname]
+
+        # Test if we can successfully connect
+        child_process = subprocess.Popen(popen_args + ["true"])
+        child_process.wait()
+        retcode = child_process.returncode
+        if retcode != 0:
+            decoded = _decode_sshpass_exit_code(retcode)
+            raise Error("cannot connect to \"%s\": %s (error code %d)" % \
+                        (hostname, decoded, retcode))
+
+        # Test if file exists by running "test -f path && test -r path" on the
+        # host
+        command = "test -f " + path + " && test -r " + path
+        child_process = subprocess.Popen(popen_args + [command],
+                                         stdout = subprocess.PIPE)
+        child_process.wait()
+        if child_process.returncode != 0:
+            raise Error("\"%s\" on \"%s\" cannot be read: make sure it " \
+                        "exists, is a regular file, and you have read "   \
+                        "permissions" % (path, hostname))
+
+        # Read the entire file using 'cat'
+        self._child_process = subprocess.Popen(popen_args + ["cat " + path],
+                                               stdout = subprocess.PIPE)
+
+        # Now the contents of the file should be available from sub-processes
+        # stdout
+        self._file_obj = self._child_process.stdout
+
+        self.is_url = True
+        self._force_fake_seek = True
+
     def _open_url(self, url):
         """ Open an URL 'url' and return the file-like object of the opened
         URL. """
 
         import urllib2
         import httplib
-        import urlparse
-
-        # Unfortunately, in order to handle URLs which contain user name and
-        # password (e.g., http://user:password@my.site.org), we need to do
-        # things a bit differently. The following code tries to find out if
-        # the URL contains user name and password.
 
         parsed_url = urlparse.urlparse(url)
         username = parsed_url.username
         password = parsed_url.password
 
+        if parsed_url.scheme == "ssh":
+            # Unfortunatelly, liburl2 does not handle "ssh://" URLs
+            self._open_url_ssh(url)
+            return
+
         if username and password:
-            # Construct a new URL without user name and password
+            # Unfortunately, in order to handle URLs which contain user name
+            # and password (e.g., http://user:password@my.site.org), we need to
+            # do few extra things.
             new_url = list(parsed_url)
             if parsed_url.port:
                 new_url[1] = "%s:%s" % (parsed_url.hostname, parsed_url.port)
@@ -283,6 +402,7 @@ class TransRead:
         self.size = None
         self.is_compressed = True
         self.is_url = False
+        self._child_process = None
         self._file_obj = None
         self._transfile_obj = None
         self._force_fake_seek = False
@@ -321,6 +441,8 @@ class TransRead:
             self._transfile_obj.close()
         if self._file_obj:
             self._file_obj.close()
+        if self._child_process:
+            self._child_process.wait()
 
     def seek(self, offset, whence = os.SEEK_SET):
         """ The 'seek()' method, similar to the one file objects have. """
