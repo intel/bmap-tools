@@ -285,6 +285,7 @@ class TransRead:
         self.is_url = False
         self._file_obj = None
         self._transfile_obj = None
+        self._force_fake_seek = False
         self._pos = 0
 
         try:
@@ -324,19 +325,19 @@ class TransRead:
     def seek(self, offset, whence = os.SEEK_SET):
         """ The 'seek()' method, similar to the one file objects have. """
 
-        if hasattr(self._transfile_obj, "seek"):
-            self._transfile_obj.seek(offset, whence)
-        else:
+        if self._force_fake_seek or not hasattr(self._transfile_obj, "seek"):
             self._pos = _fake_seek_forward(self._transfile_obj, self._pos, \
                                            offset, whence)
+        else:
+            self._transfile_obj.seek(offset, whence)
 
     def tell(self):
         """ The 'tell()' method, similar to the one file objects have. """
 
-        if hasattr(self._transfile_obj, "tell"):
-            return self._transfile_obj.tell()
-        else:
+        if self._force_fake_seek or not hasattr(self._transfile_obj, "tell"):
             return self._pos
+        else:
+            return self._transfile_obj.tell()
 
     def close(self):
         """ Close the file-like object. """
