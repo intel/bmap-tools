@@ -80,9 +80,14 @@ the "--nobmap" option.
 
 .PP
 Both IMAGE and the bmap file may be specified as an URL (http://, ftp://,
-https://, file://). In order to make \fIbmaptool\fR use a proxy server, please,
-specify the proxy using the standard "$http_proxy", "$https_proxy", "$ftp_proxy"
-or "$no_proxy" environment variables.
+https://, file://, ssh://). In order to make \fIbmaptool\fR use a proxy server,
+please, specify the proxy using the standard "$http_proxy", "$https_proxy",
+"$ftp_proxy" or "$no_proxy" environment variables.
+
+.PP
+If the server requires authentication, user name and password may be specified
+in the URL, for example "https://user:password@my.server.org/image.raw.bz2", or
+"ssh://user:password@host:path/to/image.raw".
 
 .PP
 IMAGE may be compressed, in which case \fIbmaptool\fR decompresses it on-the-fly.
