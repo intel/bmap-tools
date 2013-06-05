@@ -1,6 +1,7 @@
 """ This module allows opening and reading local and remote files and
-decompress them on-the-fly if needed. Remote files are read using urllib2.
-Supported compression types are: 'bz2', 'gz', 'tar.gz', 'tgz', 'tar.bz2'. """
+decompress them on-the-fly if needed. Remote files are read using urllib2
+(except of "ssh://" URLs, which are handled differently). Supported
+compression types are: 'bz2', 'gz', 'tar.gz', 'tgz', 'tar.bz2'. """
 
 import os
 import errno
@@ -164,7 +165,7 @@ class _CompressedFile:
         pass
 
 def _decode_sshpass_exit_code(code):
-    """ A helper function which converts "sshpass" comman-line tool's exit code
+    """ A helper function which converts "sshpass" command-line tool's exit code
     into a human-readable string. See "man sshpass". """
 
     if code == 1:
@@ -172,7 +173,7 @@ def _decode_sshpass_exit_code(code):
     elif code == 2:
         result = "conflicting arguments given"
     elif code == 3:
-        result = "general runtime error"
+        result = "general run-time error"
     elif code == 4:
         result = "unrecognized response from ssh (parse error)"
     elif code == 5:
@@ -326,7 +327,7 @@ class TransRead:
         password = parsed_url.password
 
         if parsed_url.scheme == "ssh":
-            # Unfortunatelly, liburl2 does not handle "ssh://" URLs
+            # Unfortunately, liburl2 does not handle "ssh://" URLs
             self._open_url_ssh(url)
             return
 
