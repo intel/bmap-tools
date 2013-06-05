@@ -1,3 +1,9 @@
+bmap-tools (2.4-1) unstable; urgency=low
+
+  * Add support for ssh:// URLs.
+
+ -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com> Wed, 05 Jun 2013 18:15:41 +0300
+
 bmap-tools (2.3-1) unstable; urgency=low
 
   * Add bmap file SHA1 verification, make tests work on btrfs.
