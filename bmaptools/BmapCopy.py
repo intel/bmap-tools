@@ -38,6 +38,7 @@ import os
 import stat
 import sys
 import hashlib
+import logging
 import Queue
 import thread
 import datetime
@@ -203,7 +204,8 @@ class BmapCopy:
             # Bmap file checksum appeard in format 1.3
             self._verify_bmap_checksum()
 
-    def __init__(self, image, dest, bmap = None, image_size = None):
+    def __init__(self, image, dest, bmap = None, image_size = None,
+                 logger = None):
         """ The class constructor. The parameters are:
             image      - file-like object of the image which should be copied,
                          should only support 'read()' and 'seek()' methods,
@@ -211,7 +213,13 @@ class BmapCopy:
             dest       - file object of the destination file to copy the image
                          to.
             bmap       - file object of the bmap file to use for copying.
-            image_size - size of the image in bytes. """
+            image_size - size of the image in bytes.
+            logger     - the logger object to use for printing messages.
+            """
+
+        self._logger = logger
+        if self._logger is None:
+            self._logger = logging.getLogger(__name__)
 
         self._xml = None
 
@@ -618,12 +626,13 @@ class BmapBdevCopy(BmapCopy):
         finally:
             self._restore_bdev_settings()
 
-    def __init__(self, image, dest, bmap = None, image_size = None):
+    def __init__(self, image, dest, bmap = None, image_size = None,
+                 logger = None):
         """ The same as the constructor of the 'BmapCopy' base class, but adds
         useful guard-checks specific to block devices. """
 
         # Call the base class constructor first
-        BmapCopy.__init__(self, image, dest, bmap, image_size)
+        BmapCopy.__init__(self, image, dest, bmap, image_size, logger=logger)
 
         self._batch_bytes = 1024 * 1024
         self._batch_blocks = self._batch_bytes / self.block_size
