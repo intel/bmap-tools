@@ -565,25 +565,32 @@ class BmapBdevCopy(BmapCopy):
                 f_scheduler.seek(0)
                 f_scheduler.write("noop")
         except IOError as err:
-            raise Error("cannot enable the 'noop' I/O scheduler: %s" % err)
+            self._logger.warning("failed to enable I/O optimization, expect " \
+                                 "suboptimal speed (reason: cannot switch "   \
+                                 "to the 'noop' I/O scheduler: %s)" % err)
+        else:
+            # The file contains a list of schedulers with the current
+            # scheduler in square brackets, e.g., "noop deadline [cfq]".
+            # Fetch the name of the current scheduler.
+            import re
 
-        # The file contains a list of scheduler with the current
-        # scheduler in square brackets, e.g., "noop deadline [cfq]".
-        # Fetch the current scheduler name
-        import re
+            match = re.match(r'.*\[(.+)\].*', contents)
+            if match:
+                self._old_scheduler_value = match.group(1)
 
-        match = re.match(r'.*\[(.+)\].*', contents)
-        if match:
-            self._old_scheduler_value = match.group(1)
-
-        # Limit the write buffering
+        # Limit the write buffering, because we do not need too much of it when
+        # writing sequntially. Excessive buffering makes some systems not very
+        # responsive, e.g., this was observed in Fedora 17.
         try:
             with open(self._sysfs_max_ratio_path, "r+") as f_ratio:
                 self._old_max_ratio_value = f_ratio.read()
                 f_ratio.seek(0)
                 f_ratio.write("1")
         except IOError as err:
-            raise Error("cannot set max. I/O ratio to '1': %s" % err)
+            self._logger.warning("failed to disable excessive buffering, " \
+                                 "expect worse system responsiveness "     \
+                                 "(reason: cannot switch to the 'noop' "   \
+                                 "I/O scheduler: %s)" % err)
 
     def _restore_bdev_settings(self):
         """ Restore old block device settings which we changed in
