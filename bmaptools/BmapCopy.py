@@ -557,7 +557,6 @@ class BmapBdevCopy(BmapCopy):
                 f_scheduler.seek(0)
                 f_scheduler.write("noop")
         except IOError as err:
-            # No problem, this is just an optimization
             raise Error("cannot enable the 'noop' I/O scheduler: %s" % err)
 
         # The file contains a list of scheduler with the current
