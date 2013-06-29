@@ -188,7 +188,7 @@ class BmapCreate:
 
         # pylint: disable=C0301
         xml += "    <!-- The checksum of this bmap file. When it is calculated, the value of\n"
-        xml += "         the SHA1 checksum has be zeoro (40 ASCII \"0\" symbols). -->\n"
+        xml += "         the SHA1 checksum has be zero (40 ASCII \"0\" symbols). -->\n"
         xml += "    <BmapFileSHA1> "
 
         self._f_bmap.write(xml)
