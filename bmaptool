@@ -1,8 +1,17 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2012 Intel, Inc.
+# Copyright (c) 2012-2013 Intel, Inc.
 # License: GPLv2
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License, version 2,
+# as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
 
 """
 This is a tool to generate block map files (bmap) and to copy files using bmap.
