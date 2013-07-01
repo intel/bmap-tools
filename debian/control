@@ -2,13 +2,17 @@ Source: bmap-tools
 Maintainer: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 Section: python
 Priority: optional
-Build-Depends: debhelper (>= 7), python-all, python-distribute
+Build-Depends: debhelper (>= 7),
+               python-all,
+               python-distribute,
 Standards-Version: 3.8.4
 XS-Python-Version: current
 
 Package: bmap-tools
 Architecture: all
-Depends: ${misc:Depends}, ${python:Depends}, python (>=2.7)
+Depends: python (>=2.7),
+         ${misc:Depends},
+         ${python:Depends},
 XB-Python-Version: ${python:Versions}
 Description: tool to flash image files to block devices using the block map
  bmaptool is a generic tool for creating the block map (bmap) for a
