@@ -1,6 +1,4 @@
 #!/usr/bin/make -f
 
 %:
-	dh $@
-
-
+	dh $@ --with=python2
