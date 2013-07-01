@@ -1,6 +1,6 @@
 Source: bmap-tools
 Maintainer: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
-Section: python
+Section: utils
 Priority: optional
 Build-Depends: debhelper (>= 7),
                python-all,
