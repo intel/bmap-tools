@@ -4,7 +4,7 @@ Section: utils
 Priority: optional
 Build-Depends: debhelper (>= 7),
                python-all,
-               python-distribute,
+               python-setuptools,
 Standards-Version: 3.8.4
 XS-Python-Version: current
 
