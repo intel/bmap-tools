@@ -1,5 +1,7 @@
-""" This module contains independent functions shared between various
-tests. """
+"""
+This module contains independent functions shared between various
+tests.
+"""
 
 # Disable the following pylint recommendations:
 #   * Too many statements (R0915)
@@ -11,21 +13,24 @@ import itertools
 from bmaptools import BmapHelpers
 
 def _create_random_sparse_file(file_obj, size):
-    """ Create a sparse file with randomly distributed holes. The mapped areas
-    are filled with semi-random data. Returns a tuple containing 2 lists:
+    """
+    Create a sparse file with randomly distributed holes. The mapped areas are
+    filled with semi-random data. Returns a tuple containing 2 lists:
       1. a list of mapped block ranges, same as 'Fiemap.get_mapped_ranges()'
       2. a list of unmapped block ranges (holes), same as
-         'Fiemap.get_unmapped_ranges()' """
+         'Fiemap.get_unmapped_ranges()'
+    """
 
     file_obj.truncate(0)
     block_size = BmapHelpers.get_block_size(file_obj)
     blocks_cnt = (size + block_size - 1) / block_size
 
     def process_block(block):
-        """ This is a helper function which processes a block. It randomly
-        decides whether the block should be filled with random data or should
-        become a hole. Returns 'True' if the block was mapped and 'False'
-        otherwise. """
+        """
+        This is a helper function which processes a block. It randomly decides
+        whether the block should be filled with random data or should become a
+        hole. Returns 'True' if the block was mapped and 'False' otherwise.
+        """
 
         map_the_block = random.getrandbits(1)
 
@@ -63,8 +68,9 @@ def _create_random_sparse_file(file_obj, size):
     return (mapped, unmapped)
 
 def _create_random_file(file_obj, size):
-    """ Fill the 'file_obj' file object with semi-random data up to the size
-    'size'. """
+    """
+    Fill the 'file_obj' file object with semi-random data up to the size 'size'.
+    """
 
     chunk_size = 1024 * 1024
     written = 0
@@ -80,10 +86,11 @@ def _create_random_file(file_obj, size):
 
 def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
                         delete = True):
-    """ This is a generator which yields files which other tests use as the
-    input for the testing. The generator tries to yield "interesting" files
-    which cover various corner-cases. For example, a large hole file, a file
-    with no holes, files of unaligned length, etc.
+    """
+    This is a generator which yields files which other tests use as the input
+    for the testing. The generator tries to yield "interesting" files which
+    cover various corner-cases. For example, a large hole file, a file with
+    no holes, files of unaligned length, etc.
 
     The 'directory' argument specifies the directory path where the yielded
     test files should be created. The 'delete' argument specifies whether the
@@ -94,7 +101,8 @@ def generate_test_files(max_size = 4 * 1024 * 1024, directory = None,
       2. file size in bytes
       3. a list of mapped block ranges, same as 'Fiemap.get_mapped_ranges()'
       4. a list of unmapped block ranges (holes), same as
-         'Fiemap.get_unmapped_ranges()' """
+         'Fiemap.get_unmapped_ranges()'
+    """
 
     #
     # Generate sparse files with one single hole spanning the entire file
