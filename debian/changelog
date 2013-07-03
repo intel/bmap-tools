@@ -1,34 +1,34 @@
-bmap-tools (2.4-1) unstable; urgency=low
+bmap-tools (2.4) unstable; urgency=low
 
   * Add support for ssh:// URLs.
 
  -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com>  Wed, 05 Jun 2013 18:15:41 +0300
 
-bmap-tools (2.3-1) unstable; urgency=low
+bmap-tools (2.3) unstable; urgency=low
 
   * Add bmap file SHA1 verification, make tests work on btrfs.
 
  -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com>  Mon, 06 May 2013 10:58:32 +0300
 
-bmap-tools (2.2-1) unstable; urgency=low
+bmap-tools (2.2) unstable; urgency=low
 
   * Support username and password in URLs.
 
  -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com>  Mon, 11 Mar 2013 14:40:17 +0200
 
-bmap-tools (2.1-1) unstable; urgency=low
+bmap-tools (2.1) unstable; urgency=low
 
   * Fix out of memory issues when copying .bz2 files.
 
  -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com>  Mon, 18 Feb 2013 16:38:32 +0200
 
-bmap-tools (2.0-1) unstable; urgency=low
+bmap-tools (2.0) unstable; urgency=low
 
   * Fix the an issue with running out of memory in TransRead.py.
 
  -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com>  Thu, 17 Jan 2013 11:33:15 +0200
 
-bmap-tools (2.0-0.rc5) unstable; urgency=low
+bmap-tools (2.0~rc5) unstable; urgency=low
 
   * When block device optimzations fail - raise an exception except of muting
     the error, because we really want to know about these failures and possibly
@@ -36,26 +36,26 @@ bmap-tools (2.0-0.rc5) unstable; urgency=low
 
  -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com>  Tue, 15 Jan 2013 14:51:27 +0200
 
-bmap-tools (2.0-0.rc4) unstable; urgency=low
+bmap-tools (2.0~rc4) unstable; urgency=low
 
   * Fix bmap autodiscovery.
 
  -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com>  Thu, 10 Jan 2013 13:58:07 +0200
 
-bmap-tools (2.0-0.rc3) unstable; urgency=low
+bmap-tools (2.0~rc3) unstable; urgency=low
 
   * Fix uncaught urllib2 exception bug introduced in rc1.
 
  -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com>  Mon, 07 Jan 2013 10:19:49 +0200
 
-bmap-tools (2.0-0.rc2) unstable; urgency=low
+bmap-tools (2.0~rc2) unstable; urgency=low
 
   * Fix writing to block devices, which was broken in rc1.
   * Make the informational messages a bit nicer.
 
  -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com>  Fri, 04 Jan 2013 09:52:41 +0200
 
-bmap-tools (2.0-0.rc1) unstable; urgency=low
+bmap-tools (2.0~rc1) unstable; urgency=low
 
   * Allow copying without bmap only if --nobmap was specified.
   * Auto-discover the bmap file.
@@ -65,14 +65,14 @@ bmap-tools (2.0-0.rc1) unstable; urgency=low
 
  -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com>  Thu, 20 Dec 2012 10:47:00 +0200
 
-bmap-tools (1.0-1) unstable; urgency=low
+bmap-tools (1.0) unstable; urgency=low
 
-  * Release version 1.0 of the tools - almost identical to 1.0-rc7 except of few
+  * Release version 1.0 of the tools - almost identical to 1.0~rc7 except of few
     minor differences like spelling fixes.
 
  -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com>  Mon, 03 Dec 2012 10:00:33 +0200
 
-bmap-tools (1.0-0.rc7) unstable; urgency=low
+bmap-tools (1.0~rc7) unstable; urgency=low
 
   * Add a Fiemap.py module which implements python API to the linux FIEMAP ioct.
   * Use the FIEMAP ioctl properly and optimally.
