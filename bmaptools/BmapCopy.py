@@ -616,8 +616,8 @@ class BmapBdevCopy(BmapCopy):
         except IOError as err:
             self._logger.warning("failed to disable excessive buffering, " \
                                  "expect worse system responsiveness "     \
-                                 "(reason: cannot switch to the 'noop' "   \
-                                 "I/O scheduler: %s)" % err)
+                                 "(reason: cannot set max. I/O ratio to "  \
+                                 "1: %s)" % err)
 
     def _restore_bdev_settings(self):
         """
