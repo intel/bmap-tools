@@ -4,9 +4,9 @@
 # License: GPLv2
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 
-""" This is a tool to generate block map files (bmap) and to copy files using
-bmap. Generally speaking, these tools are about writing large image files
-quickly.
+"""
+This is a tool to generate block map files (bmap) and to copy files using bmap.
+Generally speaking, these tools are about writing large image files quickly.
 
 The bmap file is an XML file which contains a list of mapped blocks of the
 image. Mapped blocks are the blocks which have disk sectors associated with
@@ -30,7 +30,8 @@ copying only a little bit more than 100MiB of data from the image to the USB
 stick (namely, you write only mapped blocks). This is a lot faster than copying
 all 4GiB of data. We say that it is a bit more than 100MiB because things like
 file-system meta-data (inode tables, superblocks, etc), partition table, etc
-also contribute to the mapped blocks and are also copied. """
+also contribute to the mapped blocks and are also copied.
+"""
 
 # Disable the following pylint recommendations:
 #   * Too few public methods (R0903)
@@ -49,13 +50,17 @@ import traceback
 from bmaptools import BmapCreate, BmapCopy, BmapHelpers, TransRead
 
 def copy_command_open_blkdev(path, log):
-    """ Open a block device specified by 'path' in exclusive mode. Returns
-    opened file object. """
+    """
+    Open a block device specified by 'path' in exclusive mode. Returns opened
+    file object.
+    """
 
     class NamedFile:
-        """ This simple class allows us to override the 'name' attribute of a
-        file object. The problem is that 'os.fdopen()' sets the name to
-        "<fdopen>", which is not very user-friendly. """
+        """
+        This simple class allows us to override the 'name' attribute of a file
+        object. The problem is that 'os.fdopen()' sets the name to "<fdopen>",
+        which is not very user-friendly.
+        """
 
         def __init__(self, file_obj, name):
             self._file_obj = file_obj
@@ -82,14 +87,16 @@ def copy_command_open_blkdev(path, log):
     return NamedFile(file_obj, path)
 
 def find_and_open_bmap(image_path):
-    """ When the user does not specify the bmap file, we try to find it at the
-    same place where the image file is located. We search for a file with the
-    same path and basename, but with a ".bmap" extension. Since the image may
+    """
+    When the user does not specify the bmap file, we try to find it at the same
+    place where the image file is located. We search for a file with the same
+    path and basename, but with a ".bmap" extension. Since the image may
     contain more than one extension (e.g., image.raw.bz2), try to remove them
     one-by-one.
 
     This function returns a file-like object for the bmap file if it has been
-    found, and 'None' otherwise. """
+    found, and 'None' otherwise.
+    """
 
     bmap_path = None
 
@@ -110,7 +117,8 @@ def find_and_open_bmap(image_path):
     return None
 
 def copy_command_open_all(args, log):
-    """ Open the image/bmap/destination files for the "copy" command. Returns a
+    """
+    Open the image/bmap/destination files for the "copy" command. Returns a
     tuple of 5 elements:
         1 file-like object for the image
         2 file object for the destination file
@@ -167,7 +175,7 @@ def copy_command_open_all(args, log):
 
 
 def copy_command(args, log):
-    """ Copy an image to a block device or a regular file using bmap. """
+    """Copy an image to a block device or a regular file using bmap."""
 
     image_obj, dest_obj, bmap_obj, bmap_path, image_size, dest_is_blkdev = \
                                           copy_command_open_all(args, log)
@@ -236,13 +244,14 @@ def copy_command(args, log):
     image_obj.close()
 
 def create_command(args, log):
-    """ Generate block map (AKA bmap) for an image. The idea is that while
-    images files may generally be very large (e.g., 4GiB), they may
-    nevertheless contain only little real data, e.g., 512MiB. This data are
-    files, directories, file-system meta-data, partition table, etc. When
-    copying the image to the target device, you do not have to copy all the
-    4GiB of data, you can copy only 512MiB of it, which is 4 times less, so
-    copying should presumably be 4 times faster.
+    """
+    Generate block map (AKA bmap) for an image. The idea is that while images
+    files may generally be very large (e.g., 4GiB), they may nevertheless
+    contain only little real data, e.g., 512MiB. This data are files,
+    directories, file-system meta-data, partition table, etc. When copying the
+    image to the target device, you do not have to copy all the 4GiB of data,
+    you can copy only 512MiB of it, which is 4 times less, so copying should
+    presumably be 4 times faster.
 
     The block map file is an XML file which contains a list of blocks which
     have to be copied to the target device. The other blocks are not used and
@@ -257,7 +266,8 @@ def create_command(args, log):
     or parts of it), etc. The end result should be a sparse file where mapped
     areas represent useful parts of the image and holes represent useless parts
     of the image, which do not have to be copied when copying the image to the
-    target device. """
+    target device.
+    """
 
     # Create and setup the output stream
     if args.output:
@@ -293,7 +303,7 @@ def create_command(args, log):
                     "were expanded?")
 
 def parse_arguments():
-    """ A helper function which parses the input arguments. """
+    """A helper function which parses the input arguments."""
 
     text = "Create block map (bmap) and copy files using bmap. The " \
            "documentation can be found here: " \
@@ -361,8 +371,10 @@ def parse_arguments():
     return parser.parse_args()
 
 def setup_logger(loglevel):
-    """ A helper function which sets up and configures the logger. The log
-    level is initialized to 'loglevel'. Returns the logger object. """
+    """
+    A helper function which sets up and configures the logger. The log level is
+    initialized to 'loglevel'. Returns the logger object.
+    """
 
     # Esc-sequences for coloured output
     esc_red = '\033[91m'    # pylint: disable=W1401
@@ -386,7 +398,7 @@ def setup_logger(loglevel):
     return log
 
 def main():
-    """ Script entry point. """
+    """Script entry point."""
 
     args = parse_arguments()
 

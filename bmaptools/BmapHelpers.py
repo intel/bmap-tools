@@ -3,7 +3,7 @@ This module contains various shared helper functions.
 """
 
 def human_size(size):
-    """ Transform size in bytes into a human-readable form. """
+    """Transform size in bytes into a human-readable form."""
 
     if size == 1:
         return "1 byte"
@@ -19,7 +19,7 @@ def human_size(size):
     return "%.1f %s" % (size, 'EiB')
 
 def human_time(seconds):
-    """ Transform time in seconds to the HH:MM:SS format. """
+    """Transform time in seconds to the HH:MM:SS format."""
 
     (minutes, seconds) = divmod(seconds, 60)
     (hours, minutes) = divmod(minutes, 60)
@@ -33,8 +33,10 @@ def human_time(seconds):
     return result + "%.1fs" % seconds
 
 def get_block_size(file_obj):
-    """ Returns block size for file object 'file_obj'. Errors are indicated by
-    the 'IOError' exception. """
+    """
+    Returns block size for file object 'file_obj'. Errors are indicated by the
+    'IOError' exception.
+    """
 
     from fcntl import ioctl
     import struct
