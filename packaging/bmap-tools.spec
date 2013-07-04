@@ -24,7 +24,8 @@ Requires:	python-xml
 Requires:	python-libs
 %endif
 
-# We need the argparse module which is not available in Centos6
+# Centos6 uses python 2.6, which does not have the argparse module. However,
+# argparse is available as a separate package there.
 %if 0%{?centos_version} == 600
 Requires:	python-argparse
 %endif
