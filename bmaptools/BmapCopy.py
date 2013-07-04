@@ -643,7 +643,9 @@ class BmapBdevCopy(BmapCopy):
 
     def copy(self, sync = True, verify = True):
         """
-        The same as in the base class but tunes the block device for better performance before starting writing. Additionally, it forces block device synchronization from time to time in order to make sure we do
+        The same as in the base class but tunes the block device for better
+        performance before starting writing. Additionally, it forces block
+        device synchronization from time to time in order to make sure we do
         not get stuck in 'fsync()' for too long time. The problem is that the
         kernel synchronizes block devices when the file is closed. And the
         result is that if the user interrupts us while we are copying the data,
