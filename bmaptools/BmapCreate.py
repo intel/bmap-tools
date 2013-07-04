@@ -273,7 +273,7 @@ class BmapCreate:
 
         return hash_obj.hexdigest()
 
-    def generate(self, include_checksums = True):
+    def generate(self, include_checksums=True):
         """
         Generate bmap for the image file. If 'include_checksums' is 'True',
         also generate SHA1 checksums for block ranges.

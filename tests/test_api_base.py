@@ -43,7 +43,7 @@ def _compare_holes(file1, file2):
             raise Error("mismatch for hole %d-%d, it is %d-%d in file2" \
                         % (range1[0], range1[1], range2[0], range2[1]))
 
-def _generate_compressed_files(file_obj, delete = True):
+def _generate_compressed_files(file_obj, delete=True):
     """
     This is a generator which yields compressed versions of a file represented
     by a file object 'file_obj'.
@@ -64,9 +64,9 @@ def _generate_compressed_files(file_obj, delete = True):
     directory = os.path.dirname(file_obj.name)
 
     # Generate an uncompressed version of the file
-    tmp_file_obj = tempfile.NamedTemporaryFile('wb+', prefix = prefix,
-                                               delete = delete, dir = directory,
-                                               suffix = '.uncompressed')
+    tmp_file_obj = tempfile.NamedTemporaryFile('wb+', prefix=prefix,
+                                               delete=delete, dir=directory,
+                                               suffix='.uncompressed')
     file_obj.seek(0)
     shutil.copyfileobj(file_obj, tmp_file_obj)
     tmp_file_obj.flush()
@@ -74,9 +74,9 @@ def _generate_compressed_files(file_obj, delete = True):
     tmp_file_obj.close()
 
     # Generate a .bz2 version of the file
-    tmp_file_obj = tempfile.NamedTemporaryFile('wb+', prefix = prefix,
-                                               delete = delete, dir = directory,
-                                               suffix = '.bz2')
+    tmp_file_obj = tempfile.NamedTemporaryFile('wb+', prefix=prefix,
+                                               delete=delete, dir=directory,
+                                               suffix='.bz2')
     bz2_file_obj = bz2.BZ2File(tmp_file_obj.name, 'wb')
     file_obj.seek(0)
     shutil.copyfileobj(file_obj, bz2_file_obj)
@@ -85,9 +85,9 @@ def _generate_compressed_files(file_obj, delete = True):
     tmp_file_obj.close()
 
     # Generate a .gz version of the file
-    tmp_file_obj = tempfile.NamedTemporaryFile('wb+', prefix = prefix,
-                                               delete = delete, dir = directory,
-                                               suffix = '.gz')
+    tmp_file_obj = tempfile.NamedTemporaryFile('wb+', prefix=prefix,
+                                               delete=delete, dir=directory,
+                                               suffix='.gz')
     gzip_file_obj = gzip.GzipFile(tmp_file_obj.name, 'wb')
     file_obj.seek(0)
     shutil.copyfileobj(file_obj, gzip_file_obj)
@@ -96,9 +96,9 @@ def _generate_compressed_files(file_obj, delete = True):
     tmp_file_obj.close()
 
     # Generate a tar.gz version of the file
-    tmp_file_obj = tempfile.NamedTemporaryFile('wb+', prefix = prefix,
-                                               delete = delete, dir = directory,
-                                               suffix = '.tar.gz')
+    tmp_file_obj = tempfile.NamedTemporaryFile('wb+', prefix=prefix,
+                                               delete=delete, dir=directory,
+                                               suffix='.tar.gz')
     tgz_file_obj = tarfile.open(tmp_file_obj.name, "w:gz")
     tgz_file_obj.add(file_obj.name)
     tgz_file_obj.close()
@@ -106,9 +106,9 @@ def _generate_compressed_files(file_obj, delete = True):
     tmp_file_obj.close()
 
     # Generate a tar.bz2 version of the file
-    tmp_file_obj = tempfile.NamedTemporaryFile('wb+', prefix = prefix,
-                                               delete = delete, dir = directory,
-                                               suffix = '.tar.bz2')
+    tmp_file_obj = tempfile.NamedTemporaryFile('wb+', prefix=prefix,
+                                               delete=delete, dir=directory,
+                                               suffix='.tar.bz2')
     tbz2_file_obj = tarfile.open(tmp_file_obj.name, "w:bz2")
     tbz2_file_obj.add(file_obj.name)
     tbz2_file_obj.close()
@@ -161,7 +161,7 @@ def _copy_image(image, f_dest, f_bmap, image_sha1, image_size):
     if not hasattr(image, "read"):
         f_image.close()
 
-def _do_test(f_image, image_size, delete = True):
+def _do_test(f_image, image_size, delete=True):
     """
     A basic test for the bmap creation and copying functionality. It first
     generates a bmap for file object 'f_image', and then copies the sparse file
@@ -180,17 +180,17 @@ def _do_test(f_image, image_size, delete = True):
     directory = os.path.dirname(f_image.name)
 
     # Create and open a temporary file for a copy of the copy
-    f_copy = tempfile.NamedTemporaryFile("wb+", prefix = prefix,
-                                        delete = delete, dir = directory,
-                                        suffix = ".copy")
+    f_copy = tempfile.NamedTemporaryFile("wb+", prefix=prefix,
+                                        delete=delete, dir=directory,
+                                        suffix=".copy")
 
     # Create and open 2 temporary files for the bmap
-    f_bmap1 = tempfile.NamedTemporaryFile("w+", prefix = prefix,
-                                          delete = delete, dir = directory,
-                                          suffix = ".bmap1")
-    f_bmap2 = tempfile.NamedTemporaryFile("w+", prefix = prefix,
-                                          delete = delete, dir = directory,
-                                          suffix = ".bmap2")
+    f_bmap1 = tempfile.NamedTemporaryFile("w+", prefix=prefix,
+                                          delete=delete, dir=directory,
+                                          suffix=".bmap1")
+    f_bmap2 = tempfile.NamedTemporaryFile("w+", prefix=prefix,
+                                          delete=delete, dir=directory,
+                                          suffix=".bmap2")
 
     image_sha1 = _calculate_sha1(f_image)
 
@@ -224,7 +224,7 @@ def _do_test(f_image, image_size, delete = True):
     # Pass 3: test compressed files copying with bmap
     #
 
-    for compressed in _generate_compressed_files(f_image, delete = delete):
+    for compressed in _generate_compressed_files(f_image, delete=delete):
         _copy_image(compressed, f_copy, f_bmap1, image_sha1, image_size)
 
         # Test without setting the size
@@ -246,7 +246,7 @@ def _do_test(f_image, image_size, delete = True):
     # Pass 6: test compressed files copying without bmap
     #
 
-    for compressed in _generate_compressed_files(f_image, delete = delete):
+    for compressed in _generate_compressed_files(f_image, delete=delete):
         _copy_image(compressed, f_copy, f_bmap1, image_sha1, image_size)
 
         # Test without setting the size
@@ -281,8 +281,8 @@ class TestCreateCopy(unittest.TestCase):
         # FIEMAP).
         directory = '.'
 
-        iterator = tests.helpers.generate_test_files(delete = delete,
-                                                     directory = directory)
+        iterator = tests.helpers.generate_test_files(delete=delete,
+                                                     directory=directory)
         for f_image, image_size, _, _ in iterator:
             assert image_size == os.path.getsize(f_image.name)
-            _do_test(f_image, image_size, delete = delete)
+            _do_test(f_image, image_size, delete=delete)

@@ -226,8 +226,7 @@ class BmapCopy:
             # Bmap file checksum appeard in format 1.3
             self._verify_bmap_checksum()
 
-    def __init__(self, image, dest, bmap = None, image_size = None,
-                 logger = None):
+    def __init__(self, image, dest, bmap=None, image_size=None, logger=None):
         """
         The class constructor. The parameters are:
             image      - file-like object of the image which should be copied,
@@ -323,7 +322,7 @@ class BmapCopy:
         else:
             # Do not rotate the wheel too fast
             now = datetime.datetime.now()
-            min_delta = datetime.timedelta(milliseconds = 250)
+            min_delta = datetime.timedelta(milliseconds=250)
             if now - self._progress_time < min_delta:
                 return
             self._progress_time = now
@@ -475,7 +474,7 @@ class BmapCopy:
 
         self._batch_queue.put(None)
 
-    def copy(self, sync = True, verify = True):
+    def copy(self, sync=True, verify=True):
         """
         Copy the image to the destination file using bmap. The 'sync' argument
         defines whether the destination file has to be synchronized upon
@@ -652,7 +651,7 @@ class BmapBdevCopy(BmapCopy):
                 raise Error("cannot set the max. I/O ratio back to '%s': %s" \
                             % (self._old_max_ratio_value, err))
 
-    def copy(self, sync = True, verify = True):
+    def copy(self, sync=True, verify=True):
         """
         The same as in the base class but tunes the block device for better
         performance before starting writing. Additionally, it forces block
@@ -675,8 +674,7 @@ class BmapBdevCopy(BmapCopy):
         finally:
             self._restore_bdev_settings()
 
-    def __init__(self, image, dest, bmap = None, image_size = None,
-                 logger = None):
+    def __init__(self, image, dest, bmap=None, image_size=None, logger=None):
         """
         The same as the constructor of the 'BmapCopy' base class, but adds
         useful guard-checks specific to block devices.

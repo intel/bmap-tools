@@ -31,7 +31,7 @@ import urlparse
 # A list of supported compression types
 SUPPORTED_COMPRESSION_TYPES = ('bz2', 'gz', 'tar.gz', 'tgz', 'tar.bz2')
 
-def _fake_seek_forward(file_obj, cur_pos, offset, whence = os.SEEK_SET):
+def _fake_seek_forward(file_obj, cur_pos, offset, whence=os.SEEK_SET):
     """
     This function implements the 'seek()' method for file object 'file_obj'.
     Only seeking forward and is allowed, and 'whence' may be either
@@ -81,7 +81,7 @@ class _CompressedFile:
     object and decompressing its contents on-the-fly.
     """
 
-    def __init__(self, file_obj, decompress_func = None, chunk_size = None):
+    def __init__(self, file_obj, decompress_func=None, chunk_size=None):
         """
         Class constructor. The 'file_ojb' argument is the compressed file-like
         object to read from. The 'decompress_func()' function is a function to
@@ -111,7 +111,7 @@ class _CompressedFile:
         self._buffer_pos = 0
         self._eof = False
 
-    def seek(self, offset, whence = os.SEEK_SET):
+    def seek(self, offset, whence=os.SEEK_SET):
         """The 'seek()' method, similar to the one file objects have."""
 
         self._pos = _fake_seek_forward(self, self._pos, offset, whence)
@@ -233,7 +233,7 @@ class TransRead:
                or self.name.endswith('.tgz'):
                 import tarfile
 
-                tar = tarfile.open(fileobj = self._file_obj, mode = 'r|*')
+                tar = tarfile.open(fileobj=self._file_obj, mode='r|*')
                 member = tar.next()
                 self._transfile_obj = tar.extractfile(member)
                 self.size = member.size
@@ -278,8 +278,8 @@ class TransRead:
 
         # Make sure the ssh client program is installed
         try:
-            subprocess.Popen("ssh", stderr = subprocess.PIPE,
-                             stdout = subprocess.PIPE).wait()
+            subprocess.Popen("ssh", stderr=subprocess.PIPE,
+                                    stdout=subprocess.PIPE).wait()
         except OSError as err:
             if err.errno == os.errno.ENOENT:
                 raise Error("\"sshpass\" program not found, but it is " \
@@ -299,8 +299,8 @@ class TransRead:
 
             # Make sure the sshpass program is installed
             try:
-                subprocess.Popen("sshpass", stderr = subprocess.PIPE,
-                                 stdout = subprocess.PIPE).wait()
+                subprocess.Popen("sshpass", stderr=subprocess.PIPE,
+                                            stdout=subprocess.PIPE).wait()
             except OSError as err:
                 if err.errno == os.errno.ENOENT:
                     raise Error("\"sshpass\" program not found, but it is " \
@@ -326,7 +326,7 @@ class TransRead:
         # host
         command = "test -f " + path + " && test -r " + path
         child_process = subprocess.Popen(popen_args + [command],
-                                         stdout = subprocess.PIPE)
+                                         stdout=subprocess.PIPE)
         child_process.wait()
         if child_process.returncode != 0:
             raise Error("\"%s\" on \"%s\" cannot be read: make sure it " \
@@ -335,7 +335,7 @@ class TransRead:
 
         # Read the entire file using 'cat'
         self._child_process = subprocess.Popen(popen_args + ["cat " + path],
-                                               stdout = subprocess.PIPE)
+                                               stdout=subprocess.PIPE)
 
         # Now the contents of the file should be available from sub-processes
         # stdout
@@ -421,7 +421,7 @@ class TransRead:
             raise Error("cannot open own temporary file '%s': %s" \
                         % (tmp_file_obj.name, err))
 
-    def __init__(self, filepath, local = False):
+    def __init__(self, filepath, local=False):
         """
         Class constructor. The 'filepath' argument is the full path to the file
         to read transparently. If 'local' is True, then the file-like object is
@@ -455,7 +455,7 @@ class TransRead:
         if local:
             self._create_local_copy()
 
-    def read(self, size = -1):
+    def read(self, size=-1):
         """
         Read the data from the file or URL and and uncompress it on-the-fly if
         necessary.
@@ -479,7 +479,7 @@ class TransRead:
         if self._child_process:
             self._child_process.wait()
 
-    def seek(self, offset, whence = os.SEEK_SET):
+    def seek(self, offset, whence=os.SEEK_SET):
         """The 'seek()' method, similar to the one file objects have."""
 
         if self._force_fake_seek or not hasattr(self._transfile_obj, "seek"):

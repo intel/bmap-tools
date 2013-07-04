@@ -70,7 +70,7 @@ class Fiemap:
 
         self._f_image_needs_close = True
 
-    def __init__(self, image, buf_size = DEFAULT_BUFFER_SIZE):
+    def __init__(self, image, buf_size=DEFAULT_BUFFER_SIZE):
         """
         Initialize a class instance. The 'image' argument is full path to the
         file to operate on, or a file object to operate on.
