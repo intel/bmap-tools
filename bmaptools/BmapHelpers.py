@@ -15,7 +15,6 @@ This module contains various shared helper functions.
 
 def human_size(size):
     """Transform size in bytes into a human-readable form."""
-
     if size == 1:
         return "1 byte"
 
@@ -31,7 +30,6 @@ def human_size(size):
 
 def human_time(seconds):
     """Transform time in seconds to the HH:MM:SS format."""
-
     (minutes, seconds) = divmod(seconds, 60)
     (hours, minutes) = divmod(minutes, 60)
 

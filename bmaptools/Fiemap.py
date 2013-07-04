@@ -61,7 +61,6 @@ class Fiemap:
 
     def _open_image_file(self):
         """Open the image file."""
-
         try:
             self._f_image = open(self._image_path, 'rb')
         except IOError as err:
@@ -132,7 +131,6 @@ class Fiemap:
 
     def __del__(self):
         """The class destructor which closes the opened files."""
-
         if self._f_image_needs_close:
             self._f_image.close()
 

@@ -113,17 +113,14 @@ class _CompressedFile:
 
     def seek(self, offset, whence=os.SEEK_SET):
         """The 'seek()' method, similar to the one file objects have."""
-
         self._pos = _fake_seek_forward(self, self._pos, offset, whence)
 
     def tell(self):
         """The 'tell()' method, similar to the one file objects have."""
-
         return self._pos
 
     def _read_from_buffer(self, length):
         """Read from the internal buffer."""
-
         buffer_len = len(self._buffer)
         if buffer_len - self._buffer_pos > length:
             data = self._buffer[self._buffer_pos:self._buffer_pos + length]
@@ -394,7 +391,6 @@ class TransRead:
 
     def _create_local_copy(self):
         """Create a local copy of a remote or compressed file."""
-
         import tempfile
 
         try:
@@ -471,7 +467,6 @@ class TransRead:
 
     def __del__(self):
         """The class destructor which closes opened files."""
-
         if self._transfile_obj:
             self._transfile_obj.close()
         if self._file_obj:
@@ -481,7 +476,6 @@ class TransRead:
 
     def seek(self, offset, whence=os.SEEK_SET):
         """The 'seek()' method, similar to the one file objects have."""
-
         if self._force_fake_seek or not hasattr(self._transfile_obj, "seek"):
             self._pos = _fake_seek_forward(self._transfile_obj, self._pos, \
                                            offset, whence)
@@ -490,7 +484,6 @@ class TransRead:
 
     def tell(self):
         """The 'tell()' method, similar to the one file objects have."""
-
         if self._force_fake_seek or not hasattr(self._transfile_obj, "tell"):
             return self._pos
         else:
@@ -498,7 +491,6 @@ class TransRead:
 
     def close(self):
         """Close the file-like object."""
-
         self.__del__()
 
     def __getattr__(self, name):

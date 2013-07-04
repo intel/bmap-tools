@@ -108,7 +108,6 @@ class BmapCreate:
 
     def _open_image_file(self):
         """Open the image file."""
-
         try:
             self._f_image = open(self._image_path, 'rb')
         except IOError as err:
@@ -119,7 +118,6 @@ class BmapCreate:
 
     def _open_bmap_file(self):
         """Open the bmap file."""
-
         try:
             self._f_bmap = open(self._bmap_path, 'w+')
         except IOError as err:
@@ -318,7 +316,6 @@ class BmapCreate:
 
     def __del__(self):
         """The class destructor which closes the opened files."""
-
         if self._f_image_needs_close:
             self._f_image.close()
         if self._f_bmap_needs_close:

@@ -185,7 +185,6 @@ def copy_command_open_all(args, log):
 
 def copy_command(args, log):
     """Copy an image to a block device or a regular file using bmap."""
-
     image_obj, dest_obj, bmap_obj, bmap_path, image_size, dest_is_blkdev = \
                                           copy_command_open_all(args, log)
     try:
@@ -313,7 +312,6 @@ def create_command(args, log):
 
 def parse_arguments():
     """A helper function which parses the input arguments."""
-
     text = "Create block map (bmap) and copy files using bmap. The " \
            "documentation can be found here: " \
            "source.tizen.org/documentation/reference/bmaptool"
@@ -408,7 +406,6 @@ def setup_logger(loglevel):
 
 def main():
     """Script entry point."""
-
     args = parse_arguments()
 
     if args.quiet:
