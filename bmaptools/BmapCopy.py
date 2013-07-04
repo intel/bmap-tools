@@ -142,7 +142,7 @@ class BmapCopy:
         """
 
         if self.image_size is not None and self.image_size != image_size:
-            raise Error("cannot set image size to %d bytes, it is known to " \
+            raise Error("cannot set image size to %d bytes, it is known to "
                         "be %d bytes (%s)" % (image_size, self.image_size,
                                               self.image_size_human))
 
@@ -180,9 +180,9 @@ class BmapCopy:
         mapped_bmap.close()
 
         if calculated_sha1 != correct_sha1:
-            raise Error("checksum mismatch for bmap file '%s': calculated " \
-                        "'%s', should be '%s'" % \
-                        (self._bmap_path, calculated_sha1, correct_sha1))
+            raise Error("checksum mismatch for bmap file '%s': calculated "
+                        "'%s', should be '%s'"
+                        % (self._bmap_path, calculated_sha1, correct_sha1))
 
     def _parse_bmap(self):
         """
@@ -192,7 +192,7 @@ class BmapCopy:
         try:
             self._xml = ElementTree.parse(self._f_bmap)
         except  ElementTree.ParseError as err:
-            raise Error("cannot parse the bmap file '%s' which should be a " \
+            raise Error("cannot parse the bmap file '%s' which should be a "
                         "proper XML file: %s" % (self._bmap_path, err))
 
         xml = self._xml
@@ -202,8 +202,8 @@ class BmapCopy:
         self.bmap_version_major = int(self.bmap_version.split('.', 1)[0])
         self.bmap_version_minor = int(self.bmap_version.split('.', 1)[1])
         if self.bmap_version_major > SUPPORTED_BMAP_VERSION:
-            raise Error("only bmap format version up to %d is supported, " \
-                        "version %d is not supported" \
+            raise Error("only bmap format version up to %d is supported, "
+                        "version %d is not supported"
                         % (SUPPORTED_BMAP_VERSION, self.bmap_version_major))
 
         # Fetch interesting data from the bmap XML file
@@ -218,8 +218,8 @@ class BmapCopy:
 
         blocks_cnt = (self.image_size + self.block_size - 1) / self.block_size
         if self.blocks_cnt != blocks_cnt:
-            raise Error("Inconsistent bmap - image size does not match " \
-                        "blocks count (%d bytes != %d blocks * %d bytes)" \
+            raise Error("Inconsistent bmap - image size does not match "
+                        "blocks count (%d bytes != %d blocks * %d bytes)"
                         % (self.image_size, self.blocks_cnt, self.block_size))
 
         if self.bmap_version_major >= 1 and self.bmap_version_minor >= 3:
@@ -444,8 +444,8 @@ class BmapCopy:
                     try:
                         buf = self._f_image.read(length * self.block_size)
                     except IOError as err:
-                        raise Error("error while reading blocks %d-%d of the " \
-                                    "image file '%s': %s" \
+                        raise Error("error while reading blocks %d-%d of the "
+                                    "image file '%s': %s"
                                     % (start, end, self._image_path, err))
 
                     if not buf:
@@ -460,9 +460,9 @@ class BmapCopy:
                                            buf))
 
                 if verify and sha1 and hash_obj.hexdigest() != sha1:
-                    raise Error("checksum mismatch for blocks range %d-%d: " \
-                                "calculated %s, should be %s (image file %s)" \
-                                % (first, last, hash_obj.hexdigest(), \
+                    raise Error("checksum mismatch for blocks range %d-%d: "
+                                "calculated %s, should be %s (image file %s)"
+                                % (first, last, hash_obj.hexdigest(),
                                    sha1, self._image_path))
         # Silence pylint warning about catching too general exception
         # pylint: disable=W0703
@@ -524,7 +524,7 @@ class BmapCopy:
             try:
                 self._f_dest.write(buf)
             except IOError as err:
-                raise Error("error while writing blocks %d-%d of '%s': %s" \
+                raise Error("error while writing blocks %d-%d of '%s': %s"
                             % (start, end, self._dest_path, err))
 
             self._batch_queue.task_done()
@@ -540,10 +540,10 @@ class BmapCopy:
         # This is just a sanity check - we should have written exactly
         # 'mapped_cnt' blocks.
         if blocks_written != self.mapped_cnt:
-            raise Error("wrote %u blocks from image '%s' to '%s', but should " \
-                        "have %u - bmap file '%s' does not belong to this" \
-                        "image" \
-                        % (blocks_written, self._image_path, self._dest_path, \
+            raise Error("wrote %u blocks from image '%s' to '%s', but should "
+                        "have %u - bmap file '%s' does not belong to this"
+                        "image"
+                        % (blocks_written, self._image_path, self._dest_path,
                            self.mapped_cnt, self._bmap_path))
 
         if self._dest_is_regfile:
@@ -551,7 +551,7 @@ class BmapCopy:
             try:
                 os.ftruncate(self._f_dest.fileno(), self.image_size)
             except OSError as err:
-                raise Error("cannot truncate file '%s': %s" \
+                raise Error("cannot truncate file '%s': %s"
                             % (self._dest_path, err))
 
         try:
@@ -572,7 +572,7 @@ class BmapCopy:
             try:
                 os.fsync(self._f_dest.fileno()),
             except OSError as err:
-                raise Error("cannot synchronize '%s': %s " \
+                raise Error("cannot synchronize '%s': %s "
                             % (self._dest_path, err.strerror))
 
 
@@ -602,8 +602,8 @@ class BmapBdevCopy(BmapCopy):
                 f_scheduler.seek(0)
                 f_scheduler.write("noop")
         except IOError as err:
-            self._logger.warning("failed to enable I/O optimization, expect " \
-                                 "suboptimal speed (reason: cannot switch "   \
+            self._logger.warning("failed to enable I/O optimization, expect "
+                                 "suboptimal speed (reason: cannot switch "
                                  "to the 'noop' I/O scheduler: %s)" % err)
         else:
             # The file contains a list of schedulers with the current
@@ -624,9 +624,9 @@ class BmapBdevCopy(BmapCopy):
                 f_ratio.seek(0)
                 f_ratio.write("1")
         except IOError as err:
-            self._logger.warning("failed to disable excessive buffering, " \
-                                 "expect worse system responsiveness "     \
-                                 "(reason: cannot set max. I/O ratio to "  \
+            self._logger.warning("failed to disable excessive buffering, "
+                                 "expect worse system responsiveness "
+                                 "(reason: cannot set max. I/O ratio to "
                                  "1: %s)" % err)
 
     def _restore_bdev_settings(self):
@@ -640,7 +640,7 @@ class BmapBdevCopy(BmapCopy):
                 with open(self._sysfs_scheduler_path, "w") as f_scheduler:
                     f_scheduler.write(self._old_scheduler_value)
             except IOError as err:
-                raise Error("cannot restore the '%s' I/O scheduler: %s" \
+                raise Error("cannot restore the '%s' I/O scheduler: %s"
                             % (self._old_scheduler_value, err))
 
         if self._old_max_ratio_value is not None:
@@ -648,7 +648,7 @@ class BmapBdevCopy(BmapCopy):
                 with open(self._sysfs_max_ratio_path, "w") as f_ratio:
                     f_ratio.write(self._old_max_ratio_value)
             except IOError as err:
-                raise Error("cannot set the max. I/O ratio back to '%s': %s" \
+                raise Error("cannot set the max. I/O ratio back to '%s': %s"
                             % (self._old_max_ratio_value, err))
 
     def copy(self, sync=True, verify=True):
@@ -700,12 +700,12 @@ class BmapBdevCopy(BmapCopy):
                 bdev_size = os.lseek(self._f_dest.fileno(), 0, os.SEEK_END)
                 os.lseek(self._f_dest.fileno(), 0, os.SEEK_SET)
             except OSError as err:
-                raise Error("cannot seed block device '%s': %s " \
+                raise Error("cannot seed block device '%s': %s "
                             % (self._dest_path, err.strerror))
 
             if bdev_size < self.image_size:
-                raise Error("the image file '%s' has size %s and it will not " \
-                            "fit the block device '%s' which has %s capacity" \
+                raise Error("the image file '%s' has size %s and it will not "
+                            "fit the block device '%s' which has %s capacity"
                             % (self._image_path, self.image_size_human,
                                self._dest_path, human_size(bdev_size)))
 

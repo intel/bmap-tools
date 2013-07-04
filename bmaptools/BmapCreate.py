@@ -111,7 +111,7 @@ class BmapCreate:
         try:
             self._f_image = open(self._image_path, 'rb')
         except IOError as err:
-            raise Error("cannot open image file '%s': %s" \
+            raise Error("cannot open image file '%s': %s"
                         % (self._image_path, err))
 
         self._f_image_needs_close = True
@@ -121,7 +121,7 @@ class BmapCreate:
         try:
             self._f_bmap = open(self._bmap_path, 'w+')
         except IOError as err:
-            raise Error("cannot open bmap file '%s': %s" \
+            raise Error("cannot open bmap file '%s': %s"
                         % (self._bmap_path, err))
 
         self._f_bmap_needs_close = True
@@ -170,7 +170,7 @@ class BmapCreate:
         self.image_size = self.fiemap.image_size
         self.image_size_human = human_size(self.image_size)
         if self.image_size == 0:
-            raise Error("cannot generate bmap for zero-sized image file '%s'" \
+            raise Error("cannot generate bmap for zero-sized image file '%s'"
                         % self._image_path)
 
         self.block_size = self.fiemap.block_size
@@ -235,8 +235,8 @@ class BmapCreate:
         self._f_bmap.write(xml)
 
         self._f_bmap.seek(self._mapped_count_pos1)
-        self._f_bmap.write("%s or %.1f%%" % \
-                           (self.mapped_size_human, self.mapped_percent))
+        self._f_bmap.write("%s or %.1f%%"
+                           % (self.mapped_size_human, self.mapped_percent))
 
         self._f_bmap.seek(self._mapped_count_pos2)
         self._f_bmap.write("%u" % self.mapped_cnt)
@@ -294,10 +294,10 @@ class BmapCreate:
                 sha1 = ""
 
             if first != last:
-                self._f_bmap.write("        <Range%s> %s-%s </Range>\n" \
+                self._f_bmap.write("        <Range%s> %s-%s </Range>\n"
                                    % (sha1, first, last))
             else:
-                self._f_bmap.write("        <Range%s> %s </Range>\n" \
+                self._f_bmap.write("        <Range%s> %s </Range>\n"
                                    % (sha1, first))
 
         self.mapped_size = self.mapped_cnt * self.block_size
@@ -309,7 +309,7 @@ class BmapCreate:
         try:
             self._f_bmap.flush()
         except IOError as err:
-            raise Error("cannot flush the bmap file '%s': %s" \
+            raise Error("cannot flush the bmap file '%s': %s"
                         % (self._bmap_path, err))
 
         self._f_image.seek(image_pos)

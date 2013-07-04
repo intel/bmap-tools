@@ -43,13 +43,13 @@ def _fake_seek_forward(file_obj, cur_pos, offset, whence=os.SEEK_SET):
     elif whence == os.SEEK_CUR:
         new_pos = cur_pos + offset
     else:
-        raise Error("'seek()' method requires the 'whence' argument " \
-                    "to be %d or %d, but %d was passed" \
+        raise Error("'seek()' method requires the 'whence' argument "
+                    "to be %d or %d, but %d was passed"
                     % (os.SEEK_SET, os.SEEK_CUR, whence))
 
     if new_pos < cur_pos:
-        raise Error("''seek()' method supports only seeking forward, " \
-                    "seeking from %d to %d is not allowed" \
+        raise Error("''seek()' method supports only seeking forward, "
+                    "seeking from %d to %d is not allowed"
                     % (cur_pos, new_pos))
 
     length = new_pos - cur_pos
@@ -62,7 +62,7 @@ def _fake_seek_forward(file_obj, cur_pos, offset, whence=os.SEEK_SET):
         to_read -= len(buf)
 
     if to_read < 0:
-        raise Error("seeked too far: %d instead of %d" \
+        raise Error("seeked too far: %d instead of %d"
                     % (new_pos - to_read, new_pos))
 
     return new_pos - to_read
@@ -279,7 +279,7 @@ class TransRead:
                                     stdout=subprocess.PIPE).wait()
         except OSError as err:
             if err.errno == os.errno.ENOENT:
-                raise Error("\"sshpass\" program not found, but it is " \
+                raise Error("\"sshpass\" program not found, but it is "
                             "required for downloading over SSH")
 
         # Prepare the commands that we are going to run
@@ -300,7 +300,7 @@ class TransRead:
                                             stdout=subprocess.PIPE).wait()
             except OSError as err:
                 if err.errno == os.errno.ENOENT:
-                    raise Error("\"sshpass\" program not found, but it is " \
+                    raise Error("\"sshpass\" program not found, but it is "
                                 "required for password SSH authentication")
         else:
             popen_args = ["ssh",
@@ -316,8 +316,8 @@ class TransRead:
         retcode = child_process.returncode
         if retcode != 0:
             decoded = _decode_sshpass_exit_code(retcode)
-            raise Error("cannot connect to \"%s\": %s (error code %d)" % \
-                        (hostname, decoded, retcode))
+            raise Error("cannot connect to \"%s\": %s (error code %d)"
+                        % (hostname, decoded, retcode))
 
         # Test if file exists by running "test -f path && test -r path" on the
         # host
@@ -326,8 +326,8 @@ class TransRead:
                                          stdout=subprocess.PIPE)
         child_process.wait()
         if child_process.returncode != 0:
-            raise Error("\"%s\" on \"%s\" cannot be read: make sure it " \
-                        "exists, is a regular file, and you have read "   \
+            raise Error("\"%s\" on \"%s\" cannot be read: make sure it "
+                        "exists, is a regular file, and you have read "
                         "permissions" % (path, hostname))
 
         # Read the entire file using 'cat'
@@ -386,7 +386,7 @@ class TransRead:
         except (IOError, ValueError, httplib.InvalidURL) as err:
             raise Error("cannot open URL '%s': %s" % (url, err))
         except httplib.BadStatusLine:
-            raise Error("cannot open URL '%s': server responds with an HTTP " \
+            raise Error("cannot open URL '%s': server responds with an HTTP "
                         "status code that we don't understand" % url)
 
     def _create_local_copy(self):
@@ -414,7 +414,7 @@ class TransRead:
         try:
             self._transfile_obj = open(tmp_file_obj.name, "rb")
         except IOError as err:
-            raise Error("cannot open own temporary file '%s': %s" \
+            raise Error("cannot open own temporary file '%s': %s"
                         % (tmp_file_obj.name, err))
 
     def __init__(self, filepath, local=False):
@@ -477,7 +477,7 @@ class TransRead:
     def seek(self, offset, whence=os.SEEK_SET):
         """The 'seek()' method, similar to the one file objects have."""
         if self._force_fake_seek or not hasattr(self._transfile_obj, "seek"):
-            self._pos = _fake_seek_forward(self._transfile_obj, self._pos, \
+            self._pos = _fake_seek_forward(self._transfile_obj, self._pos,
                                            offset, whence)
         else:
             self._transfile_obj.seek(offset, whence)

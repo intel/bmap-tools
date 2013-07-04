@@ -40,7 +40,7 @@ def _compare_holes(file1, file2):
     iterator = itertools.izip_longest(iterator1, iterator2)
     for range1, range2 in iterator:
         if range1 != range2:
-            raise Error("mismatch for hole %d-%d, it is %d-%d in file2" \
+            raise Error("mismatch for hole %d-%d, it is %d-%d in file2"
                         % (range1[0], range1[1], range2[0], range2[1]))
 
 def _generate_compressed_files(file_obj, delete=True):

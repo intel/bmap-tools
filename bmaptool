@@ -81,7 +81,7 @@ def copy_command_open_blkdev(path, log):
     try:
         descriptor = os.open(path, os.O_WRONLY | os.O_EXCL)
     except OSError as err:
-        log.error("cannot open block device '%s' in exclusive mode: %s" \
+        log.error("cannot open block device '%s' in exclusive mode: %s"
                   % (path, err))
         raise SystemExit(1)
 
@@ -169,7 +169,7 @@ def copy_command_open_all(args, log):
     try:
         dest_obj = open(args.dest, 'wb+')
     except IOError as err:
-        log.error("cannot open destination file '%s': %s" \
+        log.error("cannot open destination file '%s': %s"
                   % (args.dest, err))
         raise SystemExit(1)
 
@@ -214,11 +214,11 @@ def copy_command(args, log):
             raise SystemExit(1)
     else:
         log.info("block map format version %s" % writer.bmap_version)
-        log.info("%d blocks of size %d (%s), mapped %d blocks (%s or %.1f%%)" \
+        log.info("%d blocks of size %d (%s), mapped %d blocks (%s or %.1f%%)"
                  % (writer.blocks_cnt, writer.block_size,
                     writer.image_size_human, writer.mapped_cnt,
                     writer.mapped_size_human, writer.mapped_percent))
-        log.info("copying image '%s' to %s using bmap file '%s'" \
+        log.info("copying image '%s' to %s using bmap file '%s'"
                  % (os.path.basename(args.image), dest_str,
                     os.path.basename(bmap_path)))
 
@@ -242,8 +242,8 @@ def copy_command(args, log):
 
     copying_time = time.time() - start_time
     copying_speed = writer.mapped_size / copying_time
-    log.info("copying time: %s, copying speed %s/sec" \
-             % (BmapHelpers.human_time(copying_time), \
+    log.info("copying time: %s, copying speed %s/sec"
+             % (BmapHelpers.human_time(copying_time),
                 BmapHelpers.human_size(copying_speed)))
 
     dest_obj.close()
@@ -282,7 +282,7 @@ def create_command(args, log):
         try:
             output = open(args.output, "w+")
         except IOError as err:
-            log.error("cannot open the output file '%s': %s" \
+            log.error("cannot open the output file '%s': %s"
                       % (args.output, err))
             raise SystemExit(1)
     else:
@@ -305,9 +305,9 @@ def create_command(args, log):
         sys.stdout.write(output.read())
 
     if creator.mapped_cnt == creator.blocks_cnt:
-        log.warning("all %s are mapped, no holes in '%s'" \
+        log.warning("all %s are mapped, no holes in '%s'"
                     % (creator.image_size_human, args.image))
-        log.warning("was the image handled incorrectly and holes " \
+        log.warning("was the image handled incorrectly and holes "
                     "were expanded?")
 
 def parse_arguments():
@@ -318,7 +318,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description = text, prog = 'bmaptool')
 
     # The --version option
-    parser.add_argument("--version", action = "version", \
+    parser.add_argument("--version", action = "version",
                         version = "%(prog)s " + "%s" % VERSION)
 
     # The --quiet option

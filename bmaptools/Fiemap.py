@@ -64,7 +64,7 @@ class Fiemap:
         try:
             self._f_image = open(self._image_path, 'rb')
         except IOError as err:
-            raise Error("cannot open image file '%s': %s" \
+            raise Error("cannot open image file '%s': %s"
                         % (self._image_path, err))
 
         self._f_image_needs_close = True
@@ -91,7 +91,7 @@ class Fiemap:
 
         # Validate 'buf_size'
         if buf_size < MIN_BUFFER_SIZE:
-            raise Error("too small buffer (%d bytes), minimum is %d bytes" \
+            raise Error("too small buffer (%d bytes), minimum is %d bytes"
                     % (buf_size, MIN_BUFFER_SIZE))
 
         # How many 'struct fiemap_extent' elements fit the buffer
@@ -108,7 +108,7 @@ class Fiemap:
         try:
             self.block_size = BmapHelpers.get_block_size(self._f_image)
         except IOError as err:
-            raise Error("cannot get block size for '%s': %s" \
+            raise Error("cannot get block size for '%s': %s"
                         % (self._image_path, err))
 
         self.blocks_cnt = self.image_size + self.block_size - 1
@@ -118,12 +118,12 @@ class Fiemap:
         try:
             self._f_image.flush()
         except IOError as err:
-            raise Error("cannot flush image file '%s': %s" \
+            raise Error("cannot flush image file '%s': %s"
                         % (self._image_path, err))
         try:
             os.fsync(self._f_image.fileno()),
         except OSError as err:
-            raise Error("cannot synchronize image file '%s': %s " \
+            raise Error("cannot synchronize image file '%s': %s "
                         % (self._image_path, err.strerror))
 
         # Check if the FIEMAP ioctl is supported
@@ -145,7 +145,7 @@ class Fiemap:
         """
 
         if block < 0 or block >= self.blocks_cnt:
-            raise Error("bad block number %d, should be within [0, %d]" \
+            raise Error("bad block number %d, should be within [0, %d]"
                         % (block, self.blocks_cnt))
 
         # Initialize the 'struct fiemap' part of the buffer
