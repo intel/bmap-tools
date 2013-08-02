@@ -1,20 +1,43 @@
+Summary
+~~~~~~~
+
 The bmap-tools project implements bmap-related tools and API modules. The
 entire project is written in python, and requires python 2.7+.
-
-The project is documented here:
-https://source.tizen.org/documentation/reference/bmaptool
 
 Currently the main user of this project is Tizen IVI, but the project is
 generic and can be used everywhere, when dealing with raw images.
 
-The project author and maintainer is 'Artem.Bityutskiy@linux.intel.com'.
-Please, feel free to contact me if you have questions about the project or
-patches. Suggestions and comments about the code are welcome as well.
+The project author and maintainer is Artem Bityutskiy <dedekind1@gmail.com>.
+Please, feel free to contact me if you have questions.
 
-The debianizations and rpmization was done by
-'Ed Bartosh <eduard.bartosh@intel.com>', and he is the only person I know of
-who understands how that works :-). The bmap-tools packages for
-Debian/Ubuntu/Fedora/OpenSuse are built by the "OBS" service.
+The project is documented here:
+https://source.tizen.org/documentation/reference/bmaptool
+
+The project mailing list is (no need to subscribe to post there):
+bmap-tools@lists.infradead.org
+
+Mailing list archives:
+http://lists.infradead.org/pipermail/bmap-tools/
+
+Subscribe here:
+http://lists.infradead.org/mailman/listinfo/bmap-tools
+
+The project git tree is here:
+git://git.infradead.org/users/dedekind/bmap-tools.git
+
+The git tree web view is here:
+http://git.infradead.org/users/dedekind/bmap-tools.git
+
+Signed release tarballs are available here:
+ftp://ftp.infradead.org/pub/bmap-tools/
+
+Packages for various distributions are available here:
+* The latest release: http://download.tizen.org/tools/latest-release/
+* The latest pre-release: http://download.tizen.org/tools/pre-release/
+* Older releases: http://download.tizen.org/tools/archive
+
+Please, contribute by sending patches to the mailing list, feel free to CC
+me: Artem Bityutskiy <dedekind1@gmail.com>
 
 The project structure
 ~~~~~~~~~~~~~~~~~~~~~
@@ -88,9 +111,11 @@ release, though.
 Credits
 ~~~~~~~
 
-* Ed Bartosh <eduard.bartosh@intel.com> - for helping me with learning python
+* Ed Bartosh <eduard.bartosh@intel.com> for helping me with learning python
   (this is my first python project) and working with the Tizen IVI
-  infrastructure.
+  infrastructure. Ed also implemented the packaging.
 * Alexander Kanevskiy <alexander.kanevskiy@intel.com> and
   Kevin Wang <kevin.a.wang@intel.com> for helping with integrating this stuff
   to the Tizen IVI infrastructure.
+* Simon McVittie <simon.mcvittie@collabora.co.uk> for improving Debian
+  packaging and fixing bmaptool.
