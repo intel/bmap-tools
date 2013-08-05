@@ -1,3 +1,8 @@
+Mon Aug  5 07:05:59 UTC 2013 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 2.5-1
+- Do not fail when lacking permisssions for accessing block device's sysfs
+  files.
+- Improve debian packaging.
+
 Wed Jun  5 15:16:42 UTC 2013 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 2.4-1
 - Add ssh:// URLs support.
 

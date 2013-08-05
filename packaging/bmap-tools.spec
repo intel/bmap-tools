@@ -4,7 +4,7 @@
 
 Name:       bmap-tools
 Summary:    Tools to generate block map (AKA bmap) and flash images using bmap
-Version:    2.4
+Version:    2.5
 
 %if 0%{?opensuse_bs}
 Release: %{rc_str}.<CI_CNT>.<B_CNT>

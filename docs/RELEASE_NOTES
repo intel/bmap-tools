@@ -1,3 +1,23 @@
+Bug-fix release 2.5
+~~~~~~~~~~~~~~~~~~~
+
+1. bmaptool (or more precisely, the BmapCopy class) has an optimization where
+   we switch to the "noop" I/O scheduler when writing directly to block
+   devices. We also lessen the allowed amount of dirty data for this block
+   device in order to create less memory pressure on the system. These tweaks
+   are done by touching the corresponding sysfs files of the block device. The
+   old bmaptool behavior was that it failed when it could not modify these
+   files. However, there are systems where users can write to some block
+   devices (USB sticks, for example), but they do not have permissions to
+   change the sysfs files, and bmaptool did not work for normal users on such
+   systems. In version 2.5 we change the behavior and do not fail anymore if we
+   do not have enough permissions for changing sysfs files, simply because this
+   is an optimization, although a quite important one. However, we do print a
+   warning message.
+
+2. Many improvements and fixes in the Debian packaging, which should make it
+   simpler for distributions to package bmap-tools.
+
 Bug-fix release 2.4
 ~~~~~~~~~~~~~~~~~~~
 
