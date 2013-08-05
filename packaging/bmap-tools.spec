@@ -3,7 +3,7 @@
 %define rc_str %{?rc_num:0.rc%{rc_num}}%{!?rc_num:1}
 
 Name:       bmap-tools
-Summary:    Bmap Tools
+Summary:    Tools to generate block map (AKA bmap) and flash images using bmap
 Version:    2.4
 
 %if 0%{?opensuse_bs}
