@@ -5,7 +5,13 @@
 Name:       bmap-tools
 Summary:    Bmap Tools
 Version:    2.4
-Release:    %{rc_str}.<CI_CNT>.<B_CNT>
+
+%if 0%{?opensuse_bs}
+Release: %{rc_str}.<CI_CNT>.<B_CNT>
+%else
+Release: %{rc_str}.0.0
+%endif
+
 Group:      Development/Tools/Other
 License:    GPL-2.0
 BuildArch:  noarch
