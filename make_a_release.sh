@@ -104,14 +104,21 @@ git push origin $release_branch:$release_branch
 git push public master:master
 git push public $release_branch:$release_branch
 #5
-mutt -H /proc/self/fd/0 -x <<END_OF_EMAIL
-From: Artem Bityutskiy <dedekind1@gmail.com>
-To: bmap-tools@lists.infradead.org
+git send-email --suppress-cc=all --from "Artem Bityutskiy <dedekind1@gmail.com>" --to bmap-tools@lists.infradead.org /proc/self/fd/0 <<END_OF_EMAIL
 Subject: Announcement: $release_name is out!
 
 Bmap-tools version $new_ver is out!
 
 Release notes: http://git.infradead.org/users/dedekind/bmap-tools.git/blob/refs/heads/$release_branch:/docs/RELEASE_NOTES
 Tarball: ftp://ftp.infradead.org/pub/bmap-tools/
+
+Packages for various distributions are available here:
+http://download.tizen.org/tools/pre-release/
+
+At some later point they will be propagated to here:
+http://download.tizen.org/tools/latest-release/
+
+--
+Artem Bityutskiy
 END_OF_EMAIL
 EOF
