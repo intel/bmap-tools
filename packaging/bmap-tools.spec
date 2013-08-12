@@ -2,9 +2,9 @@
 # like '1.0-0.rc7' for release candidate rc7 and '1.0-1' for the '1.0' release.
 %define rc_str %{?rc_num:0.rc%{rc_num}}%{!?rc_num:1}
 
-Name:       bmap-tools
-Summary:    Tools to generate block map (AKA bmap) and flash images using bmap
-Version:    2.5
+Name: bmap-tools
+Summary: Tools to generate block map (AKA bmap) and flash images using bmap
+Version: 2.5
 
 %if 0%{?opensuse_bs}
 Release: %{rc_str}.<CI_CNT>.<B_CNT>
@@ -12,28 +12,28 @@ Release: %{rc_str}.<CI_CNT>.<B_CNT>
 Release: %{rc_str}.0.0
 %endif
 
-Group:      Development/Tools/Other
-License:    GPL-2.0
-BuildArch:  noarch
-URL:        http://www.tizen.org
-Source0:    %{name}_%{version}.tar.gz
+Group: Development/Tools/Other
+License: GPL-2.0
+BuildArch: noarch
+URL: http://www.tizen.org
+Source0: %{name}_%{version}.tar.gz
 
-BuildRequires:  python-distribute
+BuildRequires: python-distribute
 
 # In OpenSuse the xml.etree module is provided by the python-xml package
 %if 0%{?suse_version}
-Requires:	python-xml
+Requires: python-xml
 %endif
 
 # In Fedora the xml.etree module is provided by the python-libs package
 %if 0%{?fedora_version}
-Requires:	python-libs
+Requires: python-libs
 %endif
 
 # Centos6 uses python 2.6, which does not have the argparse module. However,
 # argparse is available as a separate package there.
 %if 0%{?centos_version} == 600
-Requires:	python-argparse
+Requires: python-argparse
 %endif
 
 %description
