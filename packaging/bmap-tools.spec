@@ -28,6 +28,8 @@ Requires: python-xml
 # In Fedora the xml.etree module is provided by the python-libs package
 %if 0%{?fedora_version}
 Requires: python-libs
+# Fedora has the pyliblzma which we use for decompressing .xz files
+Requires: pyliblzma
 %endif
 
 # Centos6 uses python 2.6, which does not have the argparse module. However,
