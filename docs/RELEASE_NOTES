@@ -1,3 +1,8 @@
+Bug-fix release 2.6
+~~~~~~~~~~~~~~~~~~~
+
+1. Add on-the-fly decompression support for '.xz' and '.tar.xz' files.
+
 Bug-fix release 2.5
 ~~~~~~~~~~~~~~~~~~~
 
