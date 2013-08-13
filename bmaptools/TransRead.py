@@ -217,6 +217,49 @@ class TransRead:
     this class are file-like objects which you can read and seek only forward.
     """
 
+    def __init__(self, filepath, local=False):
+        """
+        Class constructor. The 'filepath' argument is the full path to the file
+        to read transparently. If 'local' is True, then the file-like object is
+        guaranteed to be backed by a local file. This means that if the source
+        file is compressed or an URL, then it will first be copied to a
+        temporary local file, and then all the subsequent operations will be
+        done with the local copy.
+        """
+
+        self.name = filepath
+        self.size = None
+        self.is_compressed = True
+        self.is_url = False
+        self._child_process = None
+        self._file_obj = None
+        self._transfile_obj = None
+        self._force_fake_seek = False
+        self._pos = 0
+
+        try:
+            self._file_obj = open(self.name, "rb")
+        except IOError as err:
+            if err.errno == errno.ENOENT:
+                # This is probably an URL
+                self._open_url(filepath)
+            else:
+                raise Error("cannot open file '%s': %s" % (filepath, err))
+
+        self._open_compressed_file()
+
+        if local:
+            self._create_local_copy()
+
+    def __del__(self):
+        """The class destructor which closes opened files."""
+        if self._transfile_obj:
+            self._transfile_obj.close()
+        if self._file_obj:
+            self._file_obj.close()
+        if self._child_process:
+            self._child_process.wait()
+
     def _open_compressed_file(self):
         """
         Detect file compression type and open it with the corresponding
@@ -417,40 +460,6 @@ class TransRead:
             raise Error("cannot open own temporary file '%s': %s"
                         % (tmp_file_obj.name, err))
 
-    def __init__(self, filepath, local=False):
-        """
-        Class constructor. The 'filepath' argument is the full path to the file
-        to read transparently. If 'local' is True, then the file-like object is
-        guaranteed to be backed by a local file. This means that if the source
-        file is compressed or an URL, then it will first be copied to a
-        temporary local file, and then all the subsequent operations will be
-        done with the local copy.
-        """
-
-        self.name = filepath
-        self.size = None
-        self.is_compressed = True
-        self.is_url = False
-        self._child_process = None
-        self._file_obj = None
-        self._transfile_obj = None
-        self._force_fake_seek = False
-        self._pos = 0
-
-        try:
-            self._file_obj = open(self.name, "rb")
-        except IOError as err:
-            if err.errno == errno.ENOENT:
-                # This is probably an URL
-                self._open_url(filepath)
-            else:
-                raise Error("cannot open file '%s': %s" % (filepath, err))
-
-        self._open_compressed_file()
-
-        if local:
-            self._create_local_copy()
-
     def read(self, size=-1):
         """
         Read the data from the file or URL and and uncompress it on-the-fly if
@@ -464,15 +473,6 @@ class TransRead:
         self._pos += len(buf)
 
         return buf
-
-    def __del__(self):
-        """The class destructor which closes opened files."""
-        if self._transfile_obj:
-            self._transfile_obj.close()
-        if self._file_obj:
-            self._file_obj.close()
-        if self._child_process:
-            self._child_process.wait()
 
     def seek(self, offset, whence=os.SEEK_SET):
         """The 'seek()' method, similar to the one file objects have."""

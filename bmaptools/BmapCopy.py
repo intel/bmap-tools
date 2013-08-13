@@ -117,6 +117,85 @@ class BmapCopy:
     instance.
     """
 
+    def __init__(self, image, dest, bmap=None, image_size=None, logger=None):
+        """
+        The class constructor. The parameters are:
+            image      - file-like object of the image which should be copied,
+                         should only support 'read()' and 'seek()' methods,
+                         and only seeking forward has to be supported.
+            dest       - file object of the destination file to copy the image
+                         to.
+            bmap       - file object of the bmap file to use for copying.
+            image_size - size of the image in bytes.
+            logger     - the logger object to use for printing messages.
+        """
+
+        self._logger = logger
+        if self._logger is None:
+            self._logger = logging.getLogger(__name__)
+
+        self._xml = None
+
+        self._dest_fsync_watermark = None
+        self._batch_blocks = None
+        self._batch_queue = None
+        self._batch_bytes = 1024 * 1024
+        self._batch_queue_len = 2
+
+        self.bmap_version = None
+        self.bmap_version_major = None
+        self.bmap_version_minor = None
+        self.block_size = None
+        self.blocks_cnt = None
+        self.mapped_cnt = None
+        self.image_size = None
+        self.image_size_human = None
+        self.mapped_size = None
+        self.mapped_size_human = None
+        self.mapped_percent = None
+
+        self._f_bmap = None
+        self._f_bmap_path = None
+
+        self._progress_started = None
+        self._progress_index = None
+        self._progress_time = None
+        self._progress_file = None
+        self._progress_format = None
+        self.set_progress_indicator(None, None)
+
+        self._f_image = image
+        self._image_path = image.name
+
+        self._f_dest = dest
+        self._dest_path = dest.name
+        st_data = os.fstat(self._f_dest.fileno())
+        self._dest_is_regfile = stat.S_ISREG(st_data.st_mode)
+
+        # Special quirk for /dev/null which does not support fsync()
+        if stat.S_ISCHR(st_data.st_mode) and \
+           os.major(st_data.st_rdev) == 1 and \
+           os.minor(st_data.st_rdev) == 3:
+            self._dest_supports_fsync = False
+        else:
+            self._dest_supports_fsync = True
+
+        if bmap:
+            self._f_bmap = bmap
+            self._bmap_path = bmap.name
+            self._parse_bmap()
+        else:
+            # There is no bmap. Initialize user-visible attributes to something
+            # sensible with an assumption that we just have all blocks mapped.
+            self.bmap_version = 0
+            self.block_size = 4096
+            self.mapped_percent = 100
+
+        if image_size:
+            self._set_image_size(image_size)
+
+        self._batch_blocks = self._batch_bytes / self.block_size
+
     def set_progress_indicator(self, file_obj, format_string):
         """
         Setup the progress indicator which shows how much data has been copied
@@ -225,85 +304,6 @@ class BmapCopy:
         if self.bmap_version_major >= 1 and self.bmap_version_minor >= 3:
             # Bmap file checksum appeard in format 1.3
             self._verify_bmap_checksum()
-
-    def __init__(self, image, dest, bmap=None, image_size=None, logger=None):
-        """
-        The class constructor. The parameters are:
-            image      - file-like object of the image which should be copied,
-                         should only support 'read()' and 'seek()' methods,
-                         and only seeking forward has to be supported.
-            dest       - file object of the destination file to copy the image
-                         to.
-            bmap       - file object of the bmap file to use for copying.
-            image_size - size of the image in bytes.
-            logger     - the logger object to use for printing messages.
-        """
-
-        self._logger = logger
-        if self._logger is None:
-            self._logger = logging.getLogger(__name__)
-
-        self._xml = None
-
-        self._dest_fsync_watermark = None
-        self._batch_blocks = None
-        self._batch_queue = None
-        self._batch_bytes = 1024 * 1024
-        self._batch_queue_len = 2
-
-        self.bmap_version = None
-        self.bmap_version_major = None
-        self.bmap_version_minor = None
-        self.block_size = None
-        self.blocks_cnt = None
-        self.mapped_cnt = None
-        self.image_size = None
-        self.image_size_human = None
-        self.mapped_size = None
-        self.mapped_size_human = None
-        self.mapped_percent = None
-
-        self._f_bmap = None
-        self._f_bmap_path = None
-
-        self._progress_started = None
-        self._progress_index = None
-        self._progress_time = None
-        self._progress_file = None
-        self._progress_format = None
-        self.set_progress_indicator(None, None)
-
-        self._f_image = image
-        self._image_path = image.name
-
-        self._f_dest = dest
-        self._dest_path = dest.name
-        st_data = os.fstat(self._f_dest.fileno())
-        self._dest_is_regfile = stat.S_ISREG(st_data.st_mode)
-
-        # Special quirk for /dev/null which does not support fsync()
-        if stat.S_ISCHR(st_data.st_mode) and \
-           os.major(st_data.st_rdev) == 1 and \
-           os.minor(st_data.st_rdev) == 3:
-            self._dest_supports_fsync = False
-        else:
-            self._dest_supports_fsync = True
-
-        if bmap:
-            self._f_bmap = bmap
-            self._bmap_path = bmap.name
-            self._parse_bmap()
-        else:
-            # There is no bmap. Initialize user-visible attributes to something
-            # sensible with an assumption that we just have all blocks mapped.
-            self.bmap_version = 0
-            self.block_size = 4096
-            self.mapped_percent = 100
-
-        if image_size:
-            self._set_image_size(image_size)
-
-        self._batch_blocks = self._batch_bytes / self.block_size
 
     def _update_progress(self, blocks_written):
         """
@@ -584,6 +584,55 @@ class BmapBdevCopy(BmapCopy):
     scheduler.
     """
 
+    def __init__(self, image, dest, bmap=None, image_size=None, logger=None):
+        """
+        The same as the constructor of the 'BmapCopy' base class, but adds
+        useful guard-checks specific to block devices.
+        """
+
+        # Call the base class constructor first
+        BmapCopy.__init__(self, image, dest, bmap, image_size, logger=logger)
+
+        self._batch_bytes = 1024 * 1024
+        self._batch_blocks = self._batch_bytes / self.block_size
+        self._batch_queue_len = 6
+        self._dest_fsync_watermark = (6 * 1024 * 1024) / self.block_size
+
+        self._sysfs_base = None
+        self._sysfs_scheduler_path = None
+        self._sysfs_max_ratio_path = None
+        self._old_scheduler_value = None
+        self._old_max_ratio_value = None
+
+        # If the image size is known, check that it fits the block device
+        if self.image_size:
+            try:
+                bdev_size = os.lseek(self._f_dest.fileno(), 0, os.SEEK_END)
+                os.lseek(self._f_dest.fileno(), 0, os.SEEK_SET)
+            except OSError as err:
+                raise Error("cannot seed block device '%s': %s "
+                            % (self._dest_path, err.strerror))
+
+            if bdev_size < self.image_size:
+                raise Error("the image file '%s' has size %s and it will not "
+                            "fit the block device '%s' which has %s capacity"
+                            % (self._image_path, self.image_size_human,
+                               self._dest_path, human_size(bdev_size)))
+
+        # Construct the path to the sysfs directory of our block device
+        st_rdev = os.fstat(self._f_dest.fileno()).st_rdev
+        self._sysfs_base = "/sys/dev/block/%s:%s/" \
+                           % (os.major(st_rdev), os.minor(st_rdev))
+
+        # Check if the 'queue' sub-directory exists. If yes, then our block
+        # device is entire disk. Otherwise, it is a partition, in which case we
+        # need to go one level up in the sysfs hierarchy.
+        if not os.path.exists(self._sysfs_base + "queue"):
+            self._sysfs_base = self._sysfs_base + "../"
+
+        self._sysfs_scheduler_path = self._sysfs_base + "queue/scheduler"
+        self._sysfs_max_ratio_path = self._sysfs_base + "bdi/max_ratio"
+
     def _tune_block_device(self):
         """
         Tune the block device for better performance:
@@ -673,52 +722,3 @@ class BmapBdevCopy(BmapCopy):
             raise
         finally:
             self._restore_bdev_settings()
-
-    def __init__(self, image, dest, bmap=None, image_size=None, logger=None):
-        """
-        The same as the constructor of the 'BmapCopy' base class, but adds
-        useful guard-checks specific to block devices.
-        """
-
-        # Call the base class constructor first
-        BmapCopy.__init__(self, image, dest, bmap, image_size, logger=logger)
-
-        self._batch_bytes = 1024 * 1024
-        self._batch_blocks = self._batch_bytes / self.block_size
-        self._batch_queue_len = 6
-        self._dest_fsync_watermark = (6 * 1024 * 1024) / self.block_size
-
-        self._sysfs_base = None
-        self._sysfs_scheduler_path = None
-        self._sysfs_max_ratio_path = None
-        self._old_scheduler_value = None
-        self._old_max_ratio_value = None
-
-        # If the image size is known, check that it fits the block device
-        if self.image_size:
-            try:
-                bdev_size = os.lseek(self._f_dest.fileno(), 0, os.SEEK_END)
-                os.lseek(self._f_dest.fileno(), 0, os.SEEK_SET)
-            except OSError as err:
-                raise Error("cannot seed block device '%s': %s "
-                            % (self._dest_path, err.strerror))
-
-            if bdev_size < self.image_size:
-                raise Error("the image file '%s' has size %s and it will not "
-                            "fit the block device '%s' which has %s capacity"
-                            % (self._image_path, self.image_size_human,
-                               self._dest_path, human_size(bdev_size)))
-
-        # Construct the path to the sysfs directory of our block device
-        st_rdev = os.fstat(self._f_dest.fileno()).st_rdev
-        self._sysfs_base = "/sys/dev/block/%s:%s/" \
-                           % (os.major(st_rdev), os.minor(st_rdev))
-
-        # Check if the 'queue' sub-directory exists. If yes, then our block
-        # device is entire disk. Otherwise, it is a partition, in which case we
-        # need to go one level up in the sysfs hierarchy.
-        if not os.path.exists(self._sysfs_base + "queue"):
-            self._sysfs_base = self._sysfs_base + "../"
-
-        self._sysfs_scheduler_path = self._sysfs_base + "queue/scheduler"
-        self._sysfs_max_ratio_path = self._sysfs_base + "bdi/max_ratio"

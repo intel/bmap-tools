@@ -106,26 +106,6 @@ class BmapCreate:
     the FIEMAP ioctl to generate the bmap.
     """
 
-    def _open_image_file(self):
-        """Open the image file."""
-        try:
-            self._f_image = open(self._image_path, 'rb')
-        except IOError as err:
-            raise Error("cannot open image file '%s': %s"
-                        % (self._image_path, err))
-
-        self._f_image_needs_close = True
-
-    def _open_bmap_file(self):
-        """Open the bmap file."""
-        try:
-            self._f_bmap = open(self._bmap_path, 'w+')
-        except IOError as err:
-            raise Error("cannot open bmap file '%s': %s"
-                        % (self._bmap_path, err))
-
-        self._f_bmap_needs_close = True
-
     def __init__(self, image, bmap):
         """
         Initialize a class instance:
@@ -175,6 +155,33 @@ class BmapCreate:
 
         self.block_size = self.fiemap.block_size
         self.blocks_cnt = self.fiemap.blocks_cnt
+
+    def __del__(self):
+        """The class destructor which closes the opened files."""
+        if self._f_image_needs_close:
+            self._f_image.close()
+        if self._f_bmap_needs_close:
+            self._f_bmap.close()
+
+    def _open_image_file(self):
+        """Open the image file."""
+        try:
+            self._f_image = open(self._image_path, 'rb')
+        except IOError as err:
+            raise Error("cannot open image file '%s': %s"
+                        % (self._image_path, err))
+
+        self._f_image_needs_close = True
+
+    def _open_bmap_file(self):
+        """Open the bmap file."""
+        try:
+            self._f_bmap = open(self._bmap_path, 'w+')
+        except IOError as err:
+            raise Error("cannot open bmap file '%s': %s"
+                        % (self._bmap_path, err))
+
+        self._f_bmap_needs_close = True
 
     def _bmap_file_start(self):
         """
@@ -313,10 +320,3 @@ class BmapCreate:
                         % (self._bmap_path, err))
 
         self._f_image.seek(image_pos)
-
-    def __del__(self):
-        """The class destructor which closes the opened files."""
-        if self._f_image_needs_close:
-            self._f_image.close()
-        if self._f_bmap_needs_close:
-            self._f_bmap.close()

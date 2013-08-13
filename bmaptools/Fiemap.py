@@ -59,16 +59,6 @@ class Fiemap:
     over all mapped blocks and over all holes.
     """
 
-    def _open_image_file(self):
-        """Open the image file."""
-        try:
-            self._f_image = open(self._image_path, 'rb')
-        except IOError as err:
-            raise Error("cannot open image file '%s': %s"
-                        % (self._image_path, err))
-
-        self._f_image_needs_close = True
-
     def __init__(self, image, buf_size=DEFAULT_BUFFER_SIZE):
         """
         Initialize a class instance. The 'image' argument is full path to the
@@ -133,6 +123,16 @@ class Fiemap:
         """The class destructor which closes the opened files."""
         if self._f_image_needs_close:
             self._f_image.close()
+
+    def _open_image_file(self):
+        """Open the image file."""
+        try:
+            self._f_image = open(self._image_path, 'rb')
+        except IOError as err:
+            raise Error("cannot open image file '%s': %s"
+                        % (self._image_path, err))
+
+        self._f_image_needs_close = True
 
     def _invoke_fiemap(self, block, count):
         """
