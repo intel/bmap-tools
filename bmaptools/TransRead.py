@@ -13,7 +13,7 @@
 This module allows opening and reading local and remote files and decompress
 them on-the-fly if needed. Remote files are read using urllib2 (except of
 "ssh://" URLs, which are handled differently). Supported compression types are:
-'bz2', 'gz', 'xz', 'tar.gz', 'tgz', 'tar.bz2'.
+'bz2', 'gz', 'xz', 'tar.gz', 'tgz', 'tar.bz2', 'tar.xz'.
 """
 
 import os
@@ -29,7 +29,8 @@ import urlparse
 # pylint: disable=R0902
 
 # A list of supported compression types
-SUPPORTED_COMPRESSION_TYPES = ('bz2', 'gz', 'xz', 'tar.gz', 'tgz', 'tar.bz2')
+SUPPORTED_COMPRESSION_TYPES = ('bz2', 'gz', 'xz', 'tar.gz', 'tgz', 'tar.bz2',
+                               'tar.xz')
 
 def _fake_seek_forward(file_obj, cur_pos, offset, whence=os.SEEK_SET):
     """
@@ -247,6 +248,7 @@ class TransRead:
         #   o self._transfile_obj is a tarfile member file-like object
         self._file_obj = None
         self._file_obj2 = None
+        self._file_obj3 = None
         self._transfile_obj = None
 
         self._force_fake_seek = False
@@ -270,10 +272,12 @@ class TransRead:
         """The class destructor which closes opened files."""
         if self._transfile_obj:
             self._transfile_obj.close()
-        if self._file_obj:
-            self._file_obj.close()
+        if self._file_obj3:
+            self._file_obj3.close()
         if self._file_obj2:
             self._file_obj2.close()
+        if self._file_obj:
+            self._file_obj.close()
         if self._child_process:
             self._child_process.wait()
 
@@ -320,6 +324,15 @@ class TransRead:
                 self._transfile_obj = _CompressedFile(self._file_obj,
                                               lzma.LZMADecompressor().decompress,
                                               128)
+                if self.name.endswith('.tar.xz'):
+                    import tarfile
+
+                    self._file_obj2 = self._transfile_obj
+                    self._file_obj3 = tarfile.open(fileobj=self._file_obj2,
+                                                   mode='r|*')
+                    member = self._file_obj3.next()
+                    self._transfile_obj = self._file_obj3.extractfile(member)
+                    self.size = member.size
             else:
                 self.is_compressed = False
                 self._transfile_obj = self._file_obj
