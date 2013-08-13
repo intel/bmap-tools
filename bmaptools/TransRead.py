@@ -228,12 +228,27 @@ class TransRead:
         """
 
         self.name = filepath
+        # Size of the file (in uncompressed form), may be 'None' if the size is
+        # unknown
         self.size = None
+        # Whether the file is compressed
         self.is_compressed = True
+        # Whether the file is behind an URL
         self.is_url = False
+
+        # Wait for this child process in the destructor
         self._child_process = None
+        # There may be a chain of open files, and we save the intermediate file
+        # descriptors in 'self._file_objX', while the final file descriptor is
+        # stored in 'self._transfile_obj'. For example, when the path is an URL
+        # to a tar.bz2 file, the chain of opened file will be:
+        #   o self._file_obj is an liburl2 file-like object
+        #   o self._file_obj2 is a tarfile file-like object
+        #   o self._transfile_obj is a tarfile member file-like object
         self._file_obj = None
+        self._file_obj2 = None
         self._transfile_obj = None
+
         self._force_fake_seek = False
         self._pos = 0
 
@@ -257,6 +272,8 @@ class TransRead:
             self._transfile_obj.close()
         if self._file_obj:
             self._file_obj.close()
+        if self._file_obj2:
+            self._file_obj2.close()
         if self._child_process:
             self._child_process.wait()
 
@@ -273,9 +290,10 @@ class TransRead:
                or self.name.endswith('.tgz'):
                 import tarfile
 
-                tar = tarfile.open(fileobj=self._file_obj, mode='r|*')
-                member = tar.next()
-                self._transfile_obj = tar.extractfile(member)
+                self._file_obj2 = tarfile.open(fileobj=self._file_obj,
+                                               mode='r|*')
+                member = self._file_obj2.next()
+                self._transfile_obj = self._file_obj2.extractfile(member)
                 self.size = member.size
             elif self.name.endswith('.gz'):
                 import zlib
