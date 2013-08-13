@@ -13,7 +13,7 @@
 This module allows opening and reading local and remote files and decompress
 them on-the-fly if needed. Remote files are read using urllib2 (except of
 "ssh://" URLs, which are handled differently). Supported compression types are:
-'bz2', 'gz', 'tar.gz', 'tgz', 'tar.bz2'.
+'bz2', 'gz', 'xz', 'tar.gz', 'tgz', 'tar.bz2'.
 """
 
 import os
@@ -29,7 +29,7 @@ import urlparse
 # pylint: disable=R0902
 
 # A list of supported compression types
-SUPPORTED_COMPRESSION_TYPES = ('bz2', 'gz', 'tar.gz', 'tgz', 'tar.bz2')
+SUPPORTED_COMPRESSION_TYPES = ('bz2', 'gz', 'xz', 'tar.gz', 'tgz', 'tar.bz2')
 
 def _fake_seek_forward(file_obj, cur_pos, offset, whence=os.SEEK_SET):
     """
@@ -306,6 +306,19 @@ class TransRead:
 
                 self._transfile_obj = _CompressedFile(self._file_obj,
                                               bz2.BZ2Decompressor().decompress,
+                                              128)
+            elif self.name.endswith('.xz'):
+                try:
+                    import lzma
+                except ImportError:
+                    try:
+                        from backports import lzma
+                    except ImportError:
+                        raise Error("cannot import the \"lzma\" python module, "
+                                    "it is required for decompressing .xz files")
+
+                self._transfile_obj = _CompressedFile(self._file_obj,
+                                              lzma.LZMADecompressor().decompress,
                                               128)
             else:
                 self.is_compressed = False
