@@ -541,7 +541,7 @@ class BmapCopy:
         # 'mapped_cnt' blocks.
         if blocks_written != self.mapped_cnt:
             raise Error("wrote %u blocks from image '%s' to '%s', but should "
-                        "have %u - bmap file '%s' does not belong to this"
+                        "have %u - bmap file '%s' does not belong to this "
                         "image"
                         % (blocks_written, self._image_path, self._dest_path,
                            self.mapped_cnt, self._bmap_path))
