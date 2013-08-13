@@ -1,3 +1,9 @@
+bmap-tools (2.6) unstable; urgency=low
+
+  * Add support for on-the-fly decompression of '.xz' and '.tar.xz' files.
+
+ -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com>  Tue, 13 Aug 2013 14:53:49 +0300
+
 bmap-tools (2.5) unstable; urgency=low
 
   * Do not fail when lacking permisssions for accessing block device's sysfs

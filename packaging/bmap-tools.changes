@@ -1,3 +1,6 @@
+Tue Aug 13 11:54:31 UTC 2013 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 2.6-1
+- Add support for on-the-fly decompression of '.xz' and '.tar.xz' files.
+
 Mon Aug  5 07:05:59 UTC 2013 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 2.5-1
 - Do not fail when lacking permisssions for accessing block device's sysfs
   files.
