@@ -239,23 +239,24 @@ class TransRead:
 
         # Wait for this child process in the destructor
         self._child_process = None
+
         # There may be a chain of open files, and we save the intermediate file
-        # descriptors in 'self._file_objX', while the final file descriptor is
-        # stored in 'self._transfile_obj'. For example, when the path is an URL
-        # to a tar.bz2 file, the chain of opened file will be:
-        #   o self._file_obj is an liburl2 file-like object
-        #   o self._file_obj2 is a tarfile file-like object
-        #   o self._transfile_obj is a tarfile member file-like object
-        self._file_obj = None
-        self._file_obj2 = None
-        self._file_obj3 = None
-        self._transfile_obj = None
+        # objects in the 'self._f_objs' list. The final file object is stored
+        # in th elast element of the list.
+        #
+        # For example, when the path is an URL to a tar.xz file, the chain of
+        # opened file will be:
+        #   o self._f_objs[0] is the liburl2 file-like object
+        #   o self._f_objs[1] is the lzma file-like object
+        #   o self._f_objs[2] is the tarfile file-like object
+        #   o self._f_objs[3] is the tarfilemember file-like object
+        self._f_objs = []
 
         self._force_fake_seek = False
         self._pos = 0
 
         try:
-            self._file_obj = open(self.name, "rb")
+            self._f_objs.append(open(self.name, "rb"))
         except IOError as err:
             if err.errno == errno.ENOENT:
                 # This is probably an URL
@@ -270,16 +271,9 @@ class TransRead:
 
     def __del__(self):
         """The class destructor which closes opened files."""
-        if self._transfile_obj:
-            self._transfile_obj.close()
-        if self._file_obj3:
-            self._file_obj3.close()
-        if self._file_obj2:
-            self._file_obj2.close()
-        if self._file_obj:
-            self._file_obj.close()
-        if self._child_process:
-            self._child_process.wait()
+        for _file_obj in self._f_objs:
+            if _file_obj:
+                _file_obj.close()
 
     def _open_compressed_file(self):
         """
@@ -294,23 +288,27 @@ class TransRead:
                or self.name.endswith('.tgz'):
                 import tarfile
 
-                self._file_obj2 = tarfile.open(fileobj=self._file_obj,
-                                               mode='r|*')
-                member = self._file_obj2.next()
-                self._transfile_obj = self._file_obj2.extractfile(member)
+                f_obj = tarfile.open(fileobj=self._f_objs[-1], mode='r|*')
+                self._f_objs.append(f_obj)
+
+                member = self._f_objs[-1].next()
                 self.size = member.size
+                f_obj = self._f_objs[-1].extractfile(member)
+                self._f_objs.append(f_obj)
             elif self.name.endswith('.gz'):
                 import zlib
 
                 decompressor = zlib.decompressobj(16 + zlib.MAX_WBITS)
-                self._transfile_obj = _CompressedFile(self._file_obj,
-                                                      decompressor.decompress)
+                f_obj = _CompressedFile(self._f_objs[-1],
+                                        decompressor.decompress)
+                self._f_objs.append(f_obj)
             elif self.name.endswith('.bz2'):
                 import bz2
 
-                self._transfile_obj = _CompressedFile(self._file_obj,
-                                              bz2.BZ2Decompressor().decompress,
-                                              128)
+
+                f_obj = _CompressedFile(self._f_objs[-1],
+                                        bz2.BZ2Decompressor().decompress, 128)
+                self._f_objs.append(f_obj)
             elif self.name.endswith('.xz'):
                 try:
                     import lzma
@@ -319,26 +317,26 @@ class TransRead:
                         from backports import lzma
                     except ImportError:
                         raise Error("cannot import the \"lzma\" python module, "
-                                    "it is required for decompressing .xz files")
+                                    "it's required for decompressing .xz files")
 
-                self._transfile_obj = _CompressedFile(self._file_obj,
-                                              lzma.LZMADecompressor().decompress,
-                                              128)
+                f_obj = _CompressedFile(self._f_objs[-1],
+                                        lzma.LZMADecompressor().decompress, 128)
+                self._f_objs.append(f_obj)
+
                 if self.name.endswith('.tar.xz'):
                     import tarfile
 
-                    self._file_obj2 = self._transfile_obj
-                    self._file_obj3 = tarfile.open(fileobj=self._file_obj2,
-                                                   mode='r|*')
-                    member = self._file_obj3.next()
-                    self._transfile_obj = self._file_obj3.extractfile(member)
+                    f_obj = tarfile.open(fileobj=self._f_objs[-1], mode='r|*')
+                    self._f_objs.append(f_obj)
+
+                    member = self._f_objs[-1].next()
                     self.size = member.size
+                    f_obj = self._f_objs[-1].extractfile(member)
+                    self._f_objs.append(f_obj)
             else:
                 self.is_compressed = False
-                self._transfile_obj = self._file_obj
                 if not self.is_url:
-                    self.size = os.fstat(self._file_obj.fileno()).st_size
-                self._file_obj = None
+                    self.size = os.fstat(self._f_objs[-1].fileno()).st_size
         except IOError as err:
             raise Error("cannot open file '%s': %s" % (self.name, err))
 
@@ -423,7 +421,7 @@ class TransRead:
 
         # Now the contents of the file should be available from sub-processes
         # stdout
-        self._file_obj = self._child_process.stdout
+        self._f_objs.append(self._child_process.stdout)
 
         self.is_url = True
         self._force_fake_seek = True
@@ -468,7 +466,7 @@ class TransRead:
         urllib2.install_opener(opener)
 
         try:
-            self._file_obj = opener.open(url)
+            self._f_objs.append(opener.open(url))
             self.is_url = True
         except (IOError, ValueError, httplib.InvalidURL) as err:
             raise Error("cannot open URL '%s': %s" % (url, err))
@@ -496,10 +494,11 @@ class TransRead:
         self.close()
         self.is_compressed = False
         self.is_url = False
-        self._file_obj = tmp_file_obj
+        self._f_objs.append(tmp_file_obj)
 
         try:
-            self._transfile_obj = open(tmp_file_obj.name, "rb")
+            f_obj = open(tmp_file_obj.name, "rb")
+            self._f_objs.appen(f_obj)
         except IOError as err:
             raise Error("cannot open own temporary file '%s': %s"
                         % (tmp_file_obj.name, err))
@@ -513,25 +512,25 @@ class TransRead:
         if size < 0:
             size = 0xFFFFFFFFFFFFFFFF
 
-        buf = self._transfile_obj.read(size)
+        buf = self._f_objs[-1].read(size)
         self._pos += len(buf)
 
         return buf
 
     def seek(self, offset, whence=os.SEEK_SET):
         """The 'seek()' method, similar to the one file objects have."""
-        if self._force_fake_seek or not hasattr(self._transfile_obj, "seek"):
-            self._pos = _fake_seek_forward(self._transfile_obj, self._pos,
+        if self._force_fake_seek or not hasattr(self._f_objs[-1], "seek"):
+            self._pos = _fake_seek_forward(self._f_objs[-1], self._pos,
                                            offset, whence)
         else:
-            self._transfile_obj.seek(offset, whence)
+            self._f_objs[-1].seek(offset, whence)
 
     def tell(self):
         """The 'tell()' method, similar to the one file objects have."""
-        if self._force_fake_seek or not hasattr(self._transfile_obj, "tell"):
+        if self._force_fake_seek or not hasattr(self._f_objs[-1], "tell"):
             return self._pos
         else:
-            return self._transfile_obj.tell()
+            return self._f_objs[-1].tell()
 
     def close(self):
         """Close the file-like object."""
@@ -544,6 +543,6 @@ class TransRead:
         """
 
         if not self.is_compressed and not self.is_url:
-            return getattr(self._transfile_obj, name)
+            return getattr(self._f_objs[-1], name)
         else:
             raise AttributeError
