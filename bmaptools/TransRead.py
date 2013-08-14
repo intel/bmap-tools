@@ -222,10 +222,10 @@ class TransRead:
         """
         Class constructor. The 'filepath' argument is the full path to the file
         to read transparently. If 'local' is True, then the file-like object is
-        guaranteed to be backed by a local file. This means that if the source
-        file is compressed or an URL, then it will first be copied to a
-        temporary local file, and then all the subsequent operations will be
-        done with the local copy.
+        guaranteed to be backed by an uncompressed local file. This means that
+        if the source file is compressed and/or an URL, then it will first be
+        copied to an temporary local file, and then all the subsequent
+        operations will be done with the uncompresed local copy.
         """
 
         self.name = filepath
@@ -266,7 +266,7 @@ class TransRead:
 
         self._open_compressed_file()
 
-        if local:
+        if local and (self.is_url or self.is_compressed):
             self._create_local_copy()
 
     def __del__(self):
@@ -491,17 +491,10 @@ class TransRead:
             tmp_file_obj.write(chunk)
 
         tmp_file_obj.flush()
-        self.close()
-        self.is_compressed = False
-        self.is_url = False
-        self._f_objs.append(tmp_file_obj)
 
-        try:
-            f_obj = open(tmp_file_obj.name, "rb")
-            self._f_objs.appen(f_obj)
-        except IOError as err:
-            raise Error("cannot open own temporary file '%s': %s"
-                        % (tmp_file_obj.name, err))
+        self.close()
+        self.__init__(tmp_file_obj.name, local = False)
+        tmp_file_obj.close()
 
     def read(self, size=-1):
         """
