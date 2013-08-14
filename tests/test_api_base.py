@@ -57,6 +57,15 @@ def _generate_compressed_files(file_obj, delete=True):
     import tarfile
     import shutil
 
+    lzma_present = True
+    try:
+        import lzma
+    except ImportError:
+        try:
+            from backports import lzma
+        except ImportError:
+            lzma_present = False
+
     # Make sure the temporary files start with the same name as 'file_obj' in
     # order to simplify debugging.
     prefix = os.path.splitext(os.path.basename(file_obj.name))[0] + '.'
@@ -94,6 +103,18 @@ def _generate_compressed_files(file_obj, delete=True):
     gzip_file_obj.close()
     yield gzip_file_obj.name
     tmp_file_obj.close()
+
+    if lzma_present:
+        # Generate an .xz version of the file
+        tmp_file_obj = tempfile.NamedTemporaryFile('wb+', prefix=prefix,
+                                                   delete=delete, dir=directory,
+                                                   suffix='.xz')
+        lzma_file_obj = lzma.LZMAFile(tmp_file_obj.name, 'wb')
+        file_obj.seek(0)
+        shutil.copyfileobj(file_obj, lzma_file_obj)
+        lzma_file_obj.close()
+        yield lzma_file_obj.name
+        tmp_file_obj.close()
 
     # Generate a tar.gz version of the file
     tmp_file_obj = tempfile.NamedTemporaryFile('wb+', prefix=prefix,
