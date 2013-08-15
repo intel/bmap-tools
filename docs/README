@@ -50,6 +50,8 @@ The project structure
 | - setup.cfg            | contains a piece of nose tests configuration        |
 | - .coveragerc          | lists files to include into test coverage report    |
 | - TODO                 | Just a list of things to be done for the project.   |
+| - make_a_release.sh    | Most people may ignore this script. It is used by   |
+|                        | maintainer when creating a new release.
 | - tests/               | Contains the project unit-tests.                    |
 |   | - test_api_base.py | Tests the base API modules: 'BmapCreate.py' and     |
 |   |                    | 'BmapCopy.py'.                                      |
