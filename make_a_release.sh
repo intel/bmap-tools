@@ -79,8 +79,11 @@ gpg -o "$outdir/$release_name.tgz.asc" --detach-sign -a "$outdir/$release_name.t
 release_branch="release-$(printf "%s" "$new_ver" | sed -e 's/\(.*\)\..*/\1.0/')"
 
 cat <<EOF
-Make sure you have had updated the docs/RELEASE_NOTES file!
-Make sure you have had updated the version number and rpm/deb changelogs
+Make sure you updated the docs/RELEASE_NOTES file!
+Make sure you updated the docs/README file!
+Make sure you updated the version number and rpm/deb changelogs!
+Make sure you updated the man page!
+Make sure you updated the tizen.org documentation!
 
 To finish the release:
   1. push the $tag_name tag out
