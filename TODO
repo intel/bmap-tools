@@ -6,7 +6,7 @@ Current TODO list, any help with these is appreciated.
 3. In setup.py, fetch the version from 'bmaptool' file.
 4. Teach the 'make_a_release.sh' script to update the version and the
    changelog.
-5. Fsync before creating the bmap file
+5. Fsync before creating the bmap file (probably use FIEMAP_FLAG_SYNC flag)
 6. Write in the man page, docs, and may be --help that it is very important
    that the image is not changed while we create the bmep file, and after we
    have created it too.
