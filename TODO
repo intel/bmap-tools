@@ -13,3 +13,5 @@ Current TODO list, any help with these is appreciated.
 7. Verify that unmapped areas have all zeroes to guarantee integrity.
 8. Update the man pages
 9. Teach bmaptool to update the alternate GPT partition
+10. Remove the whole "local=True" thing from TransRead completely and
+    do that in bmaptool directly.
