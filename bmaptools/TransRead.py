@@ -439,8 +439,17 @@ class TransRead:
         Open an URL 'url' and return the file-like object of the opened URL.
         """
 
+        def _print_warning(logger, timeout):
+            """
+            This is a small helper function for printing a warning if we cannot
+            open the URL for some time.
+            """
+            logger.warning("failed to open the URL with %d sec timeout, is the "
+                           "proxy setup correctly? Keep trying..." % timeout)
+
         import urllib2
         import httplib
+        import socket
 
         parsed_url = urlparse.urlparse(url)
         username = parsed_url.username
@@ -473,15 +482,35 @@ class TransRead:
         opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
         urllib2.install_opener(opener)
 
-        try:
-            f_obj = opener.open(url)
-        except urllib2.URLError as err:
-            raise Error("cannot open URL '%s': %s" % (url, err))
-        except (IOError, ValueError, httplib.InvalidURL) as err:
-            raise Error("cannot open URL '%s': %s" % (url, err))
-        except httplib.BadStatusLine:
-            raise Error("cannot open URL '%s': server responds with an HTTP "
-                        "status code that we don't understand" % url)
+        # Open the URL. First try with a short timeout, and print a message
+        # which should supposedly give the a clue that something may be going
+        # wrong.
+        # The overall purpose of this is to improve user experience. For
+        # example, if one tries to open a file but did not setup the proxy
+        # environment variables propely, there will be a very long delay before
+        # the failure message. And it is much nicer to pre-warn the user early
+        # about something possibly being wrong.
+        for timeout in (10, None):
+            try:
+                f_obj = opener.open(url, timeout = timeout)
+            # Handling the timeout case in Python 2.7
+            except socket.timeout, err:
+                if timeout is not None:
+                    _print_warning(self._logger, timeout)
+                else:
+                    raise Error("cannot open URL '%s': %s" % (url, err))
+            except urllib2.URLError as err:
+                # Handling the timeout case in Python 2.6
+                if timeout is not None and \
+                   isinstance(err.reason, socket.timeout):
+                    _print_warning(self._logger, timeout)
+                else:
+                    raise Error("cannot open URL '%s': %s" % (url, err))
+            except (IOError, ValueError, httplib.InvalidURL) as err:
+                raise Error("cannot open URL '%s': %s" % (url, err))
+            except httplib.BadStatusLine:
+                raise Error("cannot open URL '%s': server responds with an "
+                            "HTTP status code that we don't understand" % url)
 
         self.is_url = True
         self._f_objs.append(f_obj)
