@@ -19,6 +19,7 @@ them on-the-fly if needed. Remote files are read using urllib2 (except of
 import os
 import errno
 import urlparse
+import logging
 
 # Disable the following pylint errors and recommendations:
 #   * Instance of X has no member Y (E1101), because it produces
@@ -218,7 +219,7 @@ class TransRead:
     this class are file-like objects which you can read and seek only forward.
     """
 
-    def __init__(self, filepath, local=False):
+    def __init__(self, filepath, local=False, logger=None):
         """
         Class constructor. The 'filepath' argument is the full path to the file
         to read transparently. If 'local' is True, then the file-like object is
@@ -226,7 +227,14 @@ class TransRead:
         if the source file is compressed and/or an URL, then it will first be
         copied to an temporary local file, and then all the subsequent
         operations will be done with the uncompresed local copy.
+
+        The "logger" argument is the logger object to use for printing
+        messages.
         """
+
+        self._logger = logger
+        if self._logger is None:
+            self._logger = logging.getLogger(__name__)
 
         self.name = filepath
         # Size of the file (in uncompressed form), may be 'None' if the size is

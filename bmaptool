@@ -95,7 +95,7 @@ def copy_command_open_blkdev(path, log):
 
     return NamedFile(file_obj, path)
 
-def find_and_open_bmap(image_path):
+def find_and_open_bmap(image_path, log):
     """
     When the user does not specify the bmap file, we try to find it at the same
     place where the image file is located. We search for a file with the same
@@ -113,7 +113,7 @@ def find_and_open_bmap(image_path):
         bmap_path = image_path + ".bmap"
 
         try:
-            bmap_obj = TransRead.TransRead(bmap_path)
+            bmap_obj = TransRead.TransRead(bmap_path, logger=log)
             bmap_obj.close()
             return bmap_path
         except TransRead.Error:
@@ -140,7 +140,7 @@ def copy_command_open_all(args, log):
     # Open the image file using the TransRead module, which will automatically
     # recognize whether it is compressed or whether file path is an URL, etc.
     try:
-        image_obj = TransRead.TransRead(args.image)
+        image_obj = TransRead.TransRead(args.image, logger=log)
     except TransRead.Error as err:
         log.error("cannot open image: %s" % str(err))
         raise SystemExit(1)
@@ -149,7 +149,7 @@ def copy_command_open_all(args, log):
     # was not specified.
     bmap_path = args.bmap
     if not bmap_path and not args.nobmap:
-        bmap_path = find_and_open_bmap(args.image)
+        bmap_path = find_and_open_bmap(args.image, log)
         if bmap_path:
             log.info("discovered bmap file '%s'" % bmap_path)
 
@@ -158,7 +158,7 @@ def copy_command_open_all(args, log):
         try:
             # The current implementation of BmapCopy requires a local file for
             # the bmap file.
-            bmap_obj = TransRead.TransRead(bmap_path, local = True)
+            bmap_obj = TransRead.TransRead(bmap_path, local=True, logger=log)
         except TransRead.Error as err:
             log.error("cannot open bmap file '%s': %s" % (bmap_path, str(err)))
             raise SystemExit(1)
