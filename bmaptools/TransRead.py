@@ -466,13 +466,17 @@ class TransRead:
         urllib2.install_opener(opener)
 
         try:
-            self._f_objs.append(opener.open(url))
-            self.is_url = True
+            f_obj = opener.open(url)
+        except urllib2.URLError as err:
+            raise Error("cannot open URL '%s': %s" % (url, err))
         except (IOError, ValueError, httplib.InvalidURL) as err:
             raise Error("cannot open URL '%s': %s" % (url, err))
         except httplib.BadStatusLine:
             raise Error("cannot open URL '%s': server responds with an HTTP "
                         "status code that we don't understand" % url)
+
+        self.is_url = True
+        self._f_objs.append(f_obj)
 
     def _create_local_copy(self):
         """Create a local copy of a remote or compressed file."""
