@@ -99,9 +99,9 @@ class BmapCopy:
     Instead, they are initialized only by the 'copy()' method.
 
     The 'copy()' method implements image copying. You may choose whether to
-    verify the SHA1 checksum while copying or not. Note, this is done only in
-    case of bmap-based copying and only if bmap contains the SHA1 checksums
-    (e.g., bmap version 1.0 did not have SHA1 checksums).
+    verify the checksum while copying or not. Note, this is done only in case
+    of bmap-based copying and only if bmap contains checksums (e.g., bmap
+    version 1.0 did not have checksums support).
 
     You may choose whether to synchronize the destination file after writing or
     not. To explicitly synchronize it, use the 'sync()' method.
@@ -237,31 +237,31 @@ class BmapCopy:
 
     def _verify_bmap_checksum(self):
         """
-        This is a helper function which verifies SHA1 checksum of the bmap file.
+        This is a helper function which verifies the bmap file checksum.
         """
 
         import mmap
 
-        correct_sha1 = self._xml.find("BmapFileSHA1").text.strip()
+        correct_chksum = self._xml.find("BmapFileSHA1").text.strip()
 
-        # Before verifying the shecksum, we have to substitute the SHA1 value
-        # stored in the file with all zeroes. For these purposes we create
-        # private memory mapping of the bmap file.
+        # Before verifying the shecksum, we have to substitute the checksum
+        # value stored in the file with all zeroes. For these purposes we
+        # create private memory mapping of the bmap file.
         mapped_bmap = mmap.mmap(self._f_bmap.fileno(), 0,
                                 access = mmap.ACCESS_COPY)
 
-        sha1_pos = mapped_bmap.find(correct_sha1)
-        assert sha1_pos != -1
+        chksum_pos = mapped_bmap.find(correct_chksum)
+        assert chksum_pos != -1
 
-        mapped_bmap[sha1_pos:sha1_pos + 40] = '0' * 40
-        calculated_sha1 = hashlib.sha1(mapped_bmap).hexdigest()
+        mapped_bmap[chksum_pos:chksum_pos + 40] = '0' * 40
+        calculated_chksum = hashlib.sha1(mapped_bmap).hexdigest()
 
         mapped_bmap.close()
 
-        if calculated_sha1 != correct_sha1:
+        if calculated_chksum != correct_chksum:
             raise Error("checksum mismatch for bmap file '%s': calculated "
                         "'%s', should be '%s'"
-                        % (self._bmap_path, calculated_sha1, correct_sha1))
+                        % (self._bmap_path, calculated_chksum, correct_chksum))
 
     def _parse_bmap(self):
         """
@@ -348,12 +348,12 @@ class BmapCopy:
     def _get_block_ranges(self):
         """
         This is a helper generator that parses the bmap XML file and for each
-        block range in the XML file it yields ('first', 'last', 'sha1') tuples,
-        where:
+        block range in the XML file it yields ('first', 'last', 'chksum')
+        tuples, where:
           * 'first' is the first block of the range;
           * 'last' is the last block of the range;
-          * 'sha1' is the SHA1 checksum of the range ('None' is used if it is
-            missing.
+          * 'chksum' is the checksum of the range ('None' is used if it is
+            missing).
 
         If there is no bmap file, the generator just yields a single range
         for entire image file. If the image size is unknown, the generator
@@ -393,11 +393,11 @@ class BmapCopy:
                 last = first
 
             if 'sha1' in xml_element.attrib:
-                sha1 = xml_element.attrib['sha1']
+                chksum = xml_element.attrib['sha1']
             else:
-                sha1 = None
+                chksum = None
 
-            yield (first, last, sha1)
+            yield (first, last, chksum)
 
     def _get_batches(self, first, last):
         """
@@ -433,8 +433,8 @@ class BmapCopy:
         """
 
         try:
-            for (first, last, sha1) in self._get_block_ranges():
-                if verify and sha1:
+            for (first, last, chksum) in self._get_block_ranges():
+                if verify and chksum:
                     hash_obj = hashlib.new('sha1')
 
                 self._f_image.seek(first * self.block_size)
@@ -452,18 +452,18 @@ class BmapCopy:
                         self._batch_queue.put(None)
                         return
 
-                    if verify and sha1:
+                    if verify and chksum:
                         hash_obj.update(buf)
 
                     blocks = (len(buf) + self.block_size - 1) / self.block_size
                     self._batch_queue.put(("range", start, start + blocks - 1,
                                            buf))
 
-                if verify and sha1 and hash_obj.hexdigest() != sha1:
+                if verify and chksum and hash_obj.hexdigest() != chksum:
                     raise Error("checksum mismatch for blocks range %d-%d: "
                                 "calculated %s, should be %s (image file %s)"
                                 % (first, last, hash_obj.hexdigest(),
-                                   sha1, self._image_path))
+                                   chksum, self._image_path))
         # Silence pylint warning about catching too general exception
         # pylint: disable=W0703
         except Exception:
@@ -478,8 +478,8 @@ class BmapCopy:
         """
         Copy the image to the destination file using bmap. The 'sync' argument
         defines whether the destination file has to be synchronized upon
-        return.  The 'verify' argument defines whether the SHA1 checksum has to
-        be verified while copying.
+        return.  The 'verify' argument defines whether the checksum has to be
+        verified while copying.
         """
 
         # Create the queue for block batches and start the reader thread, which

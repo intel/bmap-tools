@@ -126,7 +126,7 @@ class BmapCreate:
 
         self._mapped_count_pos1 = None
         self._mapped_count_pos2 = None
-        self._sha1_pos = None
+        self._chksum_pos = None
 
         self._f_image_needs_close = False
         self._f_bmap_needs_close = False
@@ -218,7 +218,7 @@ class BmapCreate:
         xml += "    <BmapFileSHA1> "
 
         self._f_bmap.write(xml)
-        self._sha1_pos = self._f_bmap.tell()
+        self._chksum_pos = self._f_bmap.tell()
 
         xml = "0" * 40 + " </BmapFileSHA1>\n\n"
         xml += "    <!-- The block map which consists of elements which may either be a\n"
@@ -249,14 +249,14 @@ class BmapCreate:
         self._f_bmap.write("%u" % self.mapped_cnt)
 
         self._f_bmap.seek(0)
-        sha1 = hashlib.sha1(self._f_bmap.read()).hexdigest()
-        self._f_bmap.seek(self._sha1_pos)
-        self._f_bmap.write("%s" % sha1)
+        chksum = hashlib.sha1(self._f_bmap.read()).hexdigest()
+        self._f_bmap.seek(self._chksum_pos)
+        self._f_bmap.write("%s" % chksum)
 
-    def _calculate_sha1(self, first, last):
+    def _calculate_chksum(self, first, last):
         """
-        A helper function which calculates SHA1 checksum for the range of
-        blocks of the image file: from block 'first' to block 'last'.
+        A helper function which calculates checksum for the range of blocks of
+        the image file: from block 'first' to block 'last'.
         """
 
         start = first * self.block_size
@@ -281,7 +281,7 @@ class BmapCreate:
     def generate(self, include_checksums=True):
         """
         Generate bmap for the image file. If 'include_checksums' is 'True',
-        also generate SHA1 checksums for block ranges.
+        also generate checksums for block ranges.
         """
 
         # Save image file position in order to restore it at the end
@@ -295,17 +295,17 @@ class BmapCreate:
         for first, last in self.fiemap.get_mapped_ranges(0, self.blocks_cnt):
             self.mapped_cnt += last - first + 1
             if include_checksums:
-                sha1 = self._calculate_sha1(first, last)
-                sha1 = " sha1=\"%s\"" % sha1
+                chksum = self._calculate_chksum(first, last)
+                chksum = " sha1=\"%s\"" % chksum
             else:
-                sha1 = ""
+                chksum = ""
 
             if first != last:
                 self._f_bmap.write("        <Range%s> %s-%s </Range>\n"
-                                   % (sha1, first, last))
+                                   % (chksum, first, last))
             else:
                 self._f_bmap.write("        <Range%s> %s </Range>\n"
-                                   % (sha1, first))
+                                   % (chksum, first))
 
         self.mapped_size = self.mapped_cnt * self.block_size
         self.mapped_size_human = human_size(self.mapped_size)

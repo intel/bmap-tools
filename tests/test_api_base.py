@@ -136,9 +136,9 @@ def _generate_compressed_files(file_obj, delete=True):
     yield tbz2_file_obj.name
     tmp_file_obj.close()
 
-def _calculate_sha1(file_obj):
+def _calculate_chksum(file_obj):
     """
-    Calculates SHA1 checksum for the contents of file object 'file_obj'.
+    Calculates checksum for the contents of file object 'file_obj'.
     """
 
     file_obj.seek(0)
@@ -154,7 +154,7 @@ def _calculate_sha1(file_obj):
 
     return hash_obj.hexdigest()
 
-def _copy_image(image, f_dest, f_bmap, image_sha1, image_size):
+def _copy_image(image, f_dest, f_bmap, image_chksum, image_size):
     """
     Copy image 'image' using bmap 'f_bmap' to the destination file 'f_dest'.
     """
@@ -177,7 +177,7 @@ def _copy_image(image, f_dest, f_bmap, image_sha1, image_size):
 
     # Compare the original file and the copy are identical
     f_dest.seek(0)
-    assert _calculate_sha1(f_dest) == image_sha1
+    assert _calculate_chksum(f_dest) == image_chksum
 
     if not hasattr(image, "read"):
         f_image.close()
@@ -213,7 +213,7 @@ def _do_test(f_image, image_size, delete=True):
                                           delete=delete, dir=directory,
                                           suffix=".bmap2")
 
-    image_sha1 = _calculate_sha1(f_image)
+    image_chksum = _calculate_chksum(f_image)
 
     #
     # Pass 1: generate the bmap, copy and compare
@@ -223,7 +223,7 @@ def _do_test(f_image, image_size, delete=True):
     creator = BmapCreate.BmapCreate(f_image.name, f_bmap1.name)
     creator.generate()
 
-    _copy_image(f_image, f_copy, f_bmap1, image_sha1, image_size)
+    _copy_image(f_image, f_copy, f_bmap1, image_chksum, image_size)
 
     # Make sure that holes in the copy are identical to holes in the random
     # sparse file.
@@ -235,7 +235,7 @@ def _do_test(f_image, image_size, delete=True):
 
     creator = BmapCreate.BmapCreate(f_image, f_bmap2)
     creator.generate()
-    _copy_image(f_image, f_copy, f_bmap2, image_sha1, image_size)
+    _copy_image(f_image, f_copy, f_bmap2, image_chksum, image_size)
     _compare_holes(f_image, f_copy)
 
     # Make sure the bmap files generated at pass 1 and pass 2 are identical
@@ -246,36 +246,36 @@ def _do_test(f_image, image_size, delete=True):
     #
 
     for compressed in _generate_compressed_files(f_image, delete=delete):
-        _copy_image(compressed, f_copy, f_bmap1, image_sha1, image_size)
+        _copy_image(compressed, f_copy, f_bmap1, image_chksum, image_size)
 
         # Test without setting the size
-        _copy_image(compressed, f_copy, f_bmap1, image_sha1, None)
+        _copy_image(compressed, f_copy, f_bmap1, image_chksum, None)
 
         # Append a "file:" prefixe to make BmapCopy use urllib
         compressed = "file:" + compressed
-        _copy_image(compressed, f_copy, f_bmap1, image_sha1, image_size)
-        _copy_image(compressed, f_copy, f_bmap1, image_sha1, None)
+        _copy_image(compressed, f_copy, f_bmap1, image_chksum, image_size)
+        _copy_image(compressed, f_copy, f_bmap1, image_chksum, None)
 
     #
     # Pass 5: copy without bmap and make sure it is identical to the original
     # file.
 
-    _copy_image(f_image, f_copy, None, image_sha1, image_size)
-    _copy_image(f_image, f_copy, None, image_sha1, None)
+    _copy_image(f_image, f_copy, None, image_chksum, image_size)
+    _copy_image(f_image, f_copy, None, image_chksum, None)
 
     #
     # Pass 6: test compressed files copying without bmap
     #
 
     for compressed in _generate_compressed_files(f_image, delete=delete):
-        _copy_image(compressed, f_copy, f_bmap1, image_sha1, image_size)
+        _copy_image(compressed, f_copy, f_bmap1, image_chksum, image_size)
 
         # Test without setting the size
-        _copy_image(compressed, f_copy, f_bmap1, image_sha1, None)
+        _copy_image(compressed, f_copy, f_bmap1, image_chksum, None)
 
         # Append a "file:" prefixe to make BmapCopy use urllib
-        _copy_image(compressed, f_copy, f_bmap1, image_sha1, image_size)
-        _copy_image(compressed, f_copy, f_bmap1, image_sha1, None)
+        _copy_image(compressed, f_copy, f_bmap1, image_chksum, image_size)
+        _copy_image(compressed, f_copy, f_bmap1, image_chksum, None)
 
     # Close temporary files, which will also remove them
     f_copy.close()
