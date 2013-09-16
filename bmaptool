@@ -56,6 +56,7 @@ import time
 import logging
 import tempfile
 import traceback
+import shutil
 from bmaptools import BmapCreate, BmapCopy, BmapHelpers, TransRead
 
 def copy_command_open_blkdev(path, log):
@@ -95,35 +96,66 @@ def copy_command_open_blkdev(path, log):
 
     return NamedFile(file_obj, path)
 
-def find_and_open_bmap(image_path, log):
+def find_and_open_bmap(args, log):
     """
-    When the user does not specify the bmap file, we try to find it at the same
-    place where the image file is located. We search for a file with the same
-    path and basename, but with a ".bmap" extension. Since the image may
-    contain more than one extension (e.g., image.raw.bz2), try to remove them
-    one-by-one.
+    This function opens the bmap file and returns the corresponding file object
+    as the bmap file path.
 
-    This function returns a file-like object for the bmap file if it has been
-    found, and 'None' otherwise.
+    If the user specified the bmap file explicitely, we just open the provided
+    path. Otherwise,  we try to find the bmap file at the same place where the
+    image file is located. We search for a file with the same path and
+    basename, but with a ".bmap" extension. Since the image may contain more
+    than one extension (e.g., image.raw.bz2), we try to remove them one-by-one.
+
+    Additionally, this function makes sure that the returned file object
+    corresponds to a local file, not a remote file. We do this by creating a
+    temporary local copy of the bmap file, if needed.
     """
 
-    bmap_path = None
+    if args.nobmap:
+        return (None, None)
 
-    while True:
-        bmap_path = image_path + ".bmap"
-
+    if args.bmap:
         try:
-            bmap_obj = TransRead.TransRead(bmap_path, logger=log)
-            bmap_obj.close()
-            return bmap_path
-        except TransRead.Error:
-            pass
+            bmap_obj = TransRead.TransRead(args.bmap, logger=log)
+        except TransRead.Error as err:
+            log.error("cannot open bmap file '%s': %s" % (args.bmap, str(err)))
+            raise SystemExit(1)
+        bmap_path = args.bmap
+    else:
+        # Automatically discover the bmap file
+        image_path = args.image
+        while True:
+            bmap_path = image_path + ".bmap"
+            try:
+                bmap_obj = TransRead.TransRead(bmap_path, logger=log)
+                log.info("discovered bmap file '%s'" % bmap_path)
+                break
+            except TransRead.Error:
+                pass
 
-        image_path, ext = os.path.splitext(image_path)
-        if ext == '':
-            break
+            image_path, ext = os.path.splitext(image_path)
+            if ext == '':
+                return (None, None)
 
-    return None
+    if not bmap_obj.is_compressed and not bmap_obj.is_url:
+        return (bmap_obj, bmap_path)
+
+    # Current implementation of BmapCopy requires a local file for block map,
+    # because it memory-maps it ('mmap()').
+    try:
+        # Create a temporary file for the bmap
+        tmp_obj = tempfile.TemporaryFile("w+")
+    except IOError as err:
+        log.error("cannot create a temporary file for bmap: %s" % err)
+        raise SystemExit(1)
+
+    shutil.copyfileobj(bmap_obj, tmp_obj)
+
+    tmp_obj.flush()
+    tmp_obj.seek(0)
+    bmap_obj.close()
+    return (tmp_obj, bmap_path)
 
 def copy_command_open_all(args, log):
     """
@@ -147,21 +179,7 @@ def copy_command_open_all(args, log):
 
     # Open the bmap file. Try to discover the bmap file automatically if it
     # was not specified.
-    bmap_path = args.bmap
-    if not bmap_path and not args.nobmap:
-        bmap_path = find_and_open_bmap(args.image, log)
-        if bmap_path:
-            log.info("discovered bmap file '%s'" % bmap_path)
-
-    bmap_obj = None
-    if bmap_path:
-        try:
-            # The current implementation of BmapCopy requires a local file for
-            # the bmap file.
-            bmap_obj = TransRead.TransRead(bmap_path, local=True, logger=log)
-        except TransRead.Error as err:
-            log.error("cannot open bmap file '%s': %s" % (bmap_path, str(err)))
-            raise SystemExit(1)
+    (bmap_obj, bmap_path) = find_and_open_bmap(args, log)
 
     # Try to open the destination file. If it does not exist, a new regular
     # file will be created. If it exists and it is a regular file - it'll be
@@ -210,7 +228,8 @@ def copy_command(args, log):
         if args.nobmap:
             log.info("no bmap given, copy entire image to '%s'" % args.dest)
         else:
-            log.error("please, use --nobmap option to flash without bmap")
+            log.error("bmap file not found, please, use --nobmap option to "
+                      "flash without bmap")
             raise SystemExit(1)
     else:
         log.info("block map format version %s" % writer.bmap_version)
