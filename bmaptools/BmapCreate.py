@@ -46,8 +46,14 @@ import hashlib
 from bmaptools.BmapHelpers import human_size
 from bmaptools import Fiemap
 
-# The bmap format version we generate
-SUPPORTED_BMAP_VERSION = "1.3"
+# The bmap format version we generate.
+#
+# Changelog:
+# o 1.3 -> 1.4:
+#   Support SHA256 and SHA512 checksums, in 1.3 only SHA1 was supported.
+#   "BmapFileChecksum" is used instead of "BmapFileSHA1", and "chksum="
+#   attribute is used instead "sha1=". Introduced "ChecksumType" tag.
+SUPPORTED_BMAP_VERSION = "1.4"
 
 _BMAP_START_TEMPLATE = \
 """<?xml version="1.0" ?>
@@ -106,13 +112,15 @@ class BmapCreate:
     the FIEMAP ioctl to generate the bmap.
     """
 
-    def __init__(self, image, bmap):
+    def __init__(self, image, bmap, chksum_type="sha1"):
         """
         Initialize a class instance:
-        * image - full path or a file-like object of the image to create bmap
-                  for
-        * bmap  - full path or a file object to use for writing the resulting
-                  bmap to
+        * image  - full path or a file-like object of the image to create bmap
+                   for
+        * bmap   - full path or a file object to use for writing the resulting
+                   bmap to
+        * chksum - type of the check sum to use in the bmap file (all checksum
+                   types which python's "hashlib" module supports are allowed).
         """
 
         self.image_size = None
@@ -130,6 +138,13 @@ class BmapCreate:
 
         self._f_image_needs_close = False
         self._f_bmap_needs_close = False
+
+        self._cs_type = chksum_type.lower()
+        try:
+            self._cs_len = len(hashlib.new(self._cs_type).hexdigest())
+        except ValueError as err:
+            raise Error("cannot initialize hash function \"%s\": %s" %
+                        (self._cs_type, err))
 
         if hasattr(image, "read"):
             self._f_image = image
@@ -213,17 +228,20 @@ class BmapCreate:
         xml  = "%s </MappedBlocksCount>\n\n" % mapped_count
 
         # pylint: disable=C0301
+        xml += "    <!-- Type of checksum used in this file. -->\n"
+        xml += "    <ChecksumType> %s </ChecksumType>\n\n" % self._cs_type
+
         xml += "    <!-- The checksum of this bmap file. When it is calculated, the value of\n"
-        xml += "         the SHA1 checksum has be zero (40 ASCII \"0\" symbols). -->\n"
-        xml += "    <BmapFileSHA1> "
+        xml += "         the checksum has be zero (all ASCII \"0\" symbols).  -->\n"
+        xml += "    <BmapFileChecksum> "
 
         self._f_bmap.write(xml)
         self._chksum_pos = self._f_bmap.tell()
 
-        xml = "0" * 40 + " </BmapFileSHA1>\n\n"
+        xml = "0" * self._cs_len + " </BmapFileChecksum>\n\n"
         xml += "    <!-- The block map which consists of elements which may either be a\n"
-        xml += "         range of blocks or a single block. The 'sha1' attribute (if present)\n"
-        xml += "         is the SHA1 checksum of this blocks range. -->\n"
+        xml += "         range of blocks or a single block. The 'chksum' attribute\n"
+        xml += "         (if present) is the checksum of this blocks range. -->\n"
         xml += "    <BlockMap>\n"
         # pylint: enable=C0301
 
@@ -249,7 +267,9 @@ class BmapCreate:
         self._f_bmap.write("%u" % self.mapped_cnt)
 
         self._f_bmap.seek(0)
-        chksum = hashlib.sha1(self._f_bmap.read()).hexdigest()
+        hash_obj = hashlib.new(self._cs_type)
+        hash_obj.update(self._f_bmap.read())
+        chksum = hash_obj.hexdigest()
         self._f_bmap.seek(self._chksum_pos)
         self._f_bmap.write("%s" % chksum)
 
@@ -263,7 +283,7 @@ class BmapCreate:
         end = (last + 1) * self.block_size
 
         self._f_image.seek(start)
-        hash_obj = hashlib.new("sha1")
+        hash_obj = hashlib.new(self._cs_type)
 
         chunk_size = 1024*1024
         to_read = end - start
@@ -296,7 +316,7 @@ class BmapCreate:
             self.mapped_cnt += last - first + 1
             if include_checksums:
                 chksum = self._calculate_chksum(first, last)
-                chksum = " sha1=\"%s\"" % chksum
+                chksum = " chksum=\"%s\"" % chksum
             else:
                 chksum = ""
 
