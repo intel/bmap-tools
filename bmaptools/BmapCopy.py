@@ -172,6 +172,11 @@ class BmapCopy:
         st_data = os.fstat(self._f_dest.fileno())
         self._dest_is_regfile = stat.S_ISREG(st_data.st_mode)
 
+        # The bmap file checksum type and length
+        self._cs_type = None
+        self._cs_len = None
+        self._cs_attrib_name = None
+
         # Special quirk for /dev/null which does not support fsync()
         if stat.S_ISCHR(st_data.st_mode) and \
            os.major(st_data.st_rdev) == 1 and \
@@ -242,7 +247,10 @@ class BmapCopy:
 
         import mmap
 
-        correct_chksum = self._xml.find("BmapFileSHA1").text.strip()
+        if self.bmap_version_minor == 3:
+            correct_chksum = self._xml.find("BmapFileSHA1").text.strip()
+        else:
+            correct_chksum = self._xml.find("BmapFileChecksum").text.strip()
 
         # Before verifying the shecksum, we have to substitute the checksum
         # value stored in the file with all zeroes. For these purposes we
@@ -253,8 +261,11 @@ class BmapCopy:
         chksum_pos = mapped_bmap.find(correct_chksum)
         assert chksum_pos != -1
 
-        mapped_bmap[chksum_pos:chksum_pos + 40] = '0' * 40
-        calculated_chksum = hashlib.sha1(mapped_bmap).hexdigest()
+        mapped_bmap[chksum_pos:chksum_pos + self._cs_len] = '0' * self._cs_len
+
+        hash_obj = hashlib.new(self._cs_type)
+        hash_obj.update(mapped_bmap)
+        calculated_chksum = hash_obj.hexdigest()
 
         mapped_bmap.close()
 
@@ -302,7 +313,23 @@ class BmapCopy:
                         % (self.image_size, self.blocks_cnt, self.block_size))
 
         if self.bmap_version_major >= 1 and self.bmap_version_minor >= 3:
-            # Bmap file checksum appeard in format 1.3
+            # Bmap file checksum appeard in format 1.3 and the only supported
+            # checksum type was SHA1. Version 1.4 started supporting arbitrary
+            # checksum types. A new "ChecksumType" tag was introduce to specify
+            # the checksum function name. And all XML tags which contained
+            # "sha1" in their name were renamed to something more neutral.
+            if self.bmap_version_minor == 3:
+                self._cs_type = "sha1"
+                self._cs_attrib_name = "sha1"
+            else:
+                self._cs_type = xml.find("ChecksumType").text.strip()
+                self._cs_attrib_name = "chksum"
+
+            try:
+                self._cs_len = len(hashlib.new(self._cs_type).hexdigest())
+            except ValueError as err:
+                raise Error("cannot initialize hash function \"%s\": %s" %
+                            (self._cs_type, err))
             self._verify_bmap_checksum()
 
     def _update_progress(self, blocks_written):
@@ -392,8 +419,8 @@ class BmapCopy:
             else:
                 last = first
 
-            if 'sha1' in xml_element.attrib:
-                chksum = xml_element.attrib['sha1']
+            if self._cs_attrib_name in xml_element.attrib:
+                chksum = xml_element.attrib[self._cs_attrib_name]
             else:
                 chksum = None
 
@@ -435,7 +462,7 @@ class BmapCopy:
         try:
             for (first, last, chksum) in self._get_block_ranges():
                 if verify and chksum:
-                    hash_obj = hashlib.new('sha1')
+                    hash_obj = hashlib.new(self._cs_type)
 
                 self._f_image.seek(first * self.block_size)
 
@@ -621,8 +648,8 @@ class BmapBdevCopy(BmapCopy):
 
         # Construct the path to the sysfs directory of our block device
         st_rdev = os.fstat(self._f_dest.fileno()).st_rdev
-        self._sysfs_base = "/sys/dev/block/%s:%s/" \
-                           % (os.major(st_rdev), os.minor(st_rdev))
+        self._sysfs_base = "/sys/dev/block/%s:%s/" % \
+                           (os.major(st_rdev), os.minor(st_rdev))
 
         # Check if the 'queue' sub-directory exists. If yes, then our block
         # device is entire disk. Otherwise, it is a partition, in which case we
