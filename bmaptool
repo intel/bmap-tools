@@ -313,7 +313,7 @@ def create_command(args, log):
             raise SystemExit(1)
 
     try:
-        creator = BmapCreate.BmapCreate(args.image, output)
+        creator = BmapCreate.BmapCreate(args.image, output, "sha256")
         creator.generate(not args.no_checksum)
     except BmapCreate.Error as err:
         log.error(str(err))
