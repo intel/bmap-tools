@@ -142,7 +142,7 @@ def _calculate_chksum(file_obj):
     """
 
     file_obj.seek(0)
-    hash_obj = hashlib.new("sha1")
+    hash_obj = hashlib.new("sha256")
 
     chunk_size = 1024*1024
 
