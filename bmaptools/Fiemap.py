@@ -144,7 +144,7 @@ class Fiemap:
         list (just like 'struct.upack()').
         """
 
-        if block < 0 or block >= self.blocks_cnt:
+        if self.blocks_cnt != 0 and (block < 0 or block >= self.blocks_cnt):
             raise Error("bad block number %d, should be within [0, %d]"
                         % (block, self.blocks_cnt))
 
