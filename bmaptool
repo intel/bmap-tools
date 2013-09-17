@@ -221,6 +221,11 @@ def open_files(args, log):
 
 def copy_command(args, log):
     """Copy an image to a block device or a regular file using bmap."""
+
+    if args.nobmap and args.bmap:
+        log.error("--nobmap and --bmap cannot be used together")
+        raise SystemExit(1)
+
     image_obj, dest_obj, bmap_obj, bmap_path, image_size, dest_is_blkdev = \
                                                    open_files(args, log)
     try:
