@@ -39,6 +39,9 @@ _FIEMAP_EXTENT_FORMAT = "=QQQQQLLLL"
 _FIEMAP_EXTENT_SIZE = struct.calcsize(_FIEMAP_EXTENT_FORMAT)
 # The FIEMAP ioctl number
 _FIEMAP_IOCTL = 0xC020660B
+# This FIEMAP ioctl flag which instructs the kernel to sync the file before
+# reading the block map
+_FIEMAP_FLAG_SYNC = 0x00000001
 
 # Minimum buffer which is required for 'class Fiemap' to operate
 MIN_BUFFER_SIZE = _FIEMAP_SIZE + _FIEMAP_EXTENT_SIZE
@@ -68,6 +71,9 @@ class Fiemap:
         fiemap_extent' elements which will be used when invoking the FIEMAP
         ioctl. The larger is the buffer, the less times the FIEMAP ioctl will
         be invoked.
+
+        This class synchronizes the image file every time it invokes the FIEMAP
+        ioctl in order to work-around early FIEMAP implementation kernel bugs.
         """
 
         self._f_image_needs_close = False
@@ -148,9 +154,13 @@ class Fiemap:
             raise Error("bad block number %d, should be within [0, %d]"
                         % (block, self.blocks_cnt))
 
-        # Initialize the 'struct fiemap' part of the buffer
+        # Initialize the 'struct fiemap' part of the buffer. We use the
+        # '_FIEMAP_FLAG_SYNC' flag in order to make sure the file is
+        # synchronized. The reason for this is that early FIEMAP
+        # implementations had many bugs related to cached dirty data, and
+        # synchronizing the file is a necessary work-around.
         struct.pack_into(_FIEMAP_FORMAT, self._buf, 0, block * self.block_size,
-                         count * self.block_size, 0, 0,
+                         count * self.block_size, _FIEMAP_FLAG_SYNC, 0,
                          self._fiemap_extent_cnt, 0)
 
         try:
