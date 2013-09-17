@@ -1,4 +1,4 @@
-.TH BMAPTOOL "1" "February 2013" "bmap-tools 2.1" "User Commands"
+.TH BMAPTOOL "17" "September 2013" "bmap-tools 2.6" "User Commands"
 
 .SH NAME
 
@@ -9,7 +9,7 @@ bmaptool - create block map (bmap) for a file or copy a file using bmap
 
 .PP
 .B bmaptool
-[\-\-help] [\-\-version] [\-\-quiet] <subcommand> [<args>]
+[\-\-help] [\-\-version] [\-\-quiet] <subcommand> [<options>] <args>
 
 .SH DESCRIPTION
 
@@ -92,9 +92,9 @@ in the URL, for example "https://user:password@my.server.org/image.raw.bz2", or
 .PP
 IMAGE may be compressed, in which case \fIbmaptool\fR decompresses it on-the-fly.
 The compression type is detected by the file extension and the following
-compression types are supported: ".bz2", ".gz", ".tar.gz" or ".tgz", and
-".tar.bz2". If IMAGE has none of these extensions, it is assumed to be
-uncompressed.
+compression types are supported: ".bz2", ".gz", ".xz", ".gzip", ".tar.bz2",
+".tar.gz", ".tgz", ".tar.xz". If IMAGE has none of these extensions, it is
+assumed to be uncompressed.
 
 .PP
 If DEST is a block device node (e.g., "/dev/sdg"), \fIbmaptool\fR opens it in
@@ -102,6 +102,35 @@ exclusive mode. This means that it will fail if any other process has IMAGE
 block device node opened. This also means that no other processes will be able
 to open IMAGE until \fIbmaptool\fR finishes the copying. Please, see semantics
 of the "O_EXCL" flag of the "open()" syscall.
+
+.PP
+The bmap file typically contains SHA-256 checksum for itself as well as SHA-256
+checksum for all the mapped data regions, which makes it possible to guarantee
+data integrity. \fIbmaptool\fR verifies the checksums and exits with an error
+in case of a mismatch. Checksum verification can be disabled using the
+"--no-verify" option. \fIbmaptool\fR does not verify that unampped areas
+contain only zeroes, because these areas are anyway dropped and are not used for
+anything.
+
+.PP
+The bmap file may be signed with OpenPGP (gpg). The signature may be either
+detached (a separate file) or "built into" the bmap file (so called "clearsign"
+signature).
+
+.PP
+The detached signature can be specified with the "--bmap-sig" option, otherwise
+\fIbmaptool\fR tries to automatically discover it by looking for a file with
+the same basename as the bmap file but with the ".asc" or ".sig" extension.
+This is very similar to the bmap file auto-discovery. So if a ".asc" or ".sig"
+file exists, \fIbmaptool\fR will verify the signature.
+
+.PP
+The clearsign signature is part of the bmap file and \fIbmaptool\fR
+automatically detected and verifies it.
+
+.PP
+If the signature is bad, \fIbmaptool\fR exits with an error. Bmap file
+signature verification can be disabled using the "--no-sig-verify" option.
 .RE
 
 .\"
@@ -123,6 +152,14 @@ tries to automatically discover the bmap file.
 .RE
 
 .PP
+\-\-bmap-sig SIG
+.RS 2
+Use a detached OpenPGP signature file "SIG" for verifying the bmap file
+integrity and publisher. If this option is not specified, \fIbmaptool\fR
+tries to automatically discover the signature file.
+.RE
+
+.PP
 \-\-nobmap
 .RS 2
 Disable automatic bmap file discovery and force flashing entire IMAGE without bmap.
@@ -131,9 +168,15 @@ Disable automatic bmap file discovery and force flashing entire IMAGE without bm
 .PP
 \-\-no-verify
 .RS 2
-Do not verify SHA1 checksums when copying (not recommended). The checksums are
+Do not verify data checksums when copying (not recommended). The checksums are
 stored in the bmap file, and normally \fIbmaptool\fR verifies that the data in
 IMAGE matches the checksums.
+.RE
+
+.PP
+\-\-no-sig-verify
+.RS 2
+Do not verify the OpenPGP bmap file signature (not recommended).
 .RE
 .RE
 .RE
@@ -144,18 +187,12 @@ IMAGE matches the checksums.
 .RS 2
 \fBEXAMPLES\fR
 .RS 2
-\fIbmaptool\fR copy --bmap image.bmap image.raw /dev/sdg
-.RS 2
-Copy non-compressed local file "image.raw" to block device "/dev/sdg" using bmap file "image.bmap".
-.RE
-.RE
-
-.RS 2
 \fIbmaptool\fR copy image.raw.bz2 /dev/sdg
 .RS 2
 Copy bz2-compressed local file "image.raw.bz2" to block device "/dev/sdg". The
-image file is uncompressed on-the-fly. The bamap file is discovered
-automatically.
+image file is uncompressed on-the-fly. The bmap file is discovered
+automatically. The OpenPGP signature is detected/discovered automatically
+too.
 .RE
 .RE
 
@@ -163,11 +200,20 @@ automatically.
 \fIbmaptool\fR copy http://my-server.com/files/image.raw.bz2 $HOME/tmp/file
 .RS 2
 Copy bz2-compressed remote "image.raw.bz2" to regular file "$HOME/tmp/file".
-The image file is uncompressed on-the-fly. The bamap file is discovered
-automatically.
+The image file is uncompressed on-the-fly. The bmap file is discovered
+automatically. The OpenPGP signature is detected/discovered automatically
+too.
 .RE
 .RE
 
+.RS 2
+\fIbmaptool\fR copy --bmap image.bmap --bmap-sig image.bmap.asc image.raw /dev/sdg
+.RS 2
+Copy non-compressed local file "image.raw" to block device "/dev/sdg" using bmap file
+"image.bmap". Verify the bmap file signature using a detached OpenPGP signature
+from "imag.bmap.asc".
+.RE
+.RE
 
 .\"
 .\" The "create" command description
@@ -178,6 +224,15 @@ automatically.
 Generate bmap for a regular file IMAGE. Internally, this subcommand uses the
 Linux "FIEMAP" ioctl to find out which IMAGE blocks are mapped. By default, the
 resulting bmap file is printed to stdout, unless the "--output" option is used.
+
+.PP
+The IMAGE file is always synchronized before the block map is generated. And it
+is important to make sure that the IMAGE file is not modified when the bmap
+file is being generated, and after the bmap file has been generated. Otherwise
+the bmap file becomes invalid and checksum verification will fail.
+
+.PP
+The image file can further be signed using OpenPGP.
 
 .\"
 .\" The "create" command's options
