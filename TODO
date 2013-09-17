@@ -1,7 +1,5 @@
 Current TODO list, any help with these is appreciated.
 
-2. Implement GPG signatures support, just like this is done in Fedora
-   https://fedoraproject.org/static/checksums/Fedora-19-i386-CHECKSUM
 3. In setup.py, fetch the version from 'bmaptool' file.
 4. Teach the 'make_a_release.sh' script to update the version and the
    changelog.
@@ -12,3 +10,4 @@ Current TODO list, any help with these is appreciated.
 7. Verify that unmapped areas have all zeroes to guarantee integrity.
 8. Update the man pages
 9. Teach bmaptool to update the alternate GPT partition
+10. Document GPG singatures support and supported hash function types.
