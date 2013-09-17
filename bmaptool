@@ -181,6 +181,15 @@ def copy_command_open_all(args, log):
     # was not specified.
     (bmap_obj, bmap_path) = find_and_open_bmap(args, log)
 
+    if bmap_path == args.image:
+        # Most probably the specified the bmap file instead of the image file
+        # by mistake.
+        log.warning("image has the same path as the bmap file, dropping bmap")
+        bmap_obj.close()
+        bmap_obj = None
+        bmap_path = None
+        args.nobmap = True
+
     # Try to open the destination file. If it does not exist, a new regular
     # file will be created. If it exists and it is a regular file - it'll be
     # truncated. If this is a block device, it'll just be opened.
