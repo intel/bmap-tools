@@ -6,7 +6,8 @@ Current TODO list, any help with these is appreciated.
 6. Write in the man page, docs, and may be --help that it is very important
    that the image is not changed while we create the bmep file, and after we
    have created it too.
-7. Verify that unmapped areas have all zeroes to guarantee integrity.
 8. Update the man pages
 9. Teach bmaptool to update the alternate GPT partition
 10. Document GPG singatures support and supported hash function types
+11. Write in the doc that bmaptool does not verify that unmapped areas do
+    contain zeroes.
