@@ -59,10 +59,18 @@ import traceback
 import shutil
 from bmaptools import BmapCreate, BmapCopy, BmapHelpers, TransRead
 
-def copy_command_open_blkdev(path, log):
+def open_block_device(path, log):
     """
-    Open a block device specified by 'path' in exclusive mode. Returns opened
-    file object.
+    This is a helper function for 'open_files()' which is called if the
+    destination file of the "copy" command is a block device. We handle block
+    devices a little bit different to regular files. Namely, we are trying to
+    make sure that we do not write to a mounted block device, otherwise the
+    user could corrupt, say, the root file system by a mistake. This is
+    achieved by opening the block device in exclusive mode, which guarantees
+    that we are the only users of the block device.
+
+    This function opens a block device specified by 'path' in exclusive mode.
+    Returns opened file object.
     """
 
     class NamedFile:
@@ -98,18 +106,21 @@ def copy_command_open_blkdev(path, log):
 
 def find_and_open_bmap(args, log):
     """
-    This function opens the bmap file and returns the corresponding file object
-    as the bmap file path.
+    This is a helper function for 'open_files()' which discovers and opens the
+    bmap file, then returns the corresponding file object and the bmap file
+    path.
 
     If the user specified the bmap file explicitely, we just open the provided
-    path. Otherwise,  we try to find the bmap file at the same place where the
-    image file is located. We search for a file with the same path and
-    basename, but with a ".bmap" extension. Since the image may contain more
-    than one extension (e.g., image.raw.bz2), we try to remove them one-by-one.
+    path. Otherwise, we try to discover the bmap file at the same place where
+    the image file is located. We search for a file with the same path and
+    basename, but with a ".bmap" extension.
 
     Additionally, this function makes sure that the returned file object
     corresponds to a local file, not a remote file. We do this by creating a
-    temporary local copy of the bmap file, if needed.
+    temporary local copy of the bmap file. The reason is that further on we may
+    need to check the GPG signature of the file, which requires it to be a
+    local file. On top of that, the BmapCopy class requires the bmap file to be
+    memory-mappable ('mmap()').
     """
 
     if args.nobmap:
@@ -141,8 +152,6 @@ def find_and_open_bmap(args, log):
     if not bmap_obj.is_compressed and not bmap_obj.is_url:
         return (bmap_obj, bmap_path)
 
-    # Current implementation of BmapCopy requires a local file for block map,
-    # because it memory-maps it ('mmap()').
     try:
         # Create a temporary file for the bmap
         tmp_obj = tempfile.TemporaryFile("w+")
@@ -157,10 +166,10 @@ def find_and_open_bmap(args, log):
     bmap_obj.close()
     return (tmp_obj, bmap_path)
 
-def copy_command_open_all(args, log):
+def open_files(args, log):
     """
-    Open the image/bmap/destination files for the "copy" command. Returns a
-    tuple of 5 elements:
+    This is a helper function for 'copy_command()' which the image, bmap, and
+    the destination files. Returns a tuple of 5 elements:
         1 file-like object for the image
         2 file object for the destination file
         3 file-like object for the bmap
@@ -204,7 +213,7 @@ def copy_command_open_all(args, log):
     dest_is_blkdev = stat.S_ISBLK(os.fstat(dest_obj.fileno()).st_mode)
     if dest_is_blkdev:
         dest_obj.close()
-        dest_obj = copy_command_open_blkdev(args.dest, log)
+        dest_obj = open_block_device(args.dest, log)
 
     return (image_obj, dest_obj, bmap_obj, bmap_path, image_obj.size,
             dest_is_blkdev)
@@ -213,7 +222,7 @@ def copy_command_open_all(args, log):
 def copy_command(args, log):
     """Copy an image to a block device or a regular file using bmap."""
     image_obj, dest_obj, bmap_obj, bmap_path, image_size, dest_is_blkdev = \
-                                          copy_command_open_all(args, log)
+                                                   open_files(args, log)
     try:
         if dest_is_blkdev:
             dest_str = "block device '%s'" % args.dest
