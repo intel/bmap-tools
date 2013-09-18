@@ -282,8 +282,16 @@ class BmapCopy:
         try:
             self._xml = ElementTree.parse(self._f_bmap)
         except  ElementTree.ParseError as err:
+            # Extrace the erroneous line with some context
+            self._f_bmap.seek(0)
+            xml_extract = ""
+            for num, line in enumerate(self._f_bmap):
+                if num >= err.position[0] - 4 and num <= err.position[0] + 4:
+                    xml_extract += "Line %d: %s" % (num, line)
+
             raise Error("cannot parse the bmap file '%s' which should be a "
-                        "proper XML file: %s" % (self._bmap_path, err))
+                        "proper XML file: %s, the XML extract:\n%s" %
+                        (self._bmap_path, err, xml_extract))
 
         xml = self._xml
         self.bmap_version = str(xml.getroot().attrib.get('version'))
