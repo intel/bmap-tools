@@ -228,7 +228,7 @@ class BmapCreate:
         xml  = "%s </MappedBlocksCount>\n\n" % mapped_count
 
         # pylint: disable=C0301
-        xml += "    <!-- Type of checksum used in this file. -->\n"
+        xml += "    <!-- Type of checksum used in this file -->\n"
         xml += "    <ChecksumType> %s </ChecksumType>\n\n" % self._cs_type
 
         xml += "    <!-- The checksum of this bmap file. When it is calculated, the value of\n"
