@@ -1,5 +1,3 @@
 Current TODO list, any help with these is appreciated.
 
-1. Teach the 'make_a_release.sh' script to update the version and the
-   changelog.
-2. Teach bmaptool to update the alternate GPT partition
+1. Teach bmaptool to update the alternate GPT partition

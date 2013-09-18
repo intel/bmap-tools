@@ -26,6 +26,8 @@
 #   * update the version field in all places, the rpm/deb changelog and commit
 #     that.
 
+PROG="make_a_release.sh"
+
 fatal() {
         printf "Error: %s\n" "$1" >&2
         exit 1
@@ -38,6 +40,37 @@ Usage: ${0##*/} <new_ver> <outdir>
 <new_ver>  - new bmap-tools version to make in X.Y format
 EOF
         exit 0
+}
+
+ask_question() {
+	local question=$1
+
+	while true; do
+		printf "%s\n" "$question (yes/no)?"
+		IFS= read answer
+		if [ "$answer" == "yes" ]; then
+			printf "%s\n" "Very good!"
+			return
+		elif [ "$answer" == "no" ]; then
+			printf "%s\n" "Please, do that!"
+			exit 1
+		else
+			printf "%s\n" "Please, answer \"yes\" or \"no\""
+		fi
+	done
+}
+
+format_changelog() {
+	local logfile="$1"; shift
+	local pfx1="$1"; shift
+	local pfx2="$1"; shift
+	local pfx_len="$(printf "%s" "$pfx1" | wc -c)"
+	local width="$((80-$pfx_len))"
+
+	while IFS= read -r line; do
+		printf "%s\n" "$line" | fold -c -s -w "$width" | \
+			sed -e "1 s/^/$pfx1/" | sed -e "1! s/^/$pfx2/"
+	done < "$logfile"
 }
 
 [ $# -eq 0 ] && usage
@@ -58,32 +91,77 @@ if [ "$current_branch" != "$release_branch" ]; then
 	fatal "current branch is '$current_branch' but must be '$release_branch'"
 fi
 
+# Remind the maintainer about various important things
+ask_question "Did you update the docs/RELEASE_NOTES file"
+ask_question "Did you update the docs/README file"
+ask_question "Did you update the man page"
+ask_question "Did you update documentation on tizen.org"
+
 # Make sure the git index is up-to-date
 [ -z "$(git status --porcelain)" ] || fatal "git index is not up-to-date"
+
+# Change the version in the 'bmaptool' file
+sed -i -e "s/^VERSION = \"[0-9]\+\.[0-9]\+\"$/VERSION = \"$new_ver\"/" bmaptool
+# Sed the version in the RPM spec file
+sed -i -e "s/^Version: [0-9]\+\.[0-9]\+$/Version: $new_ver/" packaging/bmap-tools.spec
+
+# Ask the maintainer for changelog lines
+logfile="$(mktemp -t "$PROG.XXXX")"
+cat > "$logfile" <<EOF
+# Please, provide changelog lines for the RPM and Deb packages.
+# Please, use one line per changelog entry, lines will be wrapped
+# automatically.
+# Lines starting with the "#" symbol will be removed.
+EOF
+
+if [ -z "${EDITOR+x}" ]; then
+	EDITOR="vim"
+fi
+"$EDITOR" "$logfile"
+
+# Remove comments and blank lines
+sed -i -e '/^#.*$/d' -e'/^$/d' "$logfile"
+
+# Prepare Debian changelog
+deblogfile="$(mktemp -t "$PROG.XXXX")"
+printf "%s\n\n" "bmap-tools ($new_ver) unstable; urgency=low" > "$deblogfile"
+format_changelog "$logfile" "  * " "    " >> "$deblogfile"
+printf "\n%s\n\n" " -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com> $(date -R)" >> "$deblogfile"
+cat debian/changelog >> "$deblogfile"
+mv "$deblogfile" debian/changelog
+
+# Prepare RPM changelog
+rpmlogfile="$(mktemp -t "$PROG.XXXX")"
+printf "%s\n" "$(date --utc) - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> ${new_ver}-1" > "$rpmlogfile"
+format_changelog "$logfile" "- " "  " >> "$rpmlogfile"
+printf "\n"  >> "$rpmlogfile"
+cat packaging/bmap-tools.changes >> "$rpmlogfile"
+mv "$rpmlogfile" packaging/bmap-tools.changes
+
+rm "$logfile"
+
+# Commit the changes
+git commit -a -s -m "Release version $new_ver"
 
 outdir="."
 tag_name="v$new_ver"
 release_name="bmap-tools-$new_ver"
 
 # Create new signed tag
-echo "Signing tag $tag_name"
+printf "%s\n" "Signing tag $tag_name"
 git tag -m "$release_name" -s "$tag_name"
 
 # Prepare a signed tarball
 git archive --format=tar --prefix="$release_name/" "$tag_name" | \
         gzip > "$outdir/$release_name.tgz"
-echo "Signing the tarball"
+printf "%s\n" "Signing the tarball"
 gpg -o "$outdir/$release_name.tgz.asc" --detach-sign -a "$outdir/$release_name.tgz"
 
 # Get the name of the release branch corresponding to this version
 release_branch="release-$(printf "%s" "$new_ver" | sed -e 's/\(.*\)\..*/\1.0/')"
 
 cat <<EOF
-Make sure you updated the docs/RELEASE_NOTES file!
-Make sure you updated the docs/README file!
 Make sure you updated the version number and rpm/deb changelogs!
-Make sure you updated the man page!
-Make sure you updated the tizen.org documentation!
 
 To finish the release:
   1. push the $tag_name tag out
