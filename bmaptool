@@ -60,6 +60,22 @@ import shutil
 import io
 from bmaptools import BmapCreate, BmapCopy, BmapHelpers, TransRead
 
+class NamedFile:
+    """
+    This simple class allows us to override the 'name' attribute of a file
+    object. The reason is that some classes use the 'name' attribute of the
+    file object to print file path. But, for example, 'os.fdopen()' sets the
+    name to "<fdopen>", which is not very user-friendly. Also, sometimes we
+    want to substitute the file name with something else.
+    """
+
+    def __init__(self, file_obj, name):
+        self._file_obj = file_obj
+        self.name = name
+
+    def __getattr__(self, name):
+        return getattr(self._file_obj, name)
+
 def open_block_device(path, log):
     """
     This is a helper function for 'open_files()' which is called if the
@@ -73,20 +89,6 @@ def open_block_device(path, log):
     This function opens a block device specified by 'path' in exclusive mode.
     Returns opened file object.
     """
-
-    class NamedFile:
-        """
-        This simple class allows us to override the 'name' attribute of a file
-        object. The problem is that 'os.fdopen()' sets the name to "<fdopen>",
-        which is not very user-friendly.
-        """
-
-        def __init__(self, file_obj, name):
-            self._file_obj = file_obj
-            self.name = name
-
-        def __getattr__(self, name):
-            return getattr(self._file_obj, name)
 
     try:
         descriptor = os.open(path, os.O_WRONLY | os.O_EXCL)
@@ -427,11 +429,13 @@ def copy_command(args, log):
         if dest_is_blkdev:
             dest_str = "block device '%s'" % args.dest
             # For block devices, use the specialized class
-            writer = BmapCopy.BmapBdevCopy(image_obj, dest_obj, bmap_obj,
+            writer = BmapCopy.BmapBdevCopy(image_obj, dest_obj, args.dest,
+                                           NamedFile(bmap_obj, bmap_path),
                                            image_size, logger=log)
         else:
             dest_str = "file '%s'" % os.path.basename(args.dest)
-            writer = BmapCopy.BmapCopy(image_obj, dest_obj, bmap_obj,
+            writer = BmapCopy.BmapCopy(image_obj, dest_obj,
+                                       NamedFile(bmap_obj, bmap_path),
                                        image_size, logger=log)
     except BmapCopy.Error as err:
         log.error(str(err))
