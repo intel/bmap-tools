@@ -12,6 +12,7 @@ Package: bmap-tools
 Architecture: all
 Depends: python (>=2.7),
          python-lzma,
+	 python-gpgme,
          ${misc:Depends},
          ${python:Depends},
 Description: tool to flash image files to block devices using the block map

@@ -20,16 +20,22 @@ Source0: %{name}_%{version}.tar.gz
 
 BuildRequires: python-distribute
 
-# In OpenSuse the xml.etree module is provided by the python-xml package
 %if 0%{?suse_version}
+# In OpenSuse the xml.etree module is provided by the python-xml package
 Requires: python-xml
+# The gpgme python module is in python-gpgme
+Requires: python-gpgme
+# Unfortunately, there is no package for the lzma module in OpenSuse
+# (checked 12.2 and 12.3)
 %endif
 
-# In Fedora the xml.etree module is provided by the python-libs package
 %if 0%{?fedora_version}
+# In Fedora the xml.etree module is provided by the python-libs package
 Requires: python-libs
-# Fedora has the pyliblzma which we use for decompressing .xz files
+# The lzma python module is packaged in pyliblzma
 Requires: pyliblzma
+# Tha gpgme python module is packaged in pygpgme
+Requires: pygpgme
 %endif
 
 # Centos6 uses python 2.6, which does not have the argparse module. However,
