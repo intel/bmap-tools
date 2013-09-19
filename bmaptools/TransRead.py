@@ -339,7 +339,7 @@ class TransRead:
         except IOError as err:
             raise Error("cannot open file '%s': %s" % (self.name, err))
 
-    def _open_url_ssh(self, url):
+    def _open_url_ssh(self, parsed_url):
         """
         This function opens a file on a remote host using SSH. The URL has to
         have this format: "ssh://username@hostname:path". Currently we only
@@ -348,8 +348,6 @@ class TransRead:
 
         import subprocess
 
-        # Parse the URL
-        parsed_url = urlparse.urlparse(url)
         username = parsed_url.username
         password = parsed_url.password
         path = parsed_url.path
@@ -443,13 +441,14 @@ class TransRead:
         import socket
 
         parsed_url = urlparse.urlparse(url)
-        username = parsed_url.username
-        password = parsed_url.password
 
         if parsed_url.scheme == "ssh":
             # Unfortunately, liburl2 does not handle "ssh://" URLs
-            self._open_url_ssh(url)
+            self._open_url_ssh(parsed_url)
             return
+
+        username = parsed_url.username
+        password = parsed_url.password
 
         if username and password:
             # Unfortunately, in order to handle URLs which contain user name
