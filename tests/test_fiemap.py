@@ -11,8 +11,14 @@ files and makes sure FIEMAP returns correct information about the holes.
 
 
 import random
-import unittest
 import itertools
+
+# This is a work-around for Centos 6
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
+
 
 import tests.helpers
 from bmaptools import Fiemap

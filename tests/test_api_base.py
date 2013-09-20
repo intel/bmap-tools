@@ -14,9 +14,14 @@ import sys
 import tempfile
 import filecmp
 import hashlib
-import unittest
 import itertools
 import random
+
+# This is a work-around for Centos 6
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 import tests.helpers
 from bmaptools import BmapCreate, BmapCopy, Fiemap, TransRead
