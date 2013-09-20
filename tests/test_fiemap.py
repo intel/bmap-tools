@@ -110,8 +110,7 @@ class TestCreateCopy(unittest.TestCase):
     function for different sparse files.
     """
 
-    @staticmethod
-    def test():
+    def test(self):
         """
         The test entry point. Executes the '_do_test()' function for files of
         different sizes, holes distribution and format.
