@@ -1,3 +1,29 @@
+Release 3.0
+~~~~~~~~~~~
+
+1. Switch from using SHA1 checksums in the bmap file to SHA256. This required
+   bmap format change. The new format version is 1.4. BmapCopy (and thus,
+   bmaptool supports all the older versions too). Now it is possible to use any
+   hash functions for checksumming, not only SHA256, but SHA256 is the default
+   for BmapCreate.
+
+2. Support OpenPGP (AKA gpg) signatures for the bmap file. From now on the bmap
+   file can be signed with gpg, in which case bmaptool verifies the bmap file
+   signature. If the signature is bad, bmaptool exits with an error message.
+   The verification can be disabled with the --no-sig-verify option.
+
+   Both detached and "in-band" clearsign signatures are supported. Bmaptool
+   automatically discovers detached signatures by checking ".sig" and ".asc"
+   files.
+
+3. The Fiemap module (and thus, bmaptool) now always synchronizes the image
+   before scanning it for mapped areas. This is done by using the
+   "FIEMAP_FLAG_SYNC" flag of the FIEMAP ioctl.
+
+   The reason for synchronizing the file is bugs in early implementations of
+   FIEMAP in the kernel and file-systems, and synchronizing the image is a
+   known way to work around the bugs.
+
 Bug-fix release 2.6
 ~~~~~~~~~~~~~~~~~~~
 
