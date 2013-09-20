@@ -294,7 +294,8 @@ class TransRead:
                 self.size = member.size
                 f_obj = self._f_objs[-1].extractfile(member)
                 self._f_objs.append(f_obj)
-            elif self.name.endswith('.gz'):
+            elif self.name.endswith('.gz') \
+                 or self.name.endswith('.gzip'):
                 import zlib
 
                 decompressor = zlib.decompressobj(16 + zlib.MAX_WBITS)
