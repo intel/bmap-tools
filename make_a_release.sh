@@ -69,7 +69,8 @@ format_changelog() {
 
 	while IFS= read -r line; do
 		printf "%s\n" "$line" | fold -c -s -w "$width" | \
-			sed -e "1 s/^/$pfx1/" | sed -e "1! s/^/$pfx2/"
+			sed -e "1 s/^/$pfx1/" | sed -e "1! s/^/$pfx2/" | \
+			sed -e "s/[\t ]\+$//"
 	done < "$logfile"
 }
 
@@ -82,13 +83,10 @@ new_ver="$1"; shift
 printf "%s" "$new_ver" | egrep -q -x '[[:digit:]]+\.[[:digit:]]+' ||
         fatal "please, provide new version in X.Y format"
 
-# Get the name of the release branch corresponding to this version
-release_branch="release-$(printf "%s" "$new_ver" | sed -e 's/\(.*\)\..*/\1.0/')"
-
-# Make sure that a release branch branch is currently checked out
+# Make sure that the current branch is 'devel'
 current_branch="$(git branch | sed -n -e '/^*/ s/^* //p')"
-if [ "$current_branch" != "$release_branch" ]; then
-	fatal "current branch is '$current_branch' but must be '$release_branch'"
+if [ "$current_branch" != "devel" ]; then
+	fatal "current branch is '$current_branch' but must be 'devel'"
 fi
 
 # Remind the maintainer about various important things
@@ -161,30 +159,32 @@ gpg -o "$outdir/$release_name.tgz.asc" --detach-sign -a "$outdir/$release_name.t
 release_branch="release-$(printf "%s" "$new_ver" | sed -e 's/\(.*\)\..*/\1.0/')"
 
 cat <<EOF
-Make sure you updated the version number and rpm/deb changelogs!
-
 To finish the release:
   1. push the $tag_name tag out
   2. copy the tarball to ftp.infradead.org
-  3. point the master branch to the updated $release_branch branch
-  4. push the master and the $release_branch branches out
-  5. announce the new release in the public mailing list
+  3. update the $release_branch with the contents of the 'devel' branch
+  4. point the master branch to the updated $release_branch branch
+  5. push the master and the $release_branch branches out
+  6. (a bit later) push to the public tree and announce the new release
+     in the public mailing list
 
 The commands would be:
 
 #1
 git push origin $tag_name
-git push public $tag_name
 #2
 scp "$outdir/$release_name.tgz" "$outdir/$release_name.tgz.asc" casper.infradead.org:/var/ftp/pub/bmap-tools/
 #3
-git branch -f master $release_branch
+git branch -f $release_branch devel
 #4
+git branch -f master $release_branch
+#5
 git push origin master:master
 git push origin $release_branch:$release_branch
+#6
+git push public $tag_name
 git push public master:master
 git push public $release_branch:$release_branch
-#5
 git send-email --suppress-cc=all --from "Artem Bityutskiy <dedekind1@gmail.com>" --to bmap-tools@lists.infradead.org /proc/self/fd/0 <<END_OF_EMAIL
 Subject: Announcement: $release_name is out!
 
