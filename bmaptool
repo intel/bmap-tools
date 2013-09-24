@@ -425,17 +425,18 @@ def copy_command(args, log):
         bmap_obj.close()
         bmap_obj = f_obj
 
+    if bmap_obj:
+        bmap_obj = NamedFile(bmap_obj, bmap_path)
+
     try:
         if dest_is_blkdev:
             dest_str = "block device '%s'" % args.dest
             # For block devices, use the specialized class
-            writer = BmapCopy.BmapBdevCopy(image_obj, dest_obj,
-                                           NamedFile(bmap_obj, bmap_path),
+            writer = BmapCopy.BmapBdevCopy(image_obj, dest_obj, bmap_obj,
                                            image_size, logger=log)
         else:
             dest_str = "file '%s'" % os.path.basename(args.dest)
-            writer = BmapCopy.BmapCopy(image_obj, dest_obj,
-                                       NamedFile(bmap_obj, bmap_path),
+            writer = BmapCopy.BmapCopy(image_obj, dest_obj, bmap_obj,
                                        image_size, logger=log)
     except BmapCopy.Error as err:
         log.error(str(err))
