@@ -567,6 +567,10 @@ def parse_arguments():
     text = "be quiet"
     parser.add_argument("-q", "--quiet", action = "store_true", help = text)
 
+    # The --debug option
+    text = "print debugging information"
+    parser.add_argument("-d", "--debug", action = "store_true", help = text)
+
     subparsers = parser.add_subparsers(title = "subcommands")
 
     #
@@ -660,10 +664,16 @@ def main():
 
     if args.quiet:
         loglevel = logging.WARNING
+    elif args.debug:
+        loglevel = logging.DEBUG
     else:
         loglevel = logging.INFO
 
     log = setup_logger(loglevel)
+
+    if args.quiet and args.debug:
+        log.error("--quiet and --debug cannot be used together")
+        raise SystemExit(1)
 
     try:
         args.func(args, log)
