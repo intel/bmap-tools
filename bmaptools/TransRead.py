@@ -435,7 +435,8 @@ class TransRead:
             open the URL for some time.
             """
             logger.warning("failed to open the URL with %d sec timeout, is the "
-                           "proxy setup correctly? Keep trying..." % timeout)
+                           "proxy configured correctly? Keep trying ..." %
+                           timeout)
 
         import urllib2
         import httplib
