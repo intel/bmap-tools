@@ -219,16 +219,16 @@ class TransRead:
     this class are file-like objects which you can read and seek only forward.
     """
 
-    def __init__(self, filepath, logger=None):
+    def __init__(self, filepath, log=None):
         """
         Class constructor. The 'filepath' argument is the full path to the file
-        to read transparently. The "logger" argument is the logger object to
-        use for printing messages.
+        to read transparently. The "log" argument is the logger object to use
+        for printing messages.
         """
 
-        self._logger = logger
-        if self._logger is None:
-            self._logger = logging.getLogger(__name__)
+        self._log = log
+        if self._log is None:
+            self._log = logging.getLogger(__name__)
 
         self.name = filepath
         # Size of the file (in uncompressed form), may be 'None' if the size is
@@ -429,14 +429,14 @@ class TransRead:
         Open an URL 'url' and return the file-like object of the opened URL.
         """
 
-        def _print_warning(logger, timeout):
+        def _print_warning(log, timeout):
             """
             This is a small helper function for printing a warning if we cannot
             open the URL for some time.
             """
-            logger.warning("failed to open the URL with %d sec timeout, is the "
-                           "proxy configured correctly? Keep trying ..." %
-                           timeout)
+            log.warning("failed to open the URL with %d sec timeout, is the "
+                        "proxy configured correctly? Keep trying ..." %
+                        timeout)
 
         import urllib2
         import httplib
@@ -488,14 +488,14 @@ class TransRead:
             # Handling the timeout case in Python 2.7
             except socket.timeout, err:
                 if timeout is not None:
-                    _print_warning(self._logger, timeout)
+                    _print_warning(self._log, timeout)
                 else:
                     raise Error("cannot open URL '%s': %s" % (url, err))
             except urllib2.URLError as err:
                 # Handling the timeout case in Python 2.6
                 if timeout is not None and \
                    isinstance(err.reason, socket.timeout):
-                    _print_warning(self._logger, timeout)
+                    _print_warning(self._log, timeout)
                 else:
                     raise Error("cannot open URL '%s': %s" % (url, err))
             except (IOError, ValueError, httplib.InvalidURL) as err:

@@ -138,7 +138,7 @@ def verify_detached_bmap_signature(args, bmap_obj, bmap_path, log):
 
     if args.bmap_sig:
         try:
-            sig_obj = TransRead.TransRead(args.bmap_sig, logger=log)
+            sig_obj = TransRead.TransRead(args.bmap_sig, log=log)
         except TransRead.Error as err:
             log.error("cannot open bmap signature file '%s': %s" %
                       (args.bmap_sig, str(err)))
@@ -148,11 +148,11 @@ def verify_detached_bmap_signature(args, bmap_obj, bmap_path, log):
         # Check if there is a stand-alone signature file
         try:
             sig_path = bmap_path + ".asc"
-            sig_obj = TransRead.TransRead(sig_path, logger=log)
+            sig_obj = TransRead.TransRead(sig_path, log=log)
         except TransRead.Error:
             try:
                 sig_path = bmap_path + ".sig"
-                sig_obj = TransRead.TransRead(sig_path, logger=log)
+                sig_obj = TransRead.TransRead(sig_path, log=log)
             except TransRead.Error:
                 # No signatures found
                 return None
@@ -310,7 +310,7 @@ def find_and_open_bmap(args, log):
 
     if args.bmap:
         try:
-            bmap_obj = TransRead.TransRead(args.bmap, logger=log)
+            bmap_obj = TransRead.TransRead(args.bmap, log=log)
         except TransRead.Error as err:
             log.error("cannot open bmap file '%s': %s" % (args.bmap, str(err)))
             raise SystemExit(1)
@@ -321,7 +321,7 @@ def find_and_open_bmap(args, log):
         while True:
             bmap_path = image_path + ".bmap"
             try:
-                bmap_obj = TransRead.TransRead(bmap_path, logger=log)
+                bmap_obj = TransRead.TransRead(bmap_path, log=log)
                 log.info("discovered bmap file '%s'" % bmap_path)
                 break
             except TransRead.Error:
@@ -363,7 +363,7 @@ def open_files(args, log):
     # Open the image file using the TransRead module, which will automatically
     # recognize whether it is compressed or whether file path is an URL, etc.
     try:
-        image_obj = TransRead.TransRead(args.image, logger=log)
+        image_obj = TransRead.TransRead(args.image, log=log)
     except TransRead.Error as err:
         log.error("cannot open image: %s" % str(err))
         raise SystemExit(1)
@@ -433,11 +433,11 @@ def copy_command(args, log):
             dest_str = "block device '%s'" % args.dest
             # For block devices, use the specialized class
             writer = BmapCopy.BmapBdevCopy(image_obj, dest_obj, bmap_obj,
-                                           image_size, logger=log)
+                                           image_size, log=log)
         else:
             dest_str = "file '%s'" % os.path.basename(args.dest)
             writer = BmapCopy.BmapCopy(image_obj, dest_obj, bmap_obj,
-                                       image_size, logger=log)
+                                       image_size, log=log)
     except BmapCopy.Error as err:
         log.error(str(err))
         raise SystemExit(1)

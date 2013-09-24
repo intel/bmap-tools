@@ -117,7 +117,7 @@ class BmapCopy:
     instance.
     """
 
-    def __init__(self, image, dest, bmap=None, image_size=None, logger=None):
+    def __init__(self, image, dest, bmap=None, image_size=None, log=None):
         """
         The class constructor. The parameters are:
             image      - file-like object of the image which should be copied,
@@ -127,12 +127,12 @@ class BmapCopy:
                          to.
             bmap       - file object of the bmap file to use for copying.
             image_size - size of the image in bytes.
-            logger     - the logger object to use for printing messages.
+            log     - the logger object to use for printing messages.
         """
 
-        self._logger = logger
-        if self._logger is None:
-            self._logger = logging.getLogger(__name__)
+        self._log = log
+        if self._log is None:
+            self._log = logging.getLogger(__name__)
 
         self._xml = None
 
@@ -619,14 +619,14 @@ class BmapBdevCopy(BmapCopy):
     scheduler.
     """
 
-    def __init__(self, image, dest, bmap=None, image_size=None, logger=None):
+    def __init__(self, image, dest, bmap=None, image_size=None, log=None):
         """
         The same as the constructor of the 'BmapCopy' base class, but adds
         useful guard-checks specific to block devices.
         """
 
         # Call the base class constructor first
-        BmapCopy.__init__(self, image, dest, bmap, image_size, logger=logger)
+        BmapCopy.__init__(self, image, dest, bmap, image_size, log=log)
 
         self._dest_fsync_watermark = (6 * 1024 * 1024) / self.block_size
 
@@ -683,9 +683,9 @@ class BmapBdevCopy(BmapCopy):
                 f_scheduler.seek(0)
                 f_scheduler.write("noop")
         except IOError as err:
-            self._logger.warning("failed to enable I/O optimization, expect "
-                                 "suboptimal speed (reason: cannot switch "
-                                 "to the 'noop' I/O scheduler: %s)" % err)
+            self._log.warning("failed to enable I/O optimization, expect "
+                              "suboptimal speed (reason: cannot switch "
+                              "to the 'noop' I/O scheduler: %s)" % err)
         else:
             # The file contains a list of schedulers with the current
             # scheduler in square brackets, e.g., "noop deadline [cfq]".
@@ -705,10 +705,9 @@ class BmapBdevCopy(BmapCopy):
                 f_ratio.seek(0)
                 f_ratio.write("1")
         except IOError as err:
-            self._logger.warning("failed to disable excessive buffering, "
-                                 "expect worse system responsiveness "
-                                 "(reason: cannot set max. I/O ratio to "
-                                 "1: %s)" % err)
+            self._log.warning("failed to disable excessive buffering, expect "
+                              "worse system responsiveness (reason: cannot set "
+                              "max. I/O ratio to 1: %s)" % err)
 
     def _restore_bdev_settings(self):
         """
