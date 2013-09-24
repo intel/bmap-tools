@@ -640,7 +640,37 @@ def setup_logger(loglevel):
     # Esc-sequences for coloured output
     esc_red = '\033[91m'    # pylint: disable=W1401
     esc_yellow = '\033[93m' # pylint: disable=W1401
+    esc_green = '\033[92m' # pylint: disable=W1401
     esc_end = '\033[0m'     # pylint: disable=W1401
+
+    class MyFormatter(logging.Formatter):
+        """
+        A custom formatter for logging messages. The reason we have it is to
+        have different format for different debug levels.
+        """
+
+        def __init__(self, fmt=None, datefmt=None):
+            """The constructor."""
+            logging.Formatter.__init__(self, fmt, datefmt)
+
+            self._orig_fmt = self._fmt
+            # Prefix with green-colored time-stamp, as well as with module name
+            # and line number
+            self._dbg_fmt = "[" + esc_green + "%(asctime)s" + esc_end + \
+                            "] [%(module)s,%(lineno)d] " + self._fmt
+
+        def format(self, record):
+            """
+            The formatter which which simply prefixes all debugging messages
+            with a time-stamp.
+            """
+
+            if record.levelno == logging.DEBUG:
+                self._fmt = self._dbg_fmt
+
+            result = logging.Formatter.format(self, record)
+            self._fmt = self._orig_fmt
+            return result
 
     # Change log level names to something less nicer than the default
     # all-capital 'INFO' etc.
@@ -651,7 +681,7 @@ def setup_logger(loglevel):
 
     log = logging.getLogger('bmap-logger')
     log.setLevel(loglevel)
-    formatter = logging.Formatter("bmaptool: %(levelname)s: %(message)s")
+    formatter = MyFormatter("bmaptool: %(levelname)s: %(message)s", "%H:%M:%S")
     where = logging.StreamHandler(sys.stderr)
     where.setFormatter(formatter)
     log.addHandler(where)
