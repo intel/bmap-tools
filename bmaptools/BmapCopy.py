@@ -347,12 +347,18 @@ class BmapCopy:
         the 'progress_file' attribute.
         """
 
+        if self.mapped_cnt:
+            assert blocks_written <= self.mapped_cnt
+            percent = int((float(blocks_written) / self.mapped_cnt) * 100)
+            self._log.debug("wrote %d blocks out of %d (%d%%)" %
+                            (blocks_written, self.mapped_cnt, percent))
+        else:
+            self._log.debug("wrote %d blocks" % blocks_written)
+
         if not self._progress_file:
             return
 
         if self.mapped_cnt:
-            assert blocks_written <= self.mapped_cnt
-            percent = int((float(blocks_written) / self.mapped_cnt) * 100)
             progress = '\r' + self._progress_format % percent + '\n'
         else:
             # Do not rotate the wheel too fast
@@ -491,6 +497,9 @@ class BmapCopy:
                         hash_obj.update(buf)
 
                     blocks = (len(buf) + self.block_size - 1) / self.block_size
+                    self._log.debug("queueing %d blocks, queue length is %d" %
+                                    (blocks, self._batch_queue.qsize()))
+
                     self._batch_queue.put(("range", start, start + blocks - 1,
                                            buf))
 

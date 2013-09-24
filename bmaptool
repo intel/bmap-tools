@@ -443,7 +443,7 @@ def copy_command(args, log):
         raise SystemExit(1)
 
     # Print the progress indicator while copying
-    if not args.quiet:
+    if not args.quiet and not args.debug:
         writer.set_progress_indicator(sys.stderr, "bmaptool: info: %d%% copied")
 
     start_time = time.time()
