@@ -140,7 +140,7 @@ class BmapCopy:
         self._batch_blocks = None
         self._batch_queue = None
         self._batch_bytes = 1024 * 1024
-        self._batch_queue_len = 2
+        self._batch_queue_len = 6
 
         self.bmap_version = None
         self.bmap_version_major = None
@@ -628,9 +628,6 @@ class BmapBdevCopy(BmapCopy):
         # Call the base class constructor first
         BmapCopy.__init__(self, image, dest, bmap, image_size, logger=logger)
 
-        self._batch_bytes = 1024 * 1024
-        self._batch_blocks = self._batch_bytes / self.block_size
-        self._batch_queue_len = 6
         self._dest_fsync_watermark = (6 * 1024 * 1024) / self.block_size
 
         self._sysfs_base = None
