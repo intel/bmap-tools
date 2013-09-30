@@ -112,7 +112,7 @@ class BmapCreate:
     the FIEMAP ioctl to generate the bmap.
     """
 
-    def __init__(self, image, bmap, chksum_type="sha1"):
+    def __init__(self, image, bmap, chksum_type="sha256"):
         """
         Initialize a class instance:
         * image  - full path or a file-like object of the image to create bmap
