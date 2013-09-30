@@ -381,6 +381,21 @@ def open_files(args, log):
         bmap_path = None
         args.nobmap = True
 
+    # If the destination file is under "/dev", but does not exist, print a
+    # warning. This is done in order to be more user-friendly, because
+    # sometimes users mean to write to a block device, them misspell its name.
+    # We just create the "/dev/misspelled" file, write the data there, and
+    # report success. Later on the user finds out that the image was not really
+    # written to the device, and gets confused. Similar confusion may happen if
+    # the destination file is not a special device for some reasons.
+    if os.path.normpath(args.dest).startswith("/dev/"):
+        if not os.path.exists(args.dest):
+            log.warning("\"%s\" does not exist, creating a regular file " \
+                        "\"%s\"" % (args.dest, args.dest))
+        elif stat.S_ISREG(os.stat(args.dest).st_mode):
+            log.warning("\"%s\" is under \"/dev\", but it is a regular file, " \
+                        "not a device node" % args.dest)
+
     # Try to open the destination file. If it does not exist, a new regular
     # file will be created. If it exists and it is a regular file - it'll be
     # truncated. If this is a block device, it'll just be opened.
