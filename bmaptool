@@ -46,7 +46,7 @@ also contribute to the mapped blocks and are also copied.
 #   * Too few public methods (R0903)
 # pylint: disable=R0903
 
-VERSION = "2.6"
+VERSION = "3.0"
 
 import argparse
 import sys

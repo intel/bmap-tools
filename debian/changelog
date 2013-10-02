@@ -1,3 +1,13 @@
+bmap-tools (3.0) unstable; urgency=low
+
+  * Switch from using SHA1 for checksumming to SHA256.
+  * Start supporting OpenPGP signatures. Both detached and clearsign signatures
+    are supported.
+  * Always sync the image file before creating the bmap for it, to work-around
+    kernel bugs in early FIEMAP implementations.
+
+ -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com> Wed, 02 Oct 2013 09:30:22 +0300
+
 bmap-tools (2.6) unstable; urgency=low
 
   * Add support for on-the-fly decompression of '.xz' and '.tar.xz' files.

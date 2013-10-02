@@ -1,3 +1,10 @@
+Wed Oct  2 06:30:22 UTC 2013 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 3.0-1
+- Switch from using SHA1 for checksumming to SHA256.
+- Start supporting OpenPGP signatures. Both detached and clearsign signatures
+  are supported.
+- Always sync the image file before creating the bmap for it, to work-around
+  kernel bugs in early FIEMAP implementations.
+
 Tue Aug 13 11:54:31 UTC 2013 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 2.6-1
 - Add support for on-the-fly decompression of '.xz' and '.tar.xz' files.
 
