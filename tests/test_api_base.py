@@ -154,12 +154,10 @@ def _generate_compressed_files(file_obj, delete=True):
     yield tbz2_file_obj.name
     tmp_file_obj.close()
 
-def _calculate_chksum(file_obj):
-    """
-    Calculates checksum for the contents of file object 'file_obj'.
-    """
+def _calculate_chksum(file_path):
+    """Calculates checksum for the contents of file 'file_path'."""
 
-    file_obj.seek(0)
+    file_obj = TransRead.TransRead(file_path)
     hash_obj = hashlib.new("sha256")
 
     chunk_size = 1024*1024
@@ -170,6 +168,7 @@ def _calculate_chksum(file_obj):
             break
         hash_obj.update(chunk)
 
+    file_obj.close()
     return hash_obj.hexdigest()
 
 def _copy_image(image, f_dest, f_bmap, image_chksum, image_size):
@@ -191,7 +190,7 @@ def _copy_image(image, f_dest, f_bmap, image_chksum, image_size):
 
     # Compare the original file and the copy are identical
     f_dest.seek(0)
-    assert _calculate_chksum(f_dest) == image_chksum
+    assert _calculate_chksum(f_dest.name) == image_chksum
 
     f_image.close()
 
@@ -226,7 +225,7 @@ def _do_test(f_image, image_size, delete=True):
                                           delete=delete, dir=directory,
                                           suffix=".bmap2")
 
-    image_chksum = _calculate_chksum(f_image)
+    image_chksum = _calculate_chksum(f_image.name)
 
     #
     # Pass 1: generate the bmap, copy and compare
