@@ -177,11 +177,7 @@ def _copy_image(image, f_dest, f_bmap, image_chksum, image_size):
     Copy image 'image' using bmap 'f_bmap' to the destination file 'f_dest'.
     """
 
-    if hasattr(image, "read"):
-        f_image = image
-        image.seek(0)
-    else:
-        f_image = TransRead.TransRead(image)
+    f_image = TransRead.TransRead(image)
 
     f_dest.seek(0)
     if f_bmap:
@@ -197,8 +193,7 @@ def _copy_image(image, f_dest, f_bmap, image_chksum, image_size):
     f_dest.seek(0)
     assert _calculate_chksum(f_dest) == image_chksum
 
-    if not hasattr(image, "read"):
-        f_image.close()
+    f_image.close()
 
 def _do_test(f_image, image_size, delete=True):
     """
@@ -241,7 +236,7 @@ def _do_test(f_image, image_size, delete=True):
     creator = BmapCreate.BmapCreate(f_image.name, f_bmap1.name)
     creator.generate()
 
-    _copy_image(f_image, f_copy, f_bmap1, image_chksum, image_size)
+    _copy_image(f_image.name, f_copy, f_bmap1, image_chksum, image_size)
 
     # Make sure that holes in the copy are identical to holes in the random
     # sparse file.
@@ -253,7 +248,7 @@ def _do_test(f_image, image_size, delete=True):
 
     creator = BmapCreate.BmapCreate(f_image, f_bmap2)
     creator.generate()
-    _copy_image(f_image, f_copy, f_bmap2, image_chksum, image_size)
+    _copy_image(f_image.name, f_copy, f_bmap2, image_chksum, image_size)
     _compare_holes(f_image, f_copy)
 
     # Make sure the bmap files generated at pass 1 and pass 2 are identical
@@ -278,8 +273,8 @@ def _do_test(f_image, image_size, delete=True):
     # Pass 5: copy without bmap and make sure it is identical to the original
     # file.
 
-    _copy_image(f_image, f_copy, None, image_chksum, image_size)
-    _copy_image(f_image, f_copy, None, image_chksum, None)
+    _copy_image(f_image.name, f_copy, None, image_chksum, image_size)
+    _copy_image(f_image.name, f_copy, None, image_chksum, None)
 
     #
     # Pass 6: test compressed files copying without bmap
