@@ -176,6 +176,7 @@ class BmapCopy:
         self._cs_type = None
         self._cs_len = None
         self._cs_attrib_name = None
+        self._bmap_cs_attrib_name = None
 
         # Special quirk for /dev/null which does not support fsync()
         if stat.S_ISCHR(st_data.st_mode) and \
@@ -247,10 +248,7 @@ class BmapCopy:
 
         import mmap
 
-        if self.bmap_version_minor == 3:
-            correct_chksum = self._xml.find("BmapFileSHA1").text.strip()
-        else:
-            correct_chksum = self._xml.find("BmapFileChecksum").text.strip()
+        correct_chksum = self._xml.find(self._bmap_cs_attrib_name).text.strip()
 
         # Before verifying the shecksum, we have to substitute the checksum
         # value stored in the file with all zeroes. For these purposes we
@@ -329,9 +327,11 @@ class BmapCopy:
             if self.bmap_version_minor == 3:
                 self._cs_type = "sha1"
                 self._cs_attrib_name = "sha1"
+                self._bmap_cs_attrib_name = "BmapFileSHA1"
             else:
                 self._cs_type = xml.find("ChecksumType").text.strip()
                 self._cs_attrib_name = "chksum"
+                self._bmap_cs_attrib_name = "BmapFileChecksum"
 
             try:
                 self._cs_len = len(hashlib.new(self._cs_type).hexdigest())
