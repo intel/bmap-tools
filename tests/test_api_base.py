@@ -174,17 +174,17 @@ def _calculate_chksum(file_path):
     file_obj.close()
     return hash_obj.hexdigest()
 
-def _copy_image(image, dest, f_bmap, image_chksum, image_size):
+def _copy_image(image, dest, bmap, image_chksum, image_size):
     """
-    Copy image 'image' using bmap 'f_bmap' to the destination file 'dest'.
+    Copy image 'image' using bmap file 'bmap' to the destination file 'dest'.
     """
 
     f_image = TransRead.TransRead(image)
     f_dest = open(dest, "w+")
-
-    f_dest.seek(0)
-    if f_bmap:
-        f_bmap.seek(0)
+    if (bmap):
+        f_bmap = open(bmap, "r")
+    else:
+        f_bmap = None
 
     writer = BmapCopy.BmapCopy(f_image, f_dest, f_bmap, image_size)
     # Randomly decide whether we want the progress bar or not
@@ -193,9 +193,10 @@ def _copy_image(image, dest, f_bmap, image_chksum, image_size):
     writer.copy(bool(random.getrandbits(1)), bool(random.getrandbits(1)))
 
     # Compare the original file and the copy are identical
-    f_dest.seek(0)
-    assert _calculate_chksum(f_dest.name) == image_chksum
+    assert _calculate_chksum(dest) == image_chksum
 
+    if f_bmap:
+        f_bmap.close()
     f_dest.close()
     f_image.close()
 
@@ -217,7 +218,7 @@ def _do_test(image, image_size, delete=True):
     # Put the temporary files in the directory with the image
     directory = os.path.dirname(image)
 
-    # Create and open a temporary file for a copy of the copy
+    # Create and open a temporary file for a copy of the image
     f_copy = tempfile.NamedTemporaryFile("wb+", prefix=prefix,
                                         delete=delete, dir=directory,
                                         suffix=".copy")
@@ -240,7 +241,7 @@ def _do_test(image, image_size, delete=True):
     creator = BmapCreate.BmapCreate(image, f_bmap1.name)
     creator.generate()
 
-    _copy_image(image, f_copy.name, f_bmap1, image_chksum, image_size)
+    _copy_image(image, f_copy.name, f_bmap1.name, image_chksum, image_size)
 
     # Make sure that holes in the copy are identical to holes in the random
     # sparse file.
@@ -252,7 +253,7 @@ def _do_test(image, image_size, delete=True):
 
     creator = BmapCreate.BmapCreate(image, f_bmap2)
     creator.generate()
-    _copy_image(image, f_copy.name, f_bmap2, image_chksum, image_size)
+    _copy_image(image, f_copy.name, f_bmap2.name, image_chksum, image_size)
     _compare_holes(image, f_copy.name)
 
     # Make sure the bmap files generated at pass 1 and pass 2 are identical
@@ -263,15 +264,17 @@ def _do_test(image, image_size, delete=True):
     #
 
     for compressed in _generate_compressed_files(image, delete=delete):
-        _copy_image(compressed, f_copy.name, f_bmap1, image_chksum, image_size)
+        _copy_image(compressed, f_copy.name, f_bmap1.name, image_chksum,
+                    image_size)
 
         # Test without setting the size
-        _copy_image(compressed, f_copy.name, f_bmap1, image_chksum, None)
+        _copy_image(compressed, f_copy.name, f_bmap1.name, image_chksum, None)
 
         # Append a "file:" prefixe to make BmapCopy use urllib
         compressed = "file:" + compressed
-        _copy_image(compressed, f_copy.name, f_bmap1, image_chksum, image_size)
-        _copy_image(compressed, f_copy.name, f_bmap1, image_chksum, None)
+        _copy_image(compressed, f_copy.name, f_bmap1.name, image_chksum,
+                    image_size)
+        _copy_image(compressed, f_copy.name, f_bmap1.name, image_chksum, None)
 
     #
     # Pass 5: copy without bmap and make sure it is identical to the original
@@ -285,14 +288,16 @@ def _do_test(image, image_size, delete=True):
     #
 
     for compressed in _generate_compressed_files(image, delete=delete):
-        _copy_image(compressed, f_copy.name, f_bmap1, image_chksum, image_size)
+        _copy_image(compressed, f_copy.name, f_bmap1.name, image_chksum,
+                    image_size)
 
         # Test without setting the size
-        _copy_image(compressed, f_copy.name, f_bmap1, image_chksum, None)
+        _copy_image(compressed, f_copy.name, f_bmap1.name, image_chksum, None)
 
         # Append a "file:" prefixe to make BmapCopy use urllib
-        _copy_image(compressed, f_copy.name, f_bmap1, image_chksum, image_size)
-        _copy_image(compressed, f_copy.name, f_bmap1, image_chksum, None)
+        _copy_image(compressed, f_copy.name, f_bmap1.name, image_chksum,
+                    image_size)
+        _copy_image(compressed, f_copy.name, f_bmap1.name, image_chksum, None)
 
     # Close temporary files, which will also remove them
     f_copy.close()
