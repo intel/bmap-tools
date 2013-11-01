@@ -61,10 +61,10 @@ def _compare_holes(file1, file2):
             raise Error("mismatch for hole %d-%d, it is %d-%d in file2"
                         % (range1[0], range1[1], range2[0], range2[1]))
 
-def _generate_compressed_files(file_obj, delete=True):
+def _generate_compressed_files(file_path, delete=True):
     """
-    This is a generator which yields compressed versions of a file represented
-    by a file object 'file_obj'.
+    This is a generator which yields compressed versions of a file
+    'file_path'.
 
     The 'delete' argument specifies whether the compressed files that this
     generator yields have to be automatically deleted.
@@ -84,17 +84,18 @@ def _generate_compressed_files(file_obj, delete=True):
         except ImportError:
             lzma_present = False
 
+    file_obj = TransRead.TransRead(file_path)
+
     # Make sure the temporary files start with the same name as 'file_obj' in
     # order to simplify debugging.
-    prefix = os.path.splitext(os.path.basename(file_obj.name))[0] + '.'
+    prefix = os.path.splitext(os.path.basename(file_path))[0] + '.'
     # Put the temporary files in the directory with 'file_obj'
-    directory = os.path.dirname(file_obj.name)
+    directory = os.path.dirname(file_path)
 
     # Generate an uncompressed version of the file
     tmp_file_obj = tempfile.NamedTemporaryFile('wb+', prefix=prefix,
                                                delete=delete, dir=directory,
                                                suffix='.uncompressed')
-    file_obj.seek(0)
     shutil.copyfileobj(file_obj, tmp_file_obj)
     tmp_file_obj.flush()
     yield tmp_file_obj.name
@@ -139,7 +140,7 @@ def _generate_compressed_files(file_obj, delete=True):
                                                delete=delete, dir=directory,
                                                suffix='.tar.gz')
     tgz_file_obj = tarfile.open(tmp_file_obj.name, "w:gz")
-    tgz_file_obj.add(file_obj.name)
+    tgz_file_obj.add(file_path)
     tgz_file_obj.close()
     yield tgz_file_obj.name
     tmp_file_obj.close()
@@ -149,10 +150,12 @@ def _generate_compressed_files(file_obj, delete=True):
                                                delete=delete, dir=directory,
                                                suffix='.tar.bz2')
     tbz2_file_obj = tarfile.open(tmp_file_obj.name, "w:bz2")
-    tbz2_file_obj.add(file_obj.name)
+    tbz2_file_obj.add(file_path)
     tbz2_file_obj.close()
     yield tbz2_file_obj.name
     tmp_file_obj.close()
+
+    file_obj.close()
 
 def _calculate_chksum(file_path):
     """Calculates checksum for the contents of file 'file_path'."""
@@ -257,7 +260,7 @@ def _do_test(f_image, image_size, delete=True):
     # Pass 3: test compressed files copying with bmap
     #
 
-    for compressed in _generate_compressed_files(f_image, delete=delete):
+    for compressed in _generate_compressed_files(f_image.name, delete=delete):
         _copy_image(compressed, f_copy, f_bmap1, image_chksum, image_size)
 
         # Test without setting the size
@@ -279,7 +282,7 @@ def _do_test(f_image, image_size, delete=True):
     # Pass 6: test compressed files copying without bmap
     #
 
-    for compressed in _generate_compressed_files(f_image, delete=delete):
+    for compressed in _generate_compressed_files(f_image.name, delete=delete):
         _copy_image(compressed, f_copy, f_bmap1, image_chksum, image_size)
 
         # Test without setting the size
