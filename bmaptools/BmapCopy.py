@@ -59,7 +59,7 @@ from xml.etree import ElementTree
 from bmaptools.BmapHelpers import human_size
 
 # The highest supported bmap format version
-SUPPORTED_BMAP_VERSION = 1
+SUPPORTED_BMAP_VERSION = 2
 
 class Error(Exception):
     """
@@ -318,21 +318,31 @@ class BmapCopy:
                         "blocks count (%d bytes != %d blocks * %d bytes)"
                         % (self.image_size, self.blocks_cnt, self.block_size))
 
-        if self.bmap_version_major >= 1 and self.bmap_version_minor >= 3:
-            # Bmap file checksum appeard in format 1.3 and the only supported
-            # checksum type was SHA1. Version 1.4 started supporting arbitrary
-            # checksum types. A new "ChecksumType" tag was introduce to specify
-            # the checksum function name. And all XML tags which contained
-            # "sha1" in their name were renamed to something more neutral.
-            if self.bmap_version_minor == 3:
-                self._cs_type = "sha1"
-                self._cs_attrib_name = "sha1"
-                self._bmap_cs_attrib_name = "BmapFileSHA1"
-            else:
-                self._cs_type = xml.find("ChecksumType").text.strip()
-                self._cs_attrib_name = "chksum"
-                self._bmap_cs_attrib_name = "BmapFileChecksum"
+        if self.bmap_version_major > 1 or \
+           (self.bmap_version_major == 1 and self.bmap_version_minor == 4):
+            # In bmap format version 1.0-1.3 the only supported checksum type
+            # was SHA1. Version 2.0 started supporting arbitrary checksum
+            # types. A new "ChecksumType" tag was introduce to specify the
+            # checksum function name. And all XML tags which contained "sha1"
+            # in their name were renamed to something more neutral. This was an
+            # change incompatible with previous formats.
+            #
+            # There is a special format version 1.4, which should not have been
+            # ever issued, but was released by a mistake. The mistake was that
+            # when implementing version 2.0 support we mistakenly gave it
+            # version number 1.4. This was later on fixed and format version
+            # 1.4 became version 2.0. So 1.4 and 2.0 formats are identical.
+            #
+            # Note, bmap files did not contain checksums prior to version 1.3.
+            self._cs_type = xml.find("ChecksumType").text.strip()
+            self._cs_attrib_name = "chksum"
+            self._bmap_cs_attrib_name = "BmapFileChecksum"
+        elif self.bmap_version_minor == 3:
+            self._cs_type = "sha1"
+            self._cs_attrib_name = "sha1"
+            self._bmap_cs_attrib_name = "BmapFileSHA1"
 
+        if self._cs_type:
             try:
                 self._cs_len = len(hashlib.new(self._cs_type).hexdigest())
             except ValueError as err:
