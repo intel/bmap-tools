@@ -49,11 +49,16 @@ from bmaptools import Fiemap
 # The bmap format version we generate.
 #
 # Changelog:
-# o 1.3 -> 1.4:
+# o 1.3 -> 2.0:
 #   Support SHA256 and SHA512 checksums, in 1.3 only SHA1 was supported.
 #   "BmapFileChecksum" is used instead of "BmapFileSHA1", and "chksum="
-#   attribute is used instead "sha1=". Introduced "ChecksumType" tag.
-SUPPORTED_BMAP_VERSION = "1.4"
+#   attribute is used instead "sha1=". Introduced "ChecksumType" tag. This is
+#   an incompatible change.
+#   Note, bmap format 1.4 is identical to 2.0. Version 1.4 was a mistake,
+#   instead of incrementing the major version number, we incremented minor
+#   version number. Unfortunately, the mistake slipped into bmap-tools version
+#   3.0, and was only fixed in bmap-tools v3.1.
+SUPPORTED_BMAP_VERSION = "2.0"
 
 _BMAP_START_TEMPLATE = \
 """<?xml version="1.0" ?>
