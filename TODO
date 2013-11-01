@@ -1,3 +1,6 @@
 Current TODO list, any help with these is appreciated.
 
 1. Teach bmaptool to update the alternate GPT partition
+2. Add nosetests for all bmap format versions
+3. Add a test for version with incompatible changes
+4. Add a test for bmap with invalid checksums
