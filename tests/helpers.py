@@ -23,7 +23,9 @@ tests.
 import tempfile
 import random
 import itertools
-from bmaptools import BmapHelpers
+import hashlib
+import sys
+from bmaptools import BmapHelpers, BmapCopy, TransRead
 
 def _create_random_sparse_file(file_obj, size):
     """
@@ -248,3 +250,47 @@ def generate_test_files(max_size=4*1024*1024, directory=None, delete=True):
         blocks_cnt = (size + block_size - 1) / block_size
         yield (file_obj, size, [(0, blocks_cnt - 1)], [])
         file_obj.close()
+
+def calculate_chksum(file_path):
+    """Calculates checksum for the contents of file 'file_path'."""
+
+    file_obj = TransRead.TransRead(file_path)
+    hash_obj = hashlib.new("sha256")
+
+    chunk_size = 1024*1024
+
+    while True:
+        chunk = file_obj.read(chunk_size)
+        if not chunk:
+            break
+        hash_obj.update(chunk)
+
+    file_obj.close()
+    return hash_obj.hexdigest()
+
+def copy_and_verify_image(image, dest, bmap, image_chksum, image_size):
+    """
+    Copy image 'image' using bmap file 'bmap' to the destination file 'dest'
+    and verify the resulting image checksum.
+    """
+
+    f_image = TransRead.TransRead(image)
+    f_dest = open(dest, "w+")
+    if (bmap):
+        f_bmap = open(bmap, "r")
+    else:
+        f_bmap = None
+
+    writer = BmapCopy.BmapCopy(f_image, f_dest, f_bmap, image_size)
+    # Randomly decide whether we want the progress bar or not
+    if bool(random.getrandbits(1)):
+        writer.set_progress_indicator(sys.stdout, None)
+    writer.copy(bool(random.getrandbits(1)), bool(random.getrandbits(1)))
+
+    # Compare the original file and the copy are identical
+    assert calculate_chksum(dest) == image_chksum
+
+    if f_bmap:
+        f_bmap.close()
+    f_dest.close()
+    f_image.close()
