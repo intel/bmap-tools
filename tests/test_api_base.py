@@ -197,23 +197,23 @@ def _copy_image(image, f_dest, f_bmap, image_chksum, image_size):
 
     f_image.close()
 
-def _do_test(f_image, image_size, delete=True):
+def _do_test(image, image_size, delete=True):
     """
     A basic test for the bmap creation and copying functionality. It first
-    generates a bmap for file object 'f_image', and then copies the sparse file
-    to a different file, and then checks that the original file and the copy
-    are identical.
+    generates a bmap for file 'image', and then copies the sparse file to a
+    different file, and then checks that the original file and the copy are
+    identical.
 
     The 'image_size' argument is size of the image in bytes. The 'delete'
     argument specifies whether the temporary files that this function creates
     have to be automatically deleted.
     """
 
-    # Make sure the temporary files start with the same name as 'f_image' in
+    # Make sure the temporary files start with the same name as 'image' in
     # order to simplify debugging.
-    prefix = os.path.splitext(os.path.basename(f_image.name))[0] + '.'
+    prefix = os.path.splitext(os.path.basename(image))[0] + '.'
     # Put the temporary files in the directory with the image
-    directory = os.path.dirname(f_image.name)
+    directory = os.path.dirname(image)
 
     # Create and open a temporary file for a copy of the copy
     f_copy = tempfile.NamedTemporaryFile("wb+", prefix=prefix,
@@ -228,30 +228,30 @@ def _do_test(f_image, image_size, delete=True):
                                           delete=delete, dir=directory,
                                           suffix=".bmap2")
 
-    image_chksum = _calculate_chksum(f_image.name)
+    image_chksum = _calculate_chksum(image)
 
     #
     # Pass 1: generate the bmap, copy and compare
     #
 
     # Create bmap for the random sparse file
-    creator = BmapCreate.BmapCreate(f_image.name, f_bmap1.name)
+    creator = BmapCreate.BmapCreate(image, f_bmap1.name)
     creator.generate()
 
-    _copy_image(f_image.name, f_copy, f_bmap1, image_chksum, image_size)
+    _copy_image(image, f_copy, f_bmap1, image_chksum, image_size)
 
     # Make sure that holes in the copy are identical to holes in the random
     # sparse file.
-    _compare_holes(f_image.name, f_copy.name)
+    _compare_holes(image, f_copy.name)
 
     #
     # Pass 2: same as pass 1, but use file objects instead of paths
     #
 
-    creator = BmapCreate.BmapCreate(f_image, f_bmap2)
+    creator = BmapCreate.BmapCreate(image, f_bmap2)
     creator.generate()
-    _copy_image(f_image.name, f_copy, f_bmap2, image_chksum, image_size)
-    _compare_holes(f_image, f_copy)
+    _copy_image(image, f_copy, f_bmap2, image_chksum, image_size)
+    _compare_holes(image, f_copy)
 
     # Make sure the bmap files generated at pass 1 and pass 2 are identical
     assert filecmp.cmp(f_bmap1.name, f_bmap2.name, False)
@@ -260,7 +260,7 @@ def _do_test(f_image, image_size, delete=True):
     # Pass 3: test compressed files copying with bmap
     #
 
-    for compressed in _generate_compressed_files(f_image.name, delete=delete):
+    for compressed in _generate_compressed_files(image, delete=delete):
         _copy_image(compressed, f_copy, f_bmap1, image_chksum, image_size)
 
         # Test without setting the size
@@ -275,14 +275,14 @@ def _do_test(f_image, image_size, delete=True):
     # Pass 5: copy without bmap and make sure it is identical to the original
     # file.
 
-    _copy_image(f_image.name, f_copy, None, image_chksum, image_size)
-    _copy_image(f_image.name, f_copy, None, image_chksum, None)
+    _copy_image(image, f_copy, None, image_chksum, image_size)
+    _copy_image(image, f_copy, None, image_chksum, None)
 
     #
     # Pass 6: test compressed files copying without bmap
     #
 
-    for compressed in _generate_compressed_files(f_image.name, delete=delete):
+    for compressed in _generate_compressed_files(image, delete=delete):
         _copy_image(compressed, f_copy, f_bmap1, image_chksum, image_size)
 
         # Test without setting the size
@@ -320,4 +320,4 @@ class TestCreateCopy(unittest.TestCase):
                                                      directory=directory)
         for f_image, image_size, _, _ in iterator:
             assert image_size == os.path.getsize(f_image.name)
-            _do_test(f_image, image_size, delete=delete)
+            _do_test(f_image.name, image_size, delete=delete)
