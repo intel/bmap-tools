@@ -94,6 +94,7 @@ ask_question "Did you update the docs/RELEASE_NOTES file"
 ask_question "Did you update the docs/README file"
 ask_question "Did you update the man page"
 ask_question "Did you update documentation on tizen.org"
+ask_question "Did you update tests: test-data and oldcodebase"
 
 # Make sure the git index is up-to-date
 [ -z "$(git status --porcelain)" ] || fatal "git index is not up-to-date"
