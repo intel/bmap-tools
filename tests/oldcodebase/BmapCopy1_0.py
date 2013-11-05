@@ -1,3 +1,5 @@
+# pylint: disable-all
+
 """ This module implements copying of images with bmap and provides the
 following API.
   1. BmapCopy class - implements copying to any kind of file, be that a block

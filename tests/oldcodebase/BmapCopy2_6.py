@@ -1,3 +1,5 @@
+# pylint: disable-all
+
 # Copyright (c) 2012-2013 Intel, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
