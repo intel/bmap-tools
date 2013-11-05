@@ -45,7 +45,11 @@ also contribute to the mapped blocks and are also copied.
 
 # Disable the following pylint recommendations:
 #   * Too many instance attributes (R0902)
+#   * Too many arguments - R0913
+#   * Too many statements (R0915)
 # pylint: disable=R0902
+# pylint: disable=R0913
+# pylint: disable=R0915
 
 import os
 import stat

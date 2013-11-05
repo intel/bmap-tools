@@ -26,8 +26,12 @@ import logging
 #     false-positives for many of 'subprocess' class members, e.g.
 #     "Instance of 'Popen' has no 'wait' member".
 #   * Too many instance attributes (R0902)
+#   * Too many branches (R0912)
+#   * Too many local variables (R0914)
 # pylint: disable=E1101
 # pylint: disable=R0902
+# pylint: disable=R0912
+# pylint: disable=R0914
 
 # A list of supported compression types
 SUPPORTED_COMPRESSION_TYPES = ('bz2', 'gz', 'xz', 'tar.gz', 'tgz', 'tar.bz2',
@@ -314,7 +318,7 @@ class TransRead:
                     import lzma
                 except ImportError:
                     try:
-                        from backports import lzma
+                        from backports import lzma # pylint: disable=F0401
                     except ImportError:
                         raise Error("cannot import the \"lzma\" python module, "
                                     "it's required for decompressing .xz files")

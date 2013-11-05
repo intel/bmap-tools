@@ -44,7 +44,11 @@ also contribute to the mapped blocks and are also copied.
 
 # Disable the following pylint recommendations:
 #   * Too few public methods (R0903)
+#   * Too many statements (R0915)
+#   * Too many branches (R0912)
 # pylint: disable=R0903
+# pylint: disable=R0915
+# pylint: disable=R0912
 
 VERSION = "3.0"
 

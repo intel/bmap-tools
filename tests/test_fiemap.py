@@ -28,7 +28,7 @@ import itertools
 
 # This is a work-around for Centos 6
 try:
-    import unittest2 as unittest
+    import unittest2 as unittest # pylint: disable=F0401
 except ImportError:
     import unittest
 
@@ -123,7 +123,7 @@ class TestCreateCopy(unittest.TestCase):
     function for different sparse files.
     """
 
-    def test(self):
+    def test(self): # pylint: disable=R0201
         """
         The test entry point. Executes the '_do_test()' function for files of
         different sizes, holes distribution and format.

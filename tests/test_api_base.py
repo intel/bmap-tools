@@ -19,8 +19,12 @@ file and the copy and verifies that they are identical.
 """
 
 # Disable the following pylint recommendations:
-#   *  Too many public methods - R0904
+#   * Too many public methods (R0904)
+#   * Too many local variables (R0914)
+#   * Too many statements (R0915)
 # pylint: disable=R0904
+# pylint: disable=R0914
+# pylint: disable=R0915
 
 import os
 import tempfile
@@ -30,7 +34,7 @@ import random
 
 # This is a work-around for Centos 6
 try:
-    import unittest2 as unittest
+    import unittest2 as unittest # pylint: disable=F0401
 except ImportError:
     import unittest
 
@@ -78,7 +82,7 @@ def _generate_compressed_files(file_path, delete=True):
         import lzma
     except ImportError:
         try:
-            from backports import lzma
+            from backports import lzma # pylint: disable=F0401
         except ImportError:
             lzma_present = False
 
@@ -272,7 +276,7 @@ class TestCreateCopy(unittest.TestCase):
     function for different sparse files.
     """
 
-    def test(self):
+    def test(self): # pylint: disable=R0201
         """
         The test entry point. Executes the '_do_test()' function for files of
         different sizes, holes distribution and format.

@@ -18,8 +18,11 @@ This unit test verifies various compatibility aspects of the BmapCopy module:
 """
 
 # Disable the following pylint recommendations:
-#   *  Too many public methods - R0904
+#   *  Too many public methods (R0904)
+#   *  Attribute 'XYZ' defined outside __init__ (W0201), because unittest
+#      classes are not supposed to have '__init__()'
 # pylint: disable=R0904
+# pylint: disable=W0201
 
 import os
 import shutil
@@ -38,7 +41,7 @@ _OLDCODEBASE_SUBDIR = "oldcodebase"
 
 # This is a work-around for Centos 6
 try:
-    import unittest2 as unittest
+    import unittest2 as unittest # pylint: disable=F0401
 except ImportError:
     import unittest
 
@@ -135,7 +138,7 @@ class TestCreateCopy(unittest.TestCase):
             if supported_ver >= bmap_version:
                 writer = old_bmapcopy_class(self._f_image, self._f_copy, f_bmap)
                 writer.copy(True, True)
-        except:
+        except: # pylint: disable=W0702
             if supported_ver >= bmap_version_major:
                 # The BmapCopy which we are testing is supposed to support this
                 # version of bmap file format. However, bmap format version 1.4
