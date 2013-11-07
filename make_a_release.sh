@@ -165,7 +165,7 @@ To finish the release:
   2. copy the tarball to ftp.infradead.org
   3. update the $release_branch with the contents of the 'devel' branch
   4. point the master branch to the updated $release_branch branch
-  5. push the master and the $release_branch branches out
+  5. push the devel, master and the $release_branch branches out
   6. (a bit later) push to the public tree and announce the new release
      in the public mailing list
 
@@ -180,10 +180,12 @@ git branch -f $release_branch devel
 #4
 git branch -f master $release_branch
 #5
+git push origin devel:devel
 git push origin master:master
 git push origin $release_branch:$release_branch
 #6
 git push public $tag_name
+git push public devel:devel
 git push public master:master
 git push public $release_branch:$release_branch
 git send-email --suppress-cc=all --from "Artem Bityutskiy <dedekind1@gmail.com>" --to bmap-tools@lists.infradead.org /proc/self/fd/0 <<END_OF_EMAIL
