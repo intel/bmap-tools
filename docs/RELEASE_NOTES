@@ -1,3 +1,23 @@
+Bug-fix release 3.1
+~~~~~~~~~~~~~~~~~~~
+
+This bug-fix release is about fixing a small screw-up in version 3.0, where we
+introduced incompatible bmap format changes, but did not properly increase the
+bmap format version number. Instead of making it to be version 2.0, we made it
+to be version 1.4. The result is that bmap-tools v2.x crash with those
+1.4-formatted bmap files.
+
+This release changes the bmap format version from 1.4 to 2.0 in order to
+lessen the versioning screw-up. Increased major bmap format version number will
+make sure that older bmap-tools fail with a readable error message, instead of
+crashing.
+
+Thus, the situation as follows:
+  * bmap-tools v2.x: handle bmap format versions 1.0-1.3, crash with 1.4, and
+                     nicely exit with 2.0
+  * bmap-tools v3.0: handles all 1.x bmap format versions, exits nicely with 2.0
+  * bmap-tools v3.1: handles all bmap format versions
+
 Release 3.0
 ~~~~~~~~~~~
 
