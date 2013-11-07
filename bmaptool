@@ -50,7 +50,7 @@ also contribute to the mapped blocks and are also copied.
 # pylint: disable=R0915
 # pylint: disable=R0912
 
-VERSION = "3.0"
+VERSION = "3.1"
 
 import argparse
 import sys
