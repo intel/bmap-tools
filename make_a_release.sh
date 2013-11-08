@@ -20,11 +20,6 @@
 #
 # This script is supposed to be executed in the root of the bmap-tools
 # project's source code tree.
-#
-# TODO:
-#   * support -rc releases;
-#   * update the version field in all places, the rpm/deb changelog and commit
-#     that.
 
 PROG="make_a_release.sh"
 
