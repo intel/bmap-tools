@@ -44,7 +44,7 @@ This module uses the FIBMAP ioctl to detect holes.
 
 import hashlib
 from bmaptools.BmapHelpers import human_size
-from bmaptools import Fiemap
+from bmaptools import Filemap
 
 # The bmap format version we generate.
 #
@@ -165,16 +165,16 @@ class BmapCreate:
             self._bmap_path = bmap
             self._open_bmap_file()
 
-        self.fiemap = Fiemap.Fiemap(self._f_image)
+        self.filemap = Filemap.Fiemap(self._f_image)
 
-        self.image_size = self.fiemap.image_size
+        self.image_size = self.filemap.image_size
         self.image_size_human = human_size(self.image_size)
         if self.image_size == 0:
             raise Error("cannot generate bmap for zero-sized image file '%s'"
                         % self._image_path)
 
-        self.block_size = self.fiemap.block_size
-        self.blocks_cnt = self.fiemap.blocks_cnt
+        self.block_size = self.filemap.block_size
+        self.blocks_cnt = self.filemap.blocks_cnt
 
     def __del__(self):
         """The class destructor which closes the opened files."""
@@ -317,7 +317,7 @@ class BmapCreate:
         # Generate the block map and write it to the XML block map
         # file as we go.
         self.mapped_cnt = 0
-        for first, last in self.fiemap.get_mapped_ranges(0, self.blocks_cnt):
+        for first, last in self.filemap.get_mapped_ranges(0, self.blocks_cnt):
             self.mapped_cnt += last - first + 1
             if include_checksums:
                 chksum = self._calculate_chksum(first, last)

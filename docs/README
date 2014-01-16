@@ -55,7 +55,7 @@ The project structure
 | - tests/               | Contains the project unit-tests.                    |
 |   | - test_api_base.py | Tests the base API modules: 'BmapCreate.py' and     |
 |   |                    | 'BmapCopy.py'.                                      |
-|   | - test_fiemap.py   | Tests the 'Fiemap.py' module.                       |
+|   | - test_fiemap.py   | Tests the 'Filemap.py' module.                      |
 |   | - test_compat.py   | Tests that new BmapCopy implementations support old |
 |   |                    | bmap formats, and old BmapCopy implementations      |
 |   |                    | support new compatible bmap fomrats.                |
@@ -67,7 +67,7 @@ The project structure
 |   |                    | functionality.                                      |
 |   | - BmapCreate.py    | Creates a bmap for a given file.                    |
 |   | - BmapCopy.py      | Implements copying of an image using its bmap.      |
-|   | - Fiemap.py        | Implements python API to the Linux FIEMAP ioctl.    |
+|   | - Filemap.py       | Allows for reading files' block map.                |
 |   | - BmapHelpers.py   | Just helper functions used all over the project.    |
 |   | - TransRead.py     | Provides a transparent way to read various kind of  |
 |   |                    | files (compressed, etc)                             |

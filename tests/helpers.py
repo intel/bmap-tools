@@ -31,9 +31,9 @@ def _create_random_sparse_file(file_obj, size):
     """
     Create a sparse file with randomly distributed holes. The mapped areas are
     filled with semi-random data. Returns a tuple containing 2 lists:
-      1. a list of mapped block ranges, same as 'Fiemap.get_mapped_ranges()'
+      1. a list of mapped block ranges, same as 'Filemap.get_mapped_ranges()'
       2. a list of unmapped block ranges (holes), same as
-         'Fiemap.get_unmapped_ranges()'
+         'Filemap.get_unmapped_ranges()'
     """
 
     file_obj.truncate(0)
@@ -113,9 +113,9 @@ def generate_test_files(max_size=4*1024*1024, directory=None, delete=True):
     The generator yields tuples consisting of the following elements:
       1. the test file object
       2. file size in bytes
-      3. a list of mapped block ranges, same as 'Fiemap.get_mapped_ranges()'
+      3. a list of mapped block ranges, same as 'Filemap.get_mapped_ranges()'
       4. a list of unmapped block ranges (holes), same as
-         'Fiemap.get_unmapped_ranges()'
+         'Filemap.get_unmapped_ranges()'
     """
 
     #
