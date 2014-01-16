@@ -88,17 +88,16 @@ def _check_ranges(f_image, filemap, first_block, blocks_cnt,
                            ranges_type, first_block, blocks_cnt,
                            check[0], check[1]))
 
-def _do_test(f_image, mapped, unmapped, buf_size=Filemap.DEFAULT_BUFFER_SIZE):
+def _do_test(f_image, mapped, unmapped):
     """
     Verify that Filemap reports the correct mapped and unmapped areas for the
     'f_image' file object. The 'mapped' and 'unmapped' lists contain the
-    correct ranges. The 'buf_size' argument specifies the internal buffer size
-    of the 'Filemap' class.
+    correct ranges.
     """
 
     # Make sure that 'Filemap' module's 'get_mapped_ranges()' returns the same
     # ranges as we have in the 'mapped' list.
-    filemap = Filemap.Fiemap(f_image, buf_size)
+    filemap = Filemap.Fiemap(f_image)
 
     # Check both 'get_mapped_ranges()' and 'get_unmapped_ranges()' for the
     # entire file.
@@ -142,7 +141,3 @@ class TestCreateCopy(unittest.TestCase):
                                                      delete)
         for f_image, _, mapped, unmapped in iterator:
             _do_test(f_image, mapped, unmapped)
-            _do_test(f_image, mapped, unmapped, Filemap.MIN_BUFFER_SIZE)
-            _do_test(f_image, mapped, unmapped, Filemap.MIN_BUFFER_SIZE * 2)
-            _do_test(f_image, mapped, unmapped, Filemap.DEFAULT_BUFFER_SIZE / 2)
-            _do_test(f_image, mapped, unmapped, Filemap.DEFAULT_BUFFER_SIZE * 2)

@@ -42,11 +42,10 @@ _FIEMAP_IOCTL = 0xC020660B
 # This FIEMAP ioctl flag which instructs the kernel to sync the file before
 # reading the block map
 _FIEMAP_FLAG_SYNC = 0x00000001
-
-# Minimum buffer which is required for 'class Fiemap' to operate
-MIN_BUFFER_SIZE = _FIEMAP_SIZE + _FIEMAP_EXTENT_SIZE
-# The default buffer size for 'class Fiemap'
-DEFAULT_BUFFER_SIZE = 256 * 1024
+# Size of the buffer for 'struct fiemap_extent' elements which will be used
+# when invoking the FIEMAP ioctl. The larger is the buffer, the less times the
+# FIEMAP ioctl will be invoked.
+_FIEMAP_BUFFER_SIZE = 256 * 1024
 
 class Error(Exception):
     """
@@ -62,15 +61,10 @@ class Fiemap:
     over all mapped blocks and over all holes.
     """
 
-    def __init__(self, image, buf_size=DEFAULT_BUFFER_SIZE):
+    def __init__(self, image):
         """
         Initialize a class instance. The 'image' argument is full path to the
         file to operate on, or a file object to operate on.
-
-        The 'buf_size' argument is the size of the buffer for 'struct
-        fiemap_extent' elements which will be used when invoking the FIEMAP
-        ioctl. The larger is the buffer, the less times the FIEMAP ioctl will
-        be invoked.
 
         This class synchronizes the image file every time it invokes the FIEMAP
         ioctl in order to work-around early FIEMAP implementation kernel bugs.
@@ -85,14 +79,12 @@ class Fiemap:
             self._image_path = image
             self._open_image_file()
 
-        # Validate 'buf_size'
-        if buf_size < MIN_BUFFER_SIZE:
-            raise Error("too small buffer (%d bytes), minimum is %d bytes"
-                    % (buf_size, MIN_BUFFER_SIZE))
+        self._buf_size = _FIEMAP_BUFFER_SIZE
 
-        # How many 'struct fiemap_extent' elements fit the buffer
-        buf_size -= _FIEMAP_SIZE
-        self._fiemap_extent_cnt = buf_size / _FIEMAP_EXTENT_SIZE
+        # Calculate how many 'struct fiemap_extent' elements fit the buffer
+        self._buf_size -= _FIEMAP_SIZE
+        self._fiemap_extent_cnt = self._buf_size / _FIEMAP_EXTENT_SIZE
+        assert self._fiemap_extent_cnt > 0
         self._buf_size = self._fiemap_extent_cnt * _FIEMAP_EXTENT_SIZE
         self._buf_size += _FIEMAP_SIZE
 
