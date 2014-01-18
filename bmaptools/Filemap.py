@@ -10,14 +10,13 @@
 # General Public License for more details.
 
 """
-This module implements python API for the FIEMAP ioctl. The FIEMAP ioctl
-allows to find holes and mapped areas in a file.
+This module implements python implements a way to get file block. Two methods
+are supported - the FIEMAP ioctl and the 'SEEK_HOLE / SEEK_DATA' features of
+the file seek syscall. The former is implemented by the 'FilemapFiemap' class,
+the latter is implemented by the 'FilemapSeek' class. Both classes provide the
+same API. The 'filemap' function automatically selects which class can be used
+and returns an instance of the class.
 """
-
-# Note, a lot of code in this module is not very readable, because it deals
-# with the rather complex FIEMAP ioctl. To understand the code, you need to
-# know the FIEMAP interface, which is documented in the
-# Documentation/filesystems/fiemap.txt file in the Linux kernel sources.
 
 # Disable the following pylint recommendations:
 #   * Too many instance attributes (R0902)
@@ -141,6 +140,37 @@ class _FilemapBase:
 
         raise Error("the method is not implemented")
 
+class FilemapSeek(_FilemapBase):
+    """
+    This class uses the 'SEEK_HOLE' and 'SEEK_DATA' to find file block mapping.
+    """
+
+    def __init__(self, image):
+        """Refer the '_FilemapBase' class for the documentation."""
+
+        # Call the base class constructor first
+        _FilemapBase.__init__(self, image)
+
+    def block_is_mapped(self, block):
+        """Refer the '_FilemapBase' class for the documentation."""
+        raise Error("Not implemented")
+
+    def block_is_unmapped(self, block):
+        """Refer the '_FilemapBase' class for the documentation."""
+        raise Error("Not implemented")
+
+    def get_mapped_ranges(self, start, count):
+        """Refer the '_FilemapBase' class for the documentation."""
+        raise Error("Not implemented")
+
+    def get_unmapped_ranges(self, start, count):
+        """Refer the '_FilemapBase' class for the documentation."""
+        raise Error("Not implemented")
+
+# Below goes the FIEMAP ioctl implementation, which is not very readable
+# because it deals with the rather complex FIEMAP ioctl. To understand the
+# code, you need to know the FIEMAP interface, which is documented in the
+# "Documentation/filesystems/fiemap.txt" file in the Linux kernel sources.
 
 # Format string for 'struct fiemap'
 _FIEMAP_FORMAT = "=QQLLLL"
@@ -160,7 +190,7 @@ _FIEMAP_FLAG_SYNC = 0x00000001
 # FIEMAP ioctl will be invoked.
 _FIEMAP_BUFFER_SIZE = 256 * 1024
 
-class Fiemap(_FilemapBase):
+class FilemapFiemap(_FilemapBase):
     """
     This class provides API to the FIEMAP ioctl. Namely, it allows to iterate
     over all mapped blocks and over all holes.
@@ -321,3 +351,18 @@ class Fiemap(_FilemapBase):
 
         if hole_first < start + count:
             yield (hole_first, start + count - 1)
+
+def filemap(image):
+    """
+    Create and return an instance of a Filemap class - 'FilemapFiemap' or
+    'FilemapSeek', depending on what the system we run on supports. If the
+    FIEMAP ioctl is supported, an instance of the 'FilemapFiemap' class is
+    returned. Otherwise, if 'SEEK_HOLE' is supported an instance of the
+    'FilemapSeek' class is returned. If none of these are supported, the
+    function generates an 'Error' type exception.
+    """
+
+    try:
+        return FilemapFiemap(image)
+    except Error:
+        return FilemapSeek(image)

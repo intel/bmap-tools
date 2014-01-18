@@ -51,8 +51,8 @@ def _compare_holes(file1, file2):
     The 'file1' and 'file2' arguments may be full file paths or file objects.
     """
 
-    filemap1 = Filemap.Fiemap(file1)
-    filemap2 = Filemap.Fiemap(file2)
+    filemap1 = Filemap.filemap(file1)
+    filemap2 = Filemap.filemap(file2)
 
     iterator1 = filemap1.get_unmapped_ranges(0, filemap1.blocks_cnt)
     iterator2 = filemap2.get_unmapped_ranges(0, filemap2.blocks_cnt)

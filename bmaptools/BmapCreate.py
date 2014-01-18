@@ -165,7 +165,7 @@ class BmapCreate:
             self._bmap_path = bmap
             self._open_bmap_file()
 
-        self.filemap = Filemap.Fiemap(self._f_image)
+        self.filemap = Filemap.filemap(self._f_image)
 
         self.image_size = self.filemap.image_size
         self.image_size_human = human_size(self.image_size)

@@ -97,7 +97,7 @@ def _do_test(f_image, mapped, unmapped):
 
     # Make sure that 'Filemap' module's 'get_mapped_ranges()' returns the same
     # ranges as we have in the 'mapped' list.
-    filemap = Filemap.Fiemap(f_image)
+    filemap = Filemap.filemap(f_image)
 
     # Check both 'get_mapped_ranges()' and 'get_unmapped_ranges()' for the
     # entire file.
