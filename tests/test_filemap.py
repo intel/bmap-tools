@@ -88,16 +88,24 @@ def _check_ranges(f_image, filemap, first_block, blocks_cnt,
                            ranges_type, first_block, blocks_cnt,
                            check[0], check[1]))
 
-def _do_test(f_image, mapped, unmapped):
-    """
-    Verify that Filemap reports the correct mapped and unmapped areas for the
-    'f_image' file object. The 'mapped' and 'unmapped' lists contain the
-    correct ranges.
-    """
+        for block in xrange(correct[0], correct[1] + 1):
+            if ranges_type is "mapped" and filemap.block_is_unmapped(block):
+                raise Error("range %d-%d of file '%s' is mapped, but"
+                            "'block_is_unmapped(%d) returned 'True'"
+                            % (correct[0], correct[1], f_image.name, block))
+            if ranges_type is "unmapped" and filemap.block_is_mapped(block):
+                raise Error("range %d-%d of file '%s' is unmapped, but"
+                            "'block_is_mapped(%d) returned 'True'"
+                            % (correct[0], correct[1], f_image.name, block))
 
-    # Make sure that 'Filemap' module's 'get_mapped_ranges()' returns the same
-    # ranges as we have in the 'mapped' list.
-    filemap = Filemap.filemap(f_image)
+
+def _do_test(f_image, filemap, mapped, unmapped):
+    """
+    Verify that the 'Filemap' module provides correct mapped and unmapped areas
+    for the 'f_image' file object. The 'mapped' and 'unmapped' lists contain
+    the correct ranges. The 'filemap' is one of the classed from the 'Filemap'
+    module.
+    """
 
     # Check both 'get_mapped_ranges()' and 'get_unmapped_ranges()' for the
     # entire file.
@@ -140,4 +148,11 @@ class TestCreateCopy(unittest.TestCase):
         iterator = tests.helpers.generate_test_files(max_size, directory,
                                                      delete)
         for f_image, _, mapped, unmapped in iterator:
-            _do_test(f_image, mapped, unmapped)
+            try:
+                fiemap = Filemap.FilemapFiemap(f_image)
+                _do_test(f_image, fiemap, mapped, unmapped)
+
+                seek = Filemap.FilemapSeek(f_image)
+                _do_test(f_image, seek, mapped, unmapped)
+            except Filemap.ErrorNotSupp:
+                pass
