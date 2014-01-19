@@ -138,9 +138,7 @@ class TestCreateCopy(unittest.TestCase):
 
         # Delete all the test-related temporary files automatically
         delete = True
-        # Create all the test-related temporary files in current directory (the
-        # default "/tmp" will not work in case of tmpfs which does not support
-        # FIEMAP).
+        # Create all the test-related temporary files in current directory
         directory = '.'
         # Maximum size of the random files used in this test
         max_size = 16 * 1024 * 1024

@@ -284,9 +284,7 @@ class TestCreateCopy(unittest.TestCase):
 
         # Delete all the test-related temporary files automatically
         delete = True
-        # Create all the test-related temporary files in current directory (the
-        # default "/tmp" will not work in case of tmpfs which does not support
-        # FIEMAP).
+        # Create all the test-related temporary files in current directory
         directory = '.'
 
         iterator = helpers.generate_test_files(delete=delete,
