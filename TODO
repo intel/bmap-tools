@@ -5,4 +5,3 @@ Current TODO list, any help with these is appreciated.
 3. When writing to a file, and the file did not exist, so we create it,
    and then fail, we do not remove the half-written file.
 4. Implement adaptive decompression buffer size.
-5. Use SEEK_HOLE when FIEMAP is not supported. This will make sure tmpfs works.
