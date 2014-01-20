@@ -64,7 +64,7 @@ import shutil
 import io
 from bmaptools import BmapCreate, BmapCopy, BmapHelpers, TransRead
 
-class NamedFile:
+class NamedFile(object):
     """
     This simple class allows us to override the 'name' attribute of a file
     object. The reason is that some classes use the 'name' attribute of the

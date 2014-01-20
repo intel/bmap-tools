@@ -42,7 +42,7 @@ class Error(Exception):
     pass
 
 
-class _FilemapBase:
+class _FilemapBase(object):
     """
     This is a base class for a couple of other classes in this module. This
     class simply performs the common parts of the initialization process: opens

@@ -104,7 +104,7 @@ class Error(Exception):
     """
     pass
 
-class BmapCreate:
+class BmapCreate(object):
     """
     This class implements the bmap creation functionality. To generate a bmap
     for an image (which is supposedly a sparse file), you should first create

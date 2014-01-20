@@ -81,7 +81,7 @@ class Error(Exception):
     """
     pass
 
-class _CompressedFile:
+class _CompressedFile(object):
     """
     This class implements transparent reading from a compressed file-like
     object and decompressing its contents on-the-fly.
@@ -217,7 +217,7 @@ def _decode_sshpass_exit_code(code):
 
     return result
 
-class TransRead:
+class TransRead(object):
     """
     This class implement the transparent reading functionality. Instances of
     this class are file-like objects which you can read and seek only forward.

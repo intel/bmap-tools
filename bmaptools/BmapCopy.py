@@ -73,7 +73,7 @@ class Error(Exception):
     """
     pass
 
-class BmapCopy:
+class BmapCopy(object):
     """
     This class implements the bmap-based copying functionality. To copy an
     image with bmap you should create an instance of this class, which requires
