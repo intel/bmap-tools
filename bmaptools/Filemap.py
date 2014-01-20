@@ -26,6 +26,7 @@ import os
 import struct
 import array
 import fcntl
+import tempfile
 from bmaptools import BmapHelpers
 
 
@@ -153,6 +154,8 @@ _SEEK_HOLE = 4
 class FilemapSeek(_FilemapBase):
     """
     This class uses the 'SEEK_HOLE' and 'SEEK_DATA' to find file block mapping.
+    Unfortunately, the current implementation requires the caller to have write
+    access to the image file.
     """
 
     def __init__(self, image):
@@ -160,6 +163,46 @@ class FilemapSeek(_FilemapBase):
 
         # Call the base class constructor first
         _FilemapBase.__init__(self, image)
+
+        self._probe_seek_hole()
+
+    def _probe_seek_hole(self):
+        """
+        Check whether the system implements 'SEEK_HOLE' and 'SEEK_DATA'.
+        Unfortunately, there seems to be no clean way for detecting this,
+        because often the system just fakes them by just assuming that all
+        files are fully mapped, so 'SEEK_HOLE' always returns EOF and
+        'SEEK_DATA' always returns the requested offset.
+
+        I could not invent a better way of detecting the fake 'SEEK_HOLE'
+        implementation than just to create a temporary file in the same
+        directory where the image file resides. It would be nice to change this
+        to something better.
+        """
+
+        directory = os.path.dirname(self._image_path)
+
+        try:
+            tmp_obj = tempfile.TemporaryFile("w+", dir=directory)
+        except IOError as err:
+            raise ErrorNotSupp("cannot create a temporary in \"%s\": %s"
+                              % (directory, err))
+
+        try:
+            os.ftruncate(tmp_obj.fileno(), self.block_size)
+        except OSError as err:
+            raise ErrorNotSupp("cannot truncate temporary file in \"%s\": %s"
+                               % (directory, err))
+
+        offs = self._lseek(tmp_obj, 0, _SEEK_HOLE)
+        if offs != 0:
+            # We are dealing with the stub 'SEEK_HOLE' implementation which
+            # always returns EOF.
+            raise ErrorNotSupp("the file-system does not support "
+                               "\"SEEK_HOLE\" and \"SEEK_DATA\" but only "
+                               "provides a stub implementation")
+
+        tmp_obj.close()
 
     def _lseek(self, file_obj, offset, whence):
         """This is a helper function which invokes 'os.lseek' for file object
