@@ -43,6 +43,7 @@ This module uses the FIBMAP ioctl to detect holes.
 # pylint: disable=R0902,R0903
 
 import hashlib
+import logging
 from bmaptools.BmapHelpers import human_size
 from bmaptools import Filemap
 
@@ -117,7 +118,7 @@ class BmapCreate(object):
     the FIEMAP ioctl to generate the bmap.
     """
 
-    def __init__(self, image, bmap, chksum_type="sha256"):
+    def __init__(self, image, bmap, chksum_type="sha256", log=None):
         """
         Initialize a class instance:
         * image  - full path or a file-like object of the image to create bmap
@@ -126,7 +127,12 @@ class BmapCreate(object):
                    bmap to
         * chksum - type of the check sum to use in the bmap file (all checksum
                    types which python's "hashlib" module supports are allowed).
+        * log     - the logger object to use for printing messages.
         """
+
+        self._log = log
+        if self._log is None:
+            self._log = logging.getLogger(__name__)
 
         self.image_size = None
         self.image_size_human = None
@@ -165,7 +171,7 @@ class BmapCreate(object):
             self._bmap_path = bmap
             self._open_bmap_file()
 
-        self.filemap = Filemap.filemap(self._f_image)
+        self.filemap = Filemap.filemap(self._f_image, self._log)
 
         self.image_size = self.filemap.image_size
         self.image_size_human = human_size(self.image_size)
