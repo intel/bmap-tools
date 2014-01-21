@@ -218,8 +218,6 @@ class BmapCreate(object):
         # We do not know the amount of mapped blocks at the moment, so just put
         # whitespaces instead of real numbers. Assume the longest possible
         # numbers.
-        mapped_count = ' ' * len(str(self.image_size))
-        mapped_size_human = ' ' * len(self.image_size_human)
 
         xml = _BMAP_START_TEMPLATE \
                % (SUPPORTED_BMAP_VERSION, self.image_size_human,
@@ -229,14 +227,14 @@ class BmapCreate(object):
         self._f_bmap.write(xml)
         self._mapped_count_pos1 = self._f_bmap.tell()
 
-        # Just put white-spaces instead of real information about mapped blocks
-        xml  = "%s or %.1f    -->\n" % (mapped_size_human, 100.0)
+        xml  = "%s or %s   -->\n" % (' ' * len(self.image_size_human),
+                                   ' ' * len("100.0%"))
         xml += "    <MappedBlocksCount> "
 
         self._f_bmap.write(xml)
         self._mapped_count_pos2 = self._f_bmap.tell()
 
-        xml  = "%s </MappedBlocksCount>\n\n" % mapped_count
+        xml  = "%s </MappedBlocksCount>\n\n" % (' ' * len(str(self.blocks_cnt)))
 
         # pylint: disable=C0301
         xml += "    <!-- Type of checksum used in this file -->\n"
