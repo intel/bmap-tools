@@ -171,7 +171,11 @@ class BmapCreate(object):
             self._bmap_path = bmap
             self._open_bmap_file()
 
-        self.filemap = Filemap.filemap(self._f_image, self._log)
+        try:
+            self.filemap = Filemap.filemap(self._f_image, self._log)
+        except (Filemap.Error, Filemap.ErrorNotSupp) as err:
+            raise Error("cannot generate bmap for file '%s': %s"
+                        % (self._image_path, err))
 
         self.image_size = self.filemap.image_size
         self.image_size_human = human_size(self.image_size)
