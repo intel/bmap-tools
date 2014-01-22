@@ -1,3 +1,22 @@
+Release 3.2
+~~~~~~~~~~~
+
+1. Make 'bmaptool create' (and hence, the BmapCreate module) work with the
+   "tmpfs" file-system. This file-system does not, unfortunately, support the
+   "FIEMAP" ioctl, but it supports the "SEEK_HOLE" option of the "lseek" system
+   call, which can also be used to find where the holes are. In this release we
+   have implemented support for "SEEK_HOLE" to cover tmpfs. Generally, FIEMAP
+   is faster than "SEEK_HOLE" for large files, so we always try to start with
+   using FIEMAP, and if it is not supported, we fall-back to using "SEEK_HOLE".
+   Therefore, the "Fiemap" module was re-named to "Filemap", since it is now
+   supports more than just the FIEMAP ioctl.
+
+   Unfortunately, the SEEK_HOLE method requires the directory where the image
+   resides to be accessible for writing, because in current implementation we
+   need to create a temporary file there for a short time. The temporary file
+   is used to detect whether SEEK_HOLE is really implemented, or the system
+   just fakes it by always returning EOF.
+
 Bug-fix release 3.1
 ~~~~~~~~~~~~~~~~~~~
 
