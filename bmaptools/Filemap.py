@@ -161,6 +161,26 @@ class _FilemapBase(object):
 _SEEK_DATA = 3
 _SEEK_HOLE = 4
 
+def _lseek(file_obj, offset, whence):
+    """This is a helper function which invokes 'os.lseek' for file object
+    'file_obj' and with specified 'offset' and 'whence'. The 'whence'
+    argument is supposed to be either '_SEEK_DATA' or '_SEEK_HOLE'. When
+    there is no more data or hole starting from 'offset', this function
+    returns '-1'.  Otherwise the data or hole position is returned."""
+
+    try:
+        return os.lseek(file_obj.fileno(), offset, whence)
+    except OSError as err:
+        # The 'lseek' system call returns the ENXIO if there is no data or
+        # hole starting from the specified offset.
+        if err.errno == os.errno.ENXIO:
+            return -1
+        elif err.errno == os.errno.EINVAL:
+            raise ErrorNotSupp("the kernel or file-system does not support "
+                               "\"SEEK_HOLE\" and \"SEEK_DATA\"")
+        else:
+            raise
+
 class FilemapSeek(_FilemapBase):
     """
     This class uses the 'SEEK_HOLE' and 'SEEK_DATA' to find file block mapping.
@@ -205,7 +225,7 @@ class FilemapSeek(_FilemapBase):
             raise ErrorNotSupp("cannot truncate temporary file in \"%s\": %s"
                                % (directory, err))
 
-        offs = self._lseek(tmp_obj, 0, _SEEK_HOLE)
+        offs = _lseek(tmp_obj, 0, _SEEK_HOLE)
         if offs != 0:
             # We are dealing with the stub 'SEEK_HOLE' implementation which
             # always returns EOF.
@@ -216,29 +236,9 @@ class FilemapSeek(_FilemapBase):
 
         tmp_obj.close()
 
-    def _lseek(self, file_obj, offset, whence):
-        """This is a helper function which invokes 'os.lseek' for file object
-        'file_obj' and with specified 'offset' and 'whence'. The 'whence'
-        argument is supposed to be either '_SEEK_DATA' or '_SEEK_HOLE'. When
-        there is no more data or hole starting from 'offset', this function
-        returns '-1'.  Otherwise the data or hole position is returned."""
-
-        try:
-            return os.lseek(file_obj.fileno(), offset, whence)
-        except OSError as err:
-            # The 'lseek' system call returns the ENXIO if there is no data or
-            # hole starting from the specified offset.
-            if err.errno == os.errno.ENXIO:
-                return -1
-            elif err.errno == os.errno.EINVAL:
-                raise ErrorNotSupp("the kernel or file-system does not support "
-                                   "\"SEEK_HOLE\" and \"SEEK_DATA\"")
-            else:
-                raise
-
     def block_is_mapped(self, block):
         """Refer the '_FilemapBase' class for the documentation."""
-        offs = self._lseek(self._f_image, block * self.block_size, _SEEK_DATA)
+        offs = _lseek(self._f_image, block * self.block_size, _SEEK_DATA)
         if offs == -1:
             result = False
         else:
@@ -264,11 +264,11 @@ class FilemapSeek(_FilemapBase):
         limit = end + count * self.block_size
 
         while True:
-            start = self._lseek(self._f_image, end, whence1)
+            start = _lseek(self._f_image, end, whence1)
             if start == -1 or start >= limit or start == self.image_size:
                 break
 
-            end = self._lseek(self._f_image, start, whence2)
+            end = _lseek(self._f_image, start, whence2)
             if end == -1 or end == self.image_size:
                 end = self.blocks_cnt * self.block_size
             if end > limit:
