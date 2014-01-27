@@ -238,8 +238,8 @@ class TransRead(object):
         # Size of the file (in uncompressed form), may be 'None' if the size is
         # unknown
         self.size = None
-        # Whether the file is compressed
-        self.is_compressed = True
+        # Type of the compression of the file
+        self.compression_type = 'none'
         # Whether the file is behind an URL
         self.is_url = False
 
@@ -291,6 +291,11 @@ class TransRead(object):
                or self.name.endswith('.tgz'):
                 import tarfile
 
+                if self.name.endswith('.tar.bz2'):
+                    self.compression_type = 'bzip2'
+                else:
+                    self.compression_type = 'gzip'
+
                 f_obj = tarfile.open(fileobj=self._f_objs[-1], mode='r|*')
                 self._f_objs.append(f_obj)
 
@@ -298,10 +303,10 @@ class TransRead(object):
                 self.size = member.size
                 f_obj = self._f_objs[-1].extractfile(member)
                 self._f_objs.append(f_obj)
-            elif self.name.endswith('.gz') \
-                 or self.name.endswith('.gzip'):
+            elif self.name.endswith('.gz') or self.name.endswith('.gzip'):
                 import zlib
 
+                self.compression_type = 'gzip'
                 decompressor = zlib.decompressobj(16 + zlib.MAX_WBITS)
                 f_obj = _CompressedFile(self._f_objs[-1],
                                         decompressor.decompress)
@@ -309,7 +314,7 @@ class TransRead(object):
             elif self.name.endswith('.bz2'):
                 import bz2
 
-
+                self.compression_type = 'bzip2'
                 f_obj = _CompressedFile(self._f_objs[-1],
                                         bz2.BZ2Decompressor().decompress, 128)
                 self._f_objs.append(f_obj)
@@ -323,6 +328,7 @@ class TransRead(object):
                         raise Error("cannot import the \"lzma\" python module, "
                                     "it's required for decompressing .xz files")
 
+                self.compression_type = 'xz'
                 f_obj = _CompressedFile(self._f_objs[-1],
                                         lzma.LZMADecompressor().decompress, 128)
                 self._f_objs.append(f_obj)
@@ -338,7 +344,6 @@ class TransRead(object):
                     f_obj = self._f_objs[-1].extractfile(member)
                     self._f_objs.append(f_obj)
             else:
-                self.is_compressed = False
                 if not self.is_url:
                     self.size = os.fstat(self._f_objs[-1].fileno()).st_size
         except IOError as err:
@@ -550,7 +555,7 @@ class TransRead(object):
         its operations.
         """
 
-        if not self.is_compressed and not self.is_url:
+        if self.compression_type == 'none' and not self.is_url:
             return getattr(self._f_objs[-1], name)
         else:
             raise AttributeError
