@@ -164,7 +164,7 @@ def verify_detached_bmap_signature(args, bmap_obj, bmap_path, log):
         log.info("discovered signature file for bmap '%s'" % sig_path)
 
     # If the stand-alone signature file is not local, make a local copy
-    if sig_obj.is_compressed or sig_obj.is_url:
+    if sig_obj.is_url:
         try:
             tmp_obj = tempfile.NamedTemporaryFile("w+")
         except IOError as err:
@@ -335,7 +335,7 @@ def find_and_open_bmap(args, log):
             if ext == '':
                 return (None, None)
 
-    if not bmap_obj.is_compressed and not bmap_obj.is_url:
+    if not bmap_obj.is_url:
         return (bmap_obj, bmap_path)
 
     try:
