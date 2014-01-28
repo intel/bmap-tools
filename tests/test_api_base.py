@@ -30,7 +30,6 @@ import os
 import tempfile
 import filecmp
 import itertools
-import random
 
 # This is a work-around for Centos 6
 try:
