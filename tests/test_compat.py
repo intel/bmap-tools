@@ -45,7 +45,7 @@ try:
 except ImportError:
     import unittest
 
-class TestCreateCopy(unittest.TestCase):
+class TestCompat(unittest.TestCase):
     """The test class for this unit test."""
 
     def test(self):

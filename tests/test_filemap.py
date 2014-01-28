@@ -124,7 +124,7 @@ def _do_test(f_image, filemap, mapped, unmapped):
         _check_ranges(f_image, filemap, first_block, blocks_cnt, unmapped,
                       "unmapped")
 
-class TestCreateCopy(unittest.TestCase):
+class TestFilemap(unittest.TestCase):
     """
     The test class for this unit tests. Basically executes the '_do_test()'
     function for different sparse files.
