@@ -278,6 +278,22 @@ class TransRead(object):
             if _file_obj:
                 _file_obj.close()
 
+    def _open_tarfile(self):
+        """
+        This is a helper function for '_open_compressed_file' which is called
+        when the file is a tar archive.
+        """
+
+        import tarfile
+
+        f_obj = tarfile.open(fileobj=self._f_objs[-1], mode='r|*')
+        self._f_objs.append(f_obj)
+
+        member = self._f_objs[-1].next()
+        self.size = member.size
+        f_obj = self._f_objs[-1].extractfile(member)
+        self._f_objs.append(f_obj)
+
     def _open_compressed_file(self):
         """
         Detect file compression type and open it with the corresponding
@@ -286,24 +302,8 @@ class TransRead(object):
         """
 
         try:
-            if self.name.endswith('.tar.gz') \
-               or self.name.endswith('.tar.bz2') \
-               or self.name.endswith('.tgz'):
-                import tarfile
-
-                if self.name.endswith('.tar.bz2'):
-                    self.compression_type = 'bzip2'
-                else:
-                    self.compression_type = 'gzip'
-
-                f_obj = tarfile.open(fileobj=self._f_objs[-1], mode='r|*')
-                self._f_objs.append(f_obj)
-
-                member = self._f_objs[-1].next()
-                self.size = member.size
-                f_obj = self._f_objs[-1].extractfile(member)
-                self._f_objs.append(f_obj)
-            elif self.name.endswith('.gz') or self.name.endswith('.gzip'):
+            if self.name.endswith('.gz') or self.name.endswith('.gzip') \
+                 or self.name.endswith('.tgz'):
                 import zlib
 
                 self.compression_type = 'gzip'
@@ -311,6 +311,9 @@ class TransRead(object):
                 f_obj = _CompressedFile(self._f_objs[-1],
                                         decompressor.decompress)
                 self._f_objs.append(f_obj)
+
+                if self.name.endswith('.tar.gz') or self.name.endswith('.tgz'):
+                    self._open_tarfile()
             elif self.name.endswith('.bz2'):
                 import bz2
 
@@ -318,6 +321,9 @@ class TransRead(object):
                 f_obj = _CompressedFile(self._f_objs[-1],
                                         bz2.BZ2Decompressor().decompress, 128)
                 self._f_objs.append(f_obj)
+
+                if self.name.endswith('.tar.bz2'):
+                    self._open_tarfile()
             elif self.name.endswith('.xz'):
                 try:
                     import lzma
@@ -334,15 +340,7 @@ class TransRead(object):
                 self._f_objs.append(f_obj)
 
                 if self.name.endswith('.tar.xz'):
-                    import tarfile
-
-                    f_obj = tarfile.open(fileobj=self._f_objs[-1], mode='r|*')
-                    self._f_objs.append(f_obj)
-
-                    member = self._f_objs[-1].next()
-                    self.size = member.size
-                    f_obj = self._f_objs[-1].extractfile(member)
-                    self._f_objs.append(f_obj)
+                    self._open_tarfile()
             else:
                 if not self.is_url:
                     self.size = os.fstat(self._f_objs[-1].fileno()).st_size
