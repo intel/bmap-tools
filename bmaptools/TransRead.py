@@ -164,10 +164,9 @@ class _CompressedFile(object):
                 self._eof = True
                 break
 
-            if self._decompress_func:
-                buf = self._decompress_func(buf)
-                if not buf:
-                    continue
+            buf = self._decompress_func(buf)
+            if not buf:
+                continue
 
             assert len(self._buffer) == 0
             assert self._buffer_pos == 0
