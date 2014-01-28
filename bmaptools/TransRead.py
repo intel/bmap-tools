@@ -316,9 +316,20 @@ class TransRead(object):
             elif self.name.endswith('.bz2'):
                 import bz2
 
+                # Let's try to use the bz2file module, which is a backport from
+                # python 3.3 available in PyPI. It supports multiple streams
+                # (pbzip2) and handles handles out-of-memory issues nicely.
+                try:
+                    import bz2file
+
+                    f_obj = bz2file.BZ2File(self._f_objs[-1], 'r')
+                except ImportError:
+                    import bz2
+
+                    f_obj = _CompressedFile(self._f_objs[-1],
+                                      bz2.BZ2Decompressor().decompress, 128)
+
                 self.compression_type = 'bzip2'
-                f_obj = _CompressedFile(self._f_objs[-1],
-                                        bz2.BZ2Decompressor().decompress, 128)
                 self._f_objs.append(f_obj)
 
                 if self.name.endswith('.tar.bz2'):
