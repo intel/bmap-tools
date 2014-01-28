@@ -239,6 +239,8 @@ class TransRead(object):
         self.size = None
         # Type of the compression of the file
         self.compression_type = 'none'
+        # Whether the 'bz2file' PyPI module was found
+        self.bz2file_found = False
         # Whether the file is behind an URL
         self.is_url = False
 
@@ -322,6 +324,7 @@ class TransRead(object):
                 try:
                     import bz2file
 
+                    self.bz2file_found = True
                     f_obj = bz2file.BZ2File(self._f_objs[-1], 'r')
                 except ImportError:
                     import bz2
@@ -524,6 +527,22 @@ class TransRead(object):
         self.is_url = True
         self._f_objs.append(f_obj)
 
+    def _get_pbzip2_error_string(self):
+        """
+        This is a helper function which returns a string which describes the
+        problem of decompressing multi-stream bzip2 archives.
+        """
+
+        res =  "file \"%res\" is a multi-stream bz2 archive " % self.name
+        res += "(pbzip2) and it is not supported by python 2.x\n"
+        res += "Please, install the \"bz2file\" python library from PyPI to "
+        res += "support multi-stream archives. Here is an example of how this "
+        res += "could be done in Fedora:\n"
+        res += "$ yum install python-pip\n"
+        res += "$ pip install bz2file"
+
+        return res
+
     def read(self, size=-1):
         """
         Read the data from the file or URL and and uncompress it on-the-fly if
@@ -533,18 +552,32 @@ class TransRead(object):
         if size < 0:
             size = 0xFFFFFFFFFFFFFFFF
 
-        buf = self._f_objs[-1].read(size)
-        self._pos += len(buf)
+        try:
+            buf = self._f_objs[-1].read(size)
+        except EOFError:
+            if self.compression_type == 'bzip2' and not self.bz2file_found:
+                # The file is probably compressed with 'pbzip2'
+                raise Error(self._get_pbzip2_error_string())
+            else:
+                raise
 
+        self._pos += len(buf)
         return buf
 
     def seek(self, offset, whence=os.SEEK_SET):
         """The 'seek()' method, similar to the one file objects have."""
-        if self._force_fake_seek or not hasattr(self._f_objs[-1], "seek"):
-            self._pos = _fake_seek_forward(self._f_objs[-1], self._pos,
-                                           offset, whence)
-        else:
-            self._f_objs[-1].seek(offset, whence)
+        try:
+            if self._force_fake_seek or not hasattr(self._f_objs[-1], "seek"):
+                self._pos = _fake_seek_forward(self._f_objs[-1], self._pos,
+                                               offset, whence)
+            else:
+                self._f_objs[-1].seek(offset, whence)
+        except EOFError:
+            if self.compression_type == 'bzip2' and not self.bz2file_found:
+                # The file is probably compressed with 'pbzip2'
+                raise Error(self._get_pbzip2_error_string())
+            else:
+                raise
 
     def tell(self):
         """The 'tell()' method, similar to the one file objects have."""
