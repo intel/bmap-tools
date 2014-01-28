@@ -17,6 +17,14 @@ Release 3.2
    is used to detect whether SEEK_HOLE is really implemented, or the system
    just fakes it by always returning EOF.
 
+2. Support multi-stream bzip2 archives, like the ones created by the "pbzip2"
+   tool. Unfortunately, this requires bmaptool users to install the "bz2files"
+   library from PyPI. In Fedora and OpenSuse, this could be done with the
+   following commands:
+       $ zypper install python-pip # Fedora
+       $ yum install python-pip # OpenSuse
+       $ pip install bz2file
+
 Bug-fix release 3.1
 ~~~~~~~~~~~~~~~~~~~
 
