@@ -222,8 +222,10 @@ from "imag.bmap.asc".
 
 .PP
 Generate bmap for a regular file IMAGE. Internally, this subcommand uses the
-Linux "FIEMAP" ioctl to find out which IMAGE blocks are mapped. By default, the
-resulting bmap file is printed to stdout, unless the "--output" option is used.
+Linux "FIEMAP" ioctl to find out which IMAGE blocks are mapped. However, if
+"FIEMAP" is not supported, the "SEEK_HOLE" feature of the "lseek" system call
+is used instead. By default, the resulting bmap file is printed to stdout,
+unless the "--output" option is used.
 
 .PP
 The IMAGE file is always synchronized before the block map is generated. And it
