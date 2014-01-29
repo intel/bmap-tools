@@ -85,8 +85,6 @@ def _generate_compressed_files(file_path, delete=True):
         except ImportError:
             lzma_present = False
 
-    file_obj = TransRead.TransRead(file_path)
-
     # Make sure the temporary files start with the same name as 'file_obj' in
     # order to simplify debugging.
     prefix = os.path.splitext(os.path.basename(file_path))[0] + '.'
@@ -97,7 +95,7 @@ def _generate_compressed_files(file_path, delete=True):
     tmp_file_obj = tempfile.NamedTemporaryFile('wb+', prefix=prefix,
                                                delete=delete, dir=directory,
                                                suffix='.uncompressed')
-    shutil.copyfileobj(file_obj, tmp_file_obj)
+    shutil.copyfileobj(TransRead.TransRead(file_path), tmp_file_obj)
     tmp_file_obj.flush()
     yield tmp_file_obj.name
     tmp_file_obj.close()
@@ -107,8 +105,7 @@ def _generate_compressed_files(file_path, delete=True):
                                                delete=delete, dir=directory,
                                                suffix='.bz2')
     bz2_file_obj = bz2.BZ2File(tmp_file_obj.name, 'wb')
-    file_obj.seek(0)
-    shutil.copyfileobj(file_obj, bz2_file_obj)
+    shutil.copyfileobj(TransRead.TransRead(file_path), bz2_file_obj)
     bz2_file_obj.close()
     yield bz2_file_obj.name
     tmp_file_obj.close()
@@ -118,8 +115,7 @@ def _generate_compressed_files(file_path, delete=True):
                                                delete=delete, dir=directory,
                                                suffix='.gz')
     gzip_file_obj = gzip.GzipFile(tmp_file_obj.name, 'wb')
-    file_obj.seek(0)
-    shutil.copyfileobj(file_obj, gzip_file_obj)
+    shutil.copyfileobj(TransRead.TransRead(file_path), gzip_file_obj)
     gzip_file_obj.close()
     yield gzip_file_obj.name
     tmp_file_obj.close()
@@ -130,8 +126,7 @@ def _generate_compressed_files(file_path, delete=True):
                                                    delete=delete, dir=directory,
                                                    suffix='.xz')
         lzma_file_obj = lzma.LZMAFile(tmp_file_obj.name, 'wb')
-        file_obj.seek(0)
-        shutil.copyfileobj(file_obj, lzma_file_obj)
+        shutil.copyfileobj(TransRead.TransRead(file_path), lzma_file_obj)
         lzma_file_obj.close()
         yield lzma_file_obj.name
         tmp_file_obj.close()
@@ -155,8 +150,6 @@ def _generate_compressed_files(file_path, delete=True):
     tbz2_file_obj.close()
     yield tbz2_file_obj.name
     tmp_file_obj.close()
-
-    file_obj.close()
 
 def _do_test(image, image_size, delete=True):
     """
