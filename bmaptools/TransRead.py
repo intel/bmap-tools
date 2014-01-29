@@ -418,6 +418,7 @@ class TransRead(object):
         # host
         command = "test -f " + path + " && test -r " + path
         child_process = subprocess.Popen(popen_args + [command],
+                                         bufsize=1024*1024,
                                          stdout=subprocess.PIPE)
         child_process.wait()
         if child_process.returncode != 0:
