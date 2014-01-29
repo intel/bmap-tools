@@ -20,6 +20,8 @@ import os
 import errno
 import urlparse
 import logging
+import subprocess
+import BmapHelpers
 
 # Disable the following pylint errors and recommendations:
 #   * Instance of X has no member Y (E1101), because it produces
@@ -367,8 +369,6 @@ class TransRead(object):
         support password-based authentication.
         """
 
-        import subprocess
-
         username = parsed_url.username
         password = parsed_url.password
         path = parsed_url.path
@@ -377,13 +377,9 @@ class TransRead(object):
             hostname = username + "@" + hostname
 
         # Make sure the ssh client program is installed
-        try:
-            subprocess.Popen("ssh", stderr=subprocess.PIPE,
-                                    stdout=subprocess.PIPE).wait()
-        except OSError as err:
-            if err.errno == os.errno.ENOENT:
-                raise Error("\"sshpass\" program not found, but it is "
-                            "required for downloading over SSH")
+        if not BmapHelpers.program_is_available("ssh"):
+            raise Error("the \"ssh\" program is not available but it is "
+                        "required for downloading over the ssh protocol")
 
         # Prepare the commands that we are going to run
         if password:
@@ -398,13 +394,9 @@ class TransRead(object):
                           hostname]
 
             # Make sure the sshpass program is installed
-            try:
-                subprocess.Popen("sshpass", stderr=subprocess.PIPE,
-                                            stdout=subprocess.PIPE).wait()
-            except OSError as err:
-                if err.errno == os.errno.ENOENT:
-                    raise Error("\"sshpass\" program not found, but it is "
-                                "required for password SSH authentication")
+            if not BmapHelpers.program_is_available("ssh"):
+                raise Error("the \"sshpass\" program is not available but it "
+                            "is required for password-based SSH authentication")
         else:
             popen_args = ["ssh",
                           "-o StrictHostKeyChecking=no",

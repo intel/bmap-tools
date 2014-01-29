@@ -54,3 +54,18 @@ def get_block_size(file_obj):
     # the FIGETBSZ ioctl (number 2).
     binary_data = ioctl(file_obj, 2, struct.pack('I', 0))
     return struct.unpack('I', binary_data)[0]
+
+def program_is_available(name):
+    """
+    This is a helper function which check if the external program 'name' is
+    available in the system.
+    """
+
+    import os
+
+    for path in os.environ["PATH"].split(os.pathsep):
+        program = os.path.join(path.strip('"'), name)
+        if os.path.isfile(program) and os.access(program, os.X_OK):
+            return True
+
+    return False
