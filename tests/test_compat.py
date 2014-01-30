@@ -30,6 +30,12 @@ import tempfile
 from tests import helpers
 from bmaptools import TransRead, BmapCopy
 
+# This is a work-around for Centos 6
+try:
+    import unittest2 as unittest # pylint: disable=F0401
+except ImportError:
+    import unittest
+
 # Test image file name
 _IMAGE_NAME = "test.image.gz"
 # Test bmap file names template
@@ -38,12 +44,6 @@ _BMAP_TEMPL = "test.image.bmap.v"
 _TEST_DATA_SUBDIR = "test-data"
 # Name of the subdirectory where old BmapCopy modules are stored
 _OLDCODEBASE_SUBDIR = "oldcodebase"
-
-# This is a work-around for Centos 6
-try:
-    import unittest2 as unittest # pylint: disable=F0401
-except ImportError:
-    import unittest
 
 class TestCompat(unittest.TestCase):
     """The test class for this unit test."""
