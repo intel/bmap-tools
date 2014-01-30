@@ -18,6 +18,22 @@ BuildArch: noarch
 URL: http://www.tizen.org
 Source0: %{name}_%{version}.tar.gz
 
+Requires: bzip2
+Requires: pbzip2
+Requires: gzip
+Requires: pigz
+Requires: xz
+Requires: tar
+
+%if 0%{?suse_version}
+%if 0%{?suse_version} > 1210
+# lzop is present in OpenSuse since version 12.1
+Requires: lzop
+%endif
+%else
+Requires: lzop
+%endif
+
 BuildRequires: python-distribute
 
 %if 0%{?suse_version}
@@ -25,16 +41,12 @@ BuildRequires: python-distribute
 Requires: python-xml
 # The gpgme python module is in python-gpgme
 Requires: python-gpgme
-# Unfortunately, there is no package for the lzma module in OpenSuse
-# (checked 12.2 and 12.3)
 %endif
 
 %if 0%{?fedora_version}
 # In Fedora the xml.etree module is provided by the python-libs package
 Requires: python-libs
 # The lzma python module is packaged in pyliblzma
-Requires: pyliblzma
-# Tha gpgme python module is packaged in pygpgme
 Requires: pygpgme
 %endif
 

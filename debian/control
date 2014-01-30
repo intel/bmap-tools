@@ -15,6 +15,13 @@ Depends: python (>=2.7),
 	 python-gpgme,
          ${misc:Depends},
          ${python:Depends},
+	 bzip2,
+	 pbzip2,
+	 gzip,
+	 pigz,
+	 lzop,
+	 xz-utils,
+	 tar
 Description: tool to flash image files to block devices using the block map
  bmaptool is a generic tool for creating the block map (bmap) for a
  file, and copying files using the block map. The idea is that large
