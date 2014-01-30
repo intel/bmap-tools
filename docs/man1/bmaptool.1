@@ -92,9 +92,26 @@ in the URL, for example "https://user:password@my.server.org/image.raw.bz2", or
 .PP
 IMAGE may be compressed, in which case \fIbmaptool\fR decompresses it on-the-fly.
 The compression type is detected by the file extension and the following
-compression types are supported: ".bz2", ".gz", ".xz", ".gzip", ".tar.bz2",
-".tar.gz", ".tgz", ".tar.xz". If IMAGE has none of these extensions, it is
-assumed to be uncompressed.
+extensions are supported:
+
+.RS 4
+1. ".gz", ".gzip", ".tar.gz" and ".tgz" for files and tar archives compressed with "\fIgzip\fR" program
+.RE
+.RS 4
+2. ".bz2", "tar.bz2", ".tbz2", ".tbz", and ".tb2" for files and tar archives compressed with "\fIbzip2\fR" program
+.RE
+.RS 4
+3. ".xz", ".tar.xz", ".txz" for files and tar archives compressed with "\fIxz\fR" program
+.RE
+.RS 4
+4. ".lzo", "tar.lzo", ".tzo" for files and tar archives compressed with "\fIlzo\fR" program
+.RE
+
+.PP
+IMAGE files with other extensions are assumed to be uncompressed. Note,
+\fIbmaptool\fR uses "\fIpbzip2\fR" and "\fIpigz\fR" programs for decompressing
+bzip2 and gzip archives faster, unless they are not available, in which case if
+falls-back to using "\fIbzip2\fR" and "\fIgzip\fR".
 
 .PP
 If DEST is a block device node (e.g., "/dev/sdg"), \fIbmaptool\fR opens it in
