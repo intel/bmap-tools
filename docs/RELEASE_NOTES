@@ -1,29 +1,34 @@
 Release 3.2
 ~~~~~~~~~~~
 
-1. Make 'bmaptool create' (and hence, the BmapCreate module) work with the
-   "tmpfs" file-system. This file-system does not, unfortunately, support the
-   "FIEMAP" ioctl, but it supports the "SEEK_HOLE" option of the "lseek" system
-   call, which can also be used to find where the holes are. In this release we
-   have implemented support for "SEEK_HOLE" to cover tmpfs. Generally, FIEMAP
-   is faster than "SEEK_HOLE" for large files, so we always try to start with
-   using FIEMAP, and if it is not supported, we fall-back to using "SEEK_HOLE".
-   Therefore, the "Fiemap" module was re-named to "Filemap", since it is now
-   supports more than just the FIEMAP ioctl.
+1. Multi-stream bzip2 archives are now supported. These are usually created
+   with the 'pbzip2' compressor.
 
-   Unfortunately, the SEEK_HOLE method requires the directory where the image
+2. LZO archives are now supported too. Files with the following extensions are
+   recognized as LZO-compressed: ".lzo", ".tar.lzo", ".tzo".
+
+3. Make 'bmaptool create' (and hence, the BmapCreate module) work with the
+   "tmpfs" file-system. Tmpfs does not, unfortunately, support the "FIEMAP"
+   ioctl, but it supports the "SEEK_HOLE" option of the "lseek" system call,
+   which is now used for finding where the holes are. However, this works only
+   with Linux kernels of version 3.8 or higher.
+
+   Generally, "FIEMAP" is faster than "SEEK_HOLE" for large files, so we always
+   try to start with using FIEMAP, and if it is not supported, we fall-back to
+   using "SEEK_HOLE". Therefore, the "Fiemap" module was re-named to "Filemap",
+   since it is now supports more than just the FIEMAP ioctl.
+
+   Unfortunately, our "SEEK_HOLE" method requires the directory where the image
    resides to be accessible for writing, because in current implementation we
    need to create a temporary file there for a short time. The temporary file
-   is used to detect whether SEEK_HOLE is really implemented, or the system
-   just fakes it by always returning EOF.
+   is used to detect whether tmpfs really supports SEEK_HOLE, or the system
+   just fakes it by always returning EOF (this is what happens in pre-3.8
+   kernels).
 
-2. Support multi-stream bzip2 archives, like the ones created by the "pbzip2"
-   tool. Unfortunately, this requires bmaptool users to install the "bz2files"
-   library from PyPI. In Fedora and OpenSuse, this could be done with the
-   following commands:
-       $ zypper install python-pip # Fedora
-       $ yum install python-pip # OpenSuse
-       $ pip install bz2file
+4. Decompression should now require less memory, which should fix
+   out-of-memory problems reported by some users recently. Namely, users
+   reported that decompressing large bz2-compressed sparse files caused
+   out-of-memory situation on machines with 2GB RAM. This should be fixed now.
 
 Bug-fix release 3.1
 ~~~~~~~~~~~~~~~~~~~
