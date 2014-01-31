@@ -1,3 +1,9 @@
+bmap-tools (3.2~rc1) unstable; urgency=low
+
+  * Bump the version number to 3.2~rc1.
+
+ -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com> Fri, 31 Jan 2014 12:54:42 +0200
+
 bmap-tools (3.1) unstable; urgency=low
 
   * Change bmap format version from 1.4 to 2.0, because there are incompatible
