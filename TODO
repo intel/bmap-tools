@@ -4,4 +4,3 @@ Current TODO list, any help with these is appreciated.
 2. Add a test for bmap with invalid checksums
 3. When writing to a file, and the file did not exist, so we create it,
    and then fail, we do not remove the half-written file.
-4. Implement adaptive decompression buffer size.
