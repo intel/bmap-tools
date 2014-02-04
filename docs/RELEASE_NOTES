@@ -30,6 +30,13 @@ Release 3.2
    reported that decompressing large bz2-compressed sparse files caused
    out-of-memory situation on machines with 2GB RAM. This should be fixed now.
 
+5. Reading and decompressing is now faster because we now use more parallelism:
+   reading the data form the source URL is done in separate thread,
+   decompressing happens in a separate process too. My measurement with Tizen
+   IVI images from 'tizen.org' showed 10% read speed improvement, but this
+   depends a lot on where the bottle-neck is: the USB stick, the network, or
+   the CPU load.
+
 Bug-fix release 3.1
 ~~~~~~~~~~~~~~~~~~~
 
