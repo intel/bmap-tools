@@ -348,6 +348,7 @@ class TransRead(object):
 
         args = (self._f_objs[-1], child_process.stdin, )
         self._rthread = threading.Thread(target=self._read_thread, args=args)
+        self._rthread.daemon = True
         self._rthread.start()
 
         self._force_fake_seek = True
