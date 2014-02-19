@@ -1,3 +1,13 @@
+bmap-tools (3.2) unstable; urgency=low
+
+  * Add support for LZO and archives ('.lzo' and '.tar.lzo').
+  * Add support for multi-stream bzip2 archives (creted with "pbzip2").
+  * Support tmpfs by using the SEEK_HOLE method instead of FIEMAP.
+  * Use external tools like 'gzip' and 'bzip2' for decompressing, instead of
+    using internal python libraries.
+
+ -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com> Wed, 19 Feb 2014 16:50:12 +0200
+
 bmap-tools (3.2~rc2) unstable; urgency=low
 
   * Bump the version number to 3.2~rc2.
