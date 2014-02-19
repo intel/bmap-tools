@@ -98,6 +98,9 @@ ask_question "Did you update tests: test-data and oldcodebase"
 sed -i -e "s/^VERSION = \"[0-9]\+\.[0-9]\+\"$/VERSION = \"$new_ver\"/" bmaptool
 # Sed the version in the RPM spec file
 sed -i -e "s/^Version: [0-9]\+\.[0-9]\+$/Version: $new_ver/" packaging/bmap-tools.spec
+# Remove the "rc_num" macro from the RPM spec file to make sure we do not have
+# the "-rcX" part in the release version
+sed -i -e '/^%define[[:blank:]]\+rc_num[[:blank:]]\+[[:digit:]]\+[[:blank:]]*$/d' packaging/bmap-tools.spec
 
 # Ask the maintainer for changelog lines
 logfile="$(mktemp -t "$PROG.XXXX")"
