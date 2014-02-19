@@ -186,6 +186,12 @@ git push public $tag_name
 git push public devel:devel
 git push public master:master
 git push public $release_branch:$release_branch
+#7
+git push tizen $tag_name
+git push tizen devel:devel
+git push tizen master:master
+git push tizen $release_branch:$release_branch
+#8
 git send-email --suppress-cc=all --from "Artem Bityutskiy <dedekind1@gmail.com>" --to bmap-tools@lists.infradead.org /proc/self/fd/0 <<END_OF_EMAIL
 Subject: Announcement: $release_name is out!
 
