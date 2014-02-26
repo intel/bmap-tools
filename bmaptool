@@ -593,7 +593,7 @@ def parse_arguments():
     subparsers = parser.add_subparsers(title = "subcommands")
 
     #
-    # Create the parser for the "create" command
+    # Create parser for the "create" command
     #
     text = "generate bmap for an image file (which should be a sparse file)"
     parser_create = subparsers.add_parser("create", help = text)
@@ -613,7 +613,7 @@ def parse_arguments():
                                help = text)
 
     #
-    # Create the parser for the "copy" command
+    # Create parser for the "copy" command
     #
     text = "write an image to a block device using bmap"
     parser_copy = subparsers.add_parser("copy", help=text)
@@ -665,7 +665,7 @@ def setup_logger(loglevel):
     class MyFormatter(logging.Formatter):
         """
         A custom formatter for logging messages. The reason we have it is to
-        have different format for different debug levels.
+        have different format for different log levels.
         """
 
         def __init__(self, fmt=None, datefmt=None):
