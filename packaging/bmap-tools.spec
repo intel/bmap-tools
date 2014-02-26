@@ -46,7 +46,7 @@ Requires: python-gpgme
 %if 0%{?fedora_version}
 # In Fedora the xml.etree module is provided by the python-libs package
 Requires: python-libs
-# The lzma python module is packaged in pyliblzma
+# Tha gpgme python module is in pygpgme package
 Requires: pygpgme
 %endif
 
