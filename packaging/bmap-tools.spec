@@ -57,11 +57,12 @@ Requires: python-argparse
 %endif
 
 %description
-Bmap-tools - tools to generate block map (AKA bmap) and flash images using
-bmap. Bmaptool is a generic tool for creating the block map (bmap) for a file,
-and copying files using the block map. The idea is that large file containing
-unused blocks, like raw system image files, can be copied or flashed a lot
-faster with bmaptool than with traditional tools like "dd" or "cp".
+Tools to generate block map (AKA bmap) and flash images using bmap. Bmaptool is
+a generic tool for creating the block map (bmap) for a file, and copying files
+using the block map. The idea is that large file containing unused blocks, like
+raw system image files, can be copied or flashed a lot faster with bmaptool
+than with traditional tools like "dd" or "cp". See
+source.tizen.org/documentation/reference/bmaptool for more information.
 
 %prep
 %setup -q -n %{name}-%{version}
