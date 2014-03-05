@@ -86,5 +86,3 @@ install -m644 docs/man1/bmaptool.1 %{buildroot}/%{_mandir}/man1
 
 %doc docs/RELEASE_NOTES
 %{_mandir}/man1/*
-
-%changelog
