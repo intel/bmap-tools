@@ -84,5 +84,5 @@ install -m644 docs/man1/bmaptool.1 %{buildroot}/%{_mandir}/man1
 /usr/lib/python*/site-packages/bmaptools/*
 %{_bindir}/*
 
-%doc docs/RELEASE_NOTES
+%doc docs/RELEASE_NOTES COPYING
 %{_mandir}/man1/*
