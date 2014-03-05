@@ -6,3 +6,5 @@ Current TODO list, any help with these is appreciated.
    and then fail, we do not remove the half-written file.
 4. Teach make_a_release.sh to modify the version in the 'doc/man1/bmaptool.1'
    file too.
+5. Use __author__ and __version__ in bmaptool, and import them from
+   'setup.py'
