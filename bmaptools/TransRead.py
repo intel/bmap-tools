@@ -27,6 +27,8 @@ import threading
 import subprocess
 from bmaptools import BmapHelpers
 
+_log = logging.getLogger(__name__)
+
 # Disable the following pylint errors and recommendations:
 #   * Instance of X has no member Y (E1101), because it produces
 #     false-positives for many of 'subprocess' class members, e.g.
@@ -122,16 +124,11 @@ class TransRead(object):
     this class are file-like objects which you can read and seek only forward.
     """
 
-    def __init__(self, filepath, log=None):
+    def __init__(self, filepath):
         """
         Class constructor. The 'filepath' argument is the full path to the file
-        to read transparently. The "log" argument is the logger object to use
-        for printing messages.
+        to read transparently.
         """
-
-        self._log = log
-        if self._log is None:
-            self._log = logging.getLogger(__name__)
 
         self.name = filepath
         # Size of the file (in uncompressed form), may be 'None' if the size is
@@ -436,14 +433,14 @@ class TransRead(object):
         Open an URL 'url' and return the file-like object of the opened URL.
         """
 
-        def _print_warning(log, timeout):
+        def _print_warning(timeout):
             """
             This is a small helper function for printing a warning if we cannot
             open the URL for some time.
             """
-            log.warning("failed to open the URL with %d sec timeout, is the "
-                        "proxy configured correctly? Keep trying ..." %
-                        timeout)
+            _log.warning("failed to open the URL with %d sec timeout, is the "
+                         "proxy configured correctly? Keep trying ..." %
+                         timeout)
 
         import urllib2
         import httplib
@@ -495,14 +492,14 @@ class TransRead(object):
             # Handling the timeout case in Python 2.7
             except socket.timeout, err:
                 if timeout is not None:
-                    _print_warning(self._log, timeout)
+                    _print_warning(timeout)
                 else:
                     raise Error("cannot open URL '%s': %s" % (url, err))
             except urllib2.URLError as err:
                 # Handling the timeout case in Python 2.6
                 if timeout is not None and \
                    isinstance(err.reason, socket.timeout):
-                    _print_warning(self._log, timeout)
+                    _print_warning(timeout)
                 else:
                     raise Error("cannot open URL '%s': %s" % (url, err))
             except (IOError, ValueError, httplib.InvalidURL) as err:

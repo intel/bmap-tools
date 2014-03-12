@@ -30,6 +30,7 @@ import tempfile
 import logging
 from bmaptools import BmapHelpers
 
+_log = logging.getLogger(__name__)
 
 class ErrorNotSupp(Exception):
     """
@@ -47,19 +48,14 @@ class _FilemapBase(object):
     """
     This is a base class for a couple of other classes in this module. This
     class simply performs the common parts of the initialization process: opens
-    the image file, gets its size, etc. The 'log' parameter is the logger object
-    to use for printing messages.
+    the image file, gets its size, etc.
     """
 
-    def __init__(self, image, log=None):
+    def __init__(self, image):
         """
         Initialize a class instance. The 'image' argument is full path to the
         file or file object to operate on.
         """
-
-        self._log = log
-        if self._log is None:
-            self._log = logging.getLogger(__name__)
 
         self._f_image_needs_close = False
 
@@ -97,9 +93,9 @@ class _FilemapBase(object):
             raise Error("cannot synchronize image file '%s': %s "
                         % (self._image_path, err.strerror))
 
-        self._log.debug("opened image \"%s\"" % self._image_path)
-        self._log.debug("block size %d, blocks count %d, image size %d"
-                        % (self.block_size, self.blocks_cnt, self.image_size))
+        _log.debug("opened image \"%s\"" % self._image_path)
+        _log.debug("block size %d, blocks count %d, image size %d"
+                   % (self.block_size, self.blocks_cnt, self.image_size))
 
     def __del__(self):
         """The class destructor which just closes the image file."""
@@ -188,12 +184,12 @@ class FilemapSeek(_FilemapBase):
     access to the image file.
     """
 
-    def __init__(self, image, log=None):
+    def __init__(self, image):
         """Refer the '_FilemapBase' class for the documentation."""
 
         # Call the base class constructor first
-        _FilemapBase.__init__(self, image, log)
-        self._log.debug("FilemapSeek: initializing")
+        _FilemapBase.__init__(self, image)
+        _log.debug("FilemapSeek: initializing")
 
         self._probe_seek_hole()
 
@@ -229,7 +225,7 @@ class FilemapSeek(_FilemapBase):
         if offs != 0:
             # We are dealing with the stub 'SEEK_HOLE' implementation which
             # always returns EOF.
-            self._log.debug("lseek(0, SEEK_HOLE) returned %d" % offs)
+            _log.debug("lseek(0, SEEK_HOLE) returned %d" % offs)
             raise ErrorNotSupp("the file-system does not support "
                                "\"SEEK_HOLE\" and \"SEEK_DATA\" but only "
                                "provides a stub implementation")
@@ -244,8 +240,8 @@ class FilemapSeek(_FilemapBase):
         else:
             result = (offs / self.block_size == block)
 
-        self._log.debug("FilemapSeek: block_is_mapped(%d) returns %s"
-                        % (block, result))
+        _log.debug("FilemapSeek: block_is_mapped(%d) returns %s"
+                   % (block, result))
         return result
 
     def block_is_unmapped(self, block):
@@ -276,20 +272,20 @@ class FilemapSeek(_FilemapBase):
 
             start_blk = start / self.block_size
             end_blk = end / self.block_size - 1
-            self._log.debug("FilemapSeek: yielding range (%d, %d)"
-                            % (start_blk, end_blk))
+            _log.debug("FilemapSeek: yielding range (%d, %d)"
+                       % (start_blk, end_blk))
             yield (start_blk, end_blk)
 
     def get_mapped_ranges(self, start, count):
         """Refer the '_FilemapBase' class for the documentation."""
-        self._log.debug("FilemapSeek: get_mapped_ranges(%d,  %d(%d))"
-                        % (start, count, start + count - 1))
+        _log.debug("FilemapSeek: get_mapped_ranges(%d,  %d(%d))"
+                   % (start, count, start + count - 1))
         return self._get_ranges(start, count, _SEEK_DATA, _SEEK_HOLE)
 
     def get_unmapped_ranges(self, start, count):
         """Refer the '_FilemapBase' class for the documentation."""
-        self._log.debug("FilemapSeek: get_unmapped_ranges(%d,  %d(%d))"
-                        % (start, count, start + count - 1))
+        _log.debug("FilemapSeek: get_unmapped_ranges(%d,  %d(%d))"
+                   % (start, count, start + count - 1))
         return self._get_ranges(start, count, _SEEK_HOLE, _SEEK_DATA)
 
 
@@ -325,15 +321,15 @@ class FilemapFiemap(_FilemapBase):
     ioctl in order to work-around early FIEMAP implementation kernel bugs.
     """
 
-    def __init__(self, image, log=None):
+    def __init__(self, image):
         """
         Initialize a class instance. The 'image' argument is full the file
         object to operate on.
         """
 
         # Call the base class constructor first
-        _FilemapBase.__init__(self, image, log)
-        self._log.debug("FilemapFiemap: initializing")
+        _FilemapBase.__init__(self, image)
+        _log.debug("FilemapFiemap: initializing")
 
         self._buf_size = _FIEMAP_BUFFER_SIZE
 
@@ -381,12 +377,12 @@ class FilemapFiemap(_FilemapBase):
             if err.errno == os.errno.EOPNOTSUPP:
                 errstr = "FilemapFiemap: the FIEMAP ioctl is not supported " \
                          "by the file-system"
-                self._log.debug(errstr)
+                _log.debug(errstr)
                 raise ErrorNotSupp(errstr)
             if err.errno == os.errno.ENOTTY:
                 errstr = "FilemapFiemap: the FIEMAP ioctl is not supported " \
                          "by the kernel"
-                self._log.debug(errstr)
+                _log.debug(errstr)
                 raise ErrorNotSupp(errstr)
             raise Error("the FIEMAP ioctl failed for '%s': %s"
                         % (self._image_path, err))
@@ -401,8 +397,8 @@ class FilemapFiemap(_FilemapBase):
         # If it contains zero, the block is not mapped, otherwise it is
         # mapped.
         result = bool(struct_fiemap[3])
-        self._log.debug("FilemapFiemap: block_is_mapped(%d) returns %s"
-                        % (block, result))
+        _log.debug("FilemapFiemap: block_is_mapped(%d) returns %s"
+                  % (block, result))
         return result
 
     def block_is_unmapped(self, block):
@@ -467,8 +463,8 @@ class FilemapFiemap(_FilemapBase):
 
     def get_mapped_ranges(self, start, count):
         """Refer the '_FilemapBase' class for the documentation."""
-        self._log.debug("FilemapFiemap: get_mapped_ranges(%d,  %d(%d))"
-                        % (start, count, start + count - 1))
+        _log.debug("FilemapFiemap: get_mapped_ranges(%d,  %d(%d))"
+                  % (start, count, start + count - 1))
         iterator = self._do_get_mapped_ranges(start, count)
         first_prev, last_prev = iterator.next()
 
@@ -476,35 +472,35 @@ class FilemapFiemap(_FilemapBase):
             if last_prev == first - 1:
                 last_prev = last
             else:
-                self._log.debug("FilemapFiemap: yielding range (%d, %d)"
-                                % (first_prev, last_prev))
+                _log.debug("FilemapFiemap: yielding range (%d, %d)"
+                          % (first_prev, last_prev))
                 yield (first_prev, last_prev)
                 first_prev, last_prev = first, last
 
-        self._log.debug("FilemapFiemap: yielding range (%d, %d)"
-                        % (first_prev, last_prev))
+        _log.debug("FilemapFiemap: yielding range (%d, %d)"
+                  % (first_prev, last_prev))
         yield (first_prev, last_prev)
 
     def get_unmapped_ranges(self, start, count):
         """Refer the '_FilemapBase' class for the documentation."""
-        self._log.debug("FilemapFiemap: get_unmapped_ranges(%d,  %d(%d))"
-                        % (start, count, start + count - 1))
+        _log.debug("FilemapFiemap: get_unmapped_ranges(%d,  %d(%d))"
+                  % (start, count, start + count - 1))
         hole_first = start
         for first, last in self._do_get_mapped_ranges(start, count):
             if first > hole_first:
-                self._log.debug("FilemapFiemap: yielding range (%d, %d)"
-                                % (hole_first, first - 1))
+                _log.debug("FilemapFiemap: yielding range (%d, %d)"
+                          % (hole_first, first - 1))
                 yield (hole_first, first - 1)
 
             hole_first = last + 1
 
         if hole_first < start + count:
-            self._log.debug("FilemapFiemap: yielding range (%d, %d)"
-                            % (hole_first, start + count - 1))
+            _log.debug("FilemapFiemap: yielding range (%d, %d)"
+                      % (hole_first, start + count - 1))
             yield (hole_first, start + count - 1)
 
 
-def filemap(image, log=None):
+def filemap(image):
     """
     Create and return an instance of a Filemap class - 'FilemapFiemap' or
     'FilemapSeek', depending on what the system we run on supports. If the
@@ -515,6 +511,6 @@ def filemap(image, log=None):
     """
 
     try:
-        return FilemapFiemap(image, log)
+        return FilemapFiemap(image)
     except ErrorNotSupp:
-        return FilemapSeek(image, log)
+        return FilemapSeek(image)

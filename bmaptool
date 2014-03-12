@@ -41,6 +41,8 @@ import shutil
 import io
 from bmaptools import BmapCreate, BmapCopy, BmapHelpers, TransRead
 
+log = logging.getLogger()
+
 class NamedFile(object):
     """
     This simple class allows us to override the 'name' attribute of a file
@@ -57,7 +59,7 @@ class NamedFile(object):
     def __getattr__(self, name):
         return getattr(self._file_obj, name)
 
-def open_block_device(path, log):
+def open_block_device(path):
     """
     This is a helper function for 'open_files()' which is called if the
     destination file of the "copy" command is a block device. We handle block
@@ -88,7 +90,7 @@ def open_block_device(path, log):
 
     return NamedFile(file_obj, path)
 
-def report_verification_results(context, sigs, log):
+def report_verification_results(context, sigs):
     """
     This is a helper function which reports the GPG signature verification
     results. The 'context' argument is the gpgme context object, and the 'sigs'
@@ -108,7 +110,7 @@ def report_verification_results(context, sigs, log):
                       "to disable signature verification")
             raise SystemExit(1)
 
-def verify_detached_bmap_signature(args, bmap_obj, bmap_path, log):
+def verify_detached_bmap_signature(args, bmap_obj, bmap_path):
     """
     This is a helper function for 'verify_bmap_signature()' which handles the
     detached signature case.
@@ -119,7 +121,7 @@ def verify_detached_bmap_signature(args, bmap_obj, bmap_path, log):
 
     if args.bmap_sig:
         try:
-            sig_obj = TransRead.TransRead(args.bmap_sig, log=log)
+            sig_obj = TransRead.TransRead(args.bmap_sig)
         except TransRead.Error as err:
             log.error("cannot open bmap signature file '%s': %s" %
                       (args.bmap_sig, str(err)))
@@ -129,11 +131,11 @@ def verify_detached_bmap_signature(args, bmap_obj, bmap_path, log):
         # Check if there is a stand-alone signature file
         try:
             sig_path = bmap_path + ".asc"
-            sig_obj = TransRead.TransRead(sig_path, log=log)
+            sig_obj = TransRead.TransRead(sig_path)
         except TransRead.Error:
             try:
                 sig_path = bmap_path + ".sig"
-                sig_obj = TransRead.TransRead(sig_path, log=log)
+                sig_obj = TransRead.TransRead(sig_path)
             except TransRead.Error:
                 # No signatures found
                 return None
@@ -179,11 +181,11 @@ def verify_detached_bmap_signature(args, bmap_obj, bmap_path, log):
         log.warning("the \"%s\" signature file does not actually contain "
                     "any valid signatures" % sig_path)
     else:
-        report_verification_results(context, sigs, log)
+        report_verification_results(context, sigs)
 
     return None
 
-def verify_clearsign_bmap_signature(args, bmap_obj, log):
+def verify_clearsign_bmap_signature(args, bmap_obj):
     """
     This is a helper function for 'verify_bmap_signature()' which handles the
     clarsign signature case.
@@ -219,7 +221,7 @@ def verify_clearsign_bmap_signature(args, bmap_obj, log):
             log.warning("the bmap file clearsign signature does not actually "
                         "contain any valid signatures")
         else:
-            report_verification_results(context, sigs, log)
+            report_verification_results(context, sigs)
 
     try:
         tmp_obj = tempfile.TemporaryFile("w+")
@@ -231,7 +233,7 @@ def verify_clearsign_bmap_signature(args, bmap_obj, log):
     tmp_obj.seek(0)
     return tmp_obj
 
-def verify_bmap_signature(args, bmap_obj, bmap_path, log):
+def verify_bmap_signature(args, bmap_obj, bmap_path):
     """
     Verify GPG signature of the bmap file if it is present. The signature may
     be in a separate file (detached) or it may be inside the bmap file itself
@@ -262,12 +264,12 @@ def verify_bmap_signature(args, bmap_obj, bmap_path, log):
     bmap_obj.seek(0)
 
     if buf == clearsign_marker:
-        return verify_clearsign_bmap_signature(args, bmap_obj, log)
+        return verify_clearsign_bmap_signature(args, bmap_obj)
     else:
-        return verify_detached_bmap_signature(args, bmap_obj, bmap_path, log)
+        return verify_detached_bmap_signature(args, bmap_obj, bmap_path)
 
 
-def find_and_open_bmap(args, log):
+def find_and_open_bmap(args):
     """
     This is a helper function for 'open_files()' which discovers and opens the
     bmap file, then returns the corresponding file object and the bmap file
@@ -291,7 +293,7 @@ def find_and_open_bmap(args, log):
 
     if args.bmap:
         try:
-            bmap_obj = TransRead.TransRead(args.bmap, log=log)
+            bmap_obj = TransRead.TransRead(args.bmap)
         except TransRead.Error as err:
             log.error("cannot open bmap file '%s': %s" % (args.bmap, str(err)))
             raise SystemExit(1)
@@ -302,7 +304,7 @@ def find_and_open_bmap(args, log):
         while True:
             bmap_path = image_path + ".bmap"
             try:
-                bmap_obj = TransRead.TransRead(bmap_path, log=log)
+                bmap_obj = TransRead.TransRead(bmap_path)
                 log.info("discovered bmap file '%s'" % bmap_path)
                 break
             except TransRead.Error:
@@ -329,7 +331,7 @@ def find_and_open_bmap(args, log):
     bmap_obj.close()
     return (tmp_obj, bmap_path)
 
-def open_files(args, log):
+def open_files(args):
     """
     This is a helper function for 'copy_command()' which the image, bmap, and
     the destination files. Returns a tuple of 5 elements:
@@ -344,14 +346,14 @@ def open_files(args, log):
     # Open the image file using the TransRead module, which will automatically
     # recognize whether it is compressed or whether file path is an URL, etc.
     try:
-        image_obj = TransRead.TransRead(args.image, log=log)
+        image_obj = TransRead.TransRead(args.image)
     except TransRead.Error as err:
         log.error("cannot open image: %s" % str(err))
         raise SystemExit(1)
 
     # Open the bmap file. Try to discover the bmap file automatically if it
     # was not specified.
-    (bmap_obj, bmap_path) = find_and_open_bmap(args, log)
+    (bmap_obj, bmap_path) = find_and_open_bmap(args)
 
     if bmap_path == args.image:
         # Most probably the specified the bmap file instead of the image file
@@ -391,13 +393,13 @@ def open_files(args, log):
     dest_is_blkdev = stat.S_ISBLK(os.fstat(dest_obj.fileno()).st_mode)
     if dest_is_blkdev:
         dest_obj.close()
-        dest_obj = open_block_device(args.dest, log)
+        dest_obj = open_block_device(args.dest)
 
     return (image_obj, dest_obj, bmap_obj, bmap_path, image_obj.size,
             dest_is_blkdev)
 
 
-def copy_command(args, log):
+def copy_command(args):
     """Copy an image to a block device or a regular file using bmap."""
 
     if args.nobmap and args.bmap:
@@ -409,14 +411,14 @@ def copy_command(args, log):
         raise SystemExit(1)
 
     image_obj, dest_obj, bmap_obj, bmap_path, image_size, dest_is_blkdev = \
-                                                   open_files(args, log)
+                                                   open_files(args)
 
     if args.bmap_sig and not bmap_obj:
         log.error("the bmap signature file was specified, but bmap file "
                   "was not found")
         raise SystemExit(1)
 
-    f_obj = verify_bmap_signature(args, bmap_obj, bmap_path, log)
+    f_obj = verify_bmap_signature(args, bmap_obj, bmap_path)
     if f_obj:
         bmap_obj.close()
         bmap_obj = f_obj
@@ -429,11 +431,11 @@ def copy_command(args, log):
             dest_str = "block device '%s'" % args.dest
             # For block devices, use the specialized class
             writer = BmapCopy.BmapBdevCopy(image_obj, dest_obj, bmap_obj,
-                                           image_size, log=log)
+                                           image_size)
         else:
             dest_str = "file '%s'" % os.path.basename(args.dest)
             writer = BmapCopy.BmapCopy(image_obj, dest_obj, bmap_obj,
-                                       image_size, log=log)
+                                       image_size)
     except BmapCopy.Error as err:
         log.error(str(err))
         raise SystemExit(1)
@@ -489,7 +491,7 @@ def copy_command(args, log):
         bmap_obj.close()
     image_obj.close()
 
-def create_command(args, log):
+def create_command(args):
     """
     Generate block map (AKA bmap) for an image. The idea is that while images
     files may generally be very large (e.g., 4GiB), they may nevertheless
@@ -532,7 +534,7 @@ def create_command(args, log):
             raise SystemExit(1)
 
     try:
-        creator = BmapCreate.BmapCreate(args.image, output, "sha256", log)
+        creator = BmapCreate.BmapCreate(args.image, output, "sha256")
         creator.generate(not args.no_checksum)
     except BmapCreate.Error as err:
         log.error(str(err))
@@ -627,8 +629,8 @@ def parse_arguments():
 
 def setup_logger(loglevel):
     """
-    A helper function which sets up and configures the logger. The log level is
-    initialized to 'loglevel'. Returns the logger object.
+    A helper function which configures the root logger. The log level is
+    initialized to 'loglevel'.
     """
 
     # Esc-sequences for coloured output
@@ -666,21 +668,18 @@ def setup_logger(loglevel):
             self._fmt = self._orig_fmt
             return result
 
-    # Change log level names to something less nicer than the default
-    # all-capital 'INFO' etc.
+    # Change log level names to something nicer than the default all-capital
+    # 'INFO' etc.
     logging.addLevelName(logging.ERROR, esc_red + "ERROR" + esc_end)
     logging.addLevelName(logging.WARNING, esc_yellow + "WARNING" + esc_end)
     logging.addLevelName(logging.DEBUG, "debug")
     logging.addLevelName(logging.INFO, "info")
 
-    log = logging.getLogger('bmap-logger')
     log.setLevel(loglevel)
     formatter = MyFormatter("bmaptool: %(levelname)s: %(message)s", "%H:%M:%S")
     where = logging.StreamHandler(sys.stderr)
     where.setFormatter(formatter)
     log.addHandler(where)
-
-    return log
 
 def main():
     """Script entry point."""
@@ -693,14 +692,14 @@ def main():
     else:
         loglevel = logging.INFO
 
-    log = setup_logger(loglevel)
+    setup_logger(loglevel)
 
     if args.quiet and args.debug:
         log.error("--quiet and --debug cannot be used together")
         raise SystemExit(1)
 
     try:
-        args.func(args, log)
+        args.func(args)
     except MemoryError:
         log.error("Out of memory!")
         traceback.print_exc()
