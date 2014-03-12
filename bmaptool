@@ -14,32 +14,9 @@
 # General Public License for more details.
 
 """
-This is a tool to generate block map files (bmap) and to copy files using bmap.
-Generally speaking, these tools are about writing large image files quickly.
-
-The bmap file is an XML file which contains a list of mapped blocks of the
-image. Mapped blocks are the blocks which have disk sectors associated with
-them, as opposed to holes, which are blocks with no associated disk sectors. In
-other words, the image is considered to be a sparse file, and bmap basically
-contains a list of mapped blocks of this sparse file. The bmap additionally
-contains some useful information like block size (usually 4KiB), image size,
-mapped blocks count, etc.
-
-The bmap is used for copying the image to a block device or to a regular file.
-The idea is that we copy quickly with bmap because we copy only mapped blocks
-and ignore the holes, because they are useless. And if the image is generated
-properly (starting with a huge hole and writing all the data), it usually
-contains only little mapped blocks, comparing to the overall image size. And
-such an image compresses very well (because holes are read as all zeroes), so
-it is beneficial to distribute them as compressed files along with the bmap.
-
-Here is an example. Suppose you have a 4GiB image which contains only 100MiB of
-user data and you need to flash it to a slow USB stick. With bmap you end up
-copying only a little bit more than 100MiB of data from the image to the USB
-stick (namely, you write only mapped blocks). This is a lot faster than copying
-all 4GiB of data. We say that it is a bit more than 100MiB because things like
-file-system meta-data (inode tables, superblocks, etc), partition table, etc
-also contribute to the mapped blocks and are also copied.
+A tool for creating block maps (bmap) and copying disk images using bmap files.
+Documentation can be found here:
+source.tizen.org/documentation/reference/bmaptool
 """
 
 # Disable the following pylint recommendations:
@@ -573,9 +550,7 @@ def create_command(args, log):
 
 def parse_arguments():
     """A helper function which parses the input arguments."""
-    text = "Create block map (bmap) and copy files using bmap. The " \
-           "documentation can be found here: " \
-           "source.tizen.org/documentation/reference/bmaptool"
+    text = sys.modules[__name__].__doc__
     parser = argparse.ArgumentParser(description = text, prog = 'bmaptool')
 
     # The --version option
