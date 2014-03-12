@@ -8,3 +8,6 @@ Current TODO list, any help with these is appreciated.
    file too.
 5. Use __author__ and __version__ in bmaptool, and import them from
    'setup.py'
+6. Move all the documentation from tizen.org to 01.org
+7. Make sure the web documentation describes all features of releases starting
+   from 3.1.
