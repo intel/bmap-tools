@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2013 Intel, Inc.
+# Copyright (c) 2012-2014 Intel, Inc.
 # License: GPLv2
 # Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 #

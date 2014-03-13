@@ -1,4 +1,6 @@
-# Copyright (c) 2012 Intel, Inc.
+# Copyright (c) 2012-2014 Intel, Inc.
+# License: GPLv2
+# Author: Artem Bityutskiy <artem.bityutskiy@linux.intel.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2,
