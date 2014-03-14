@@ -35,7 +35,7 @@ import tempfile
 import logging
 from bmaptools import BmapHelpers
 
-_log = logging.getLogger(__name__)
+_log = logging.getLogger(__name__) # pylint: disable=C0103
 
 class ErrorNotSupp(Exception):
     """

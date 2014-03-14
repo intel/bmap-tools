@@ -67,7 +67,7 @@ import datetime
 from xml.etree import ElementTree
 from bmaptools.BmapHelpers import human_size
 
-_log = logging.getLogger(__name__)
+_log = logging.getLogger(__name__) # pylint: disable=C0103
 
 # The highest supported bmap format version
 SUPPORTED_BMAP_VERSION = 2

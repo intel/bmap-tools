@@ -43,7 +43,7 @@ import shutil
 import io
 from bmaptools import BmapCreate, BmapCopy, BmapHelpers, TransRead
 
-log = logging.getLogger()
+log = logging.getLogger() # pylint: disable=C0103
 
 class NamedFile(object):
     """

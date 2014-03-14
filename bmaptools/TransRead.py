@@ -32,7 +32,7 @@ import threading
 import subprocess
 from bmaptools import BmapHelpers
 
-_log = logging.getLogger(__name__)
+_log = logging.getLogger(__name__) # pylint: disable=C0103
 
 # Disable the following pylint errors and recommendations:
 #   * Instance of X has no member Y (E1101), because it produces
