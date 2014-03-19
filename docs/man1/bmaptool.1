@@ -9,7 +9,7 @@ bmaptool - create block map (bmap) for a file or copy a file using bmap
 
 .PP
 .B bmaptool
-[\-\-help] [\-\-version] [\-\-quiet] [\-\-debug] <subcommand> [<options>] <args>
+[\-\-help] [\-\-version] [\-\-quiet] [\-\-debug] <command> [<options>] <args>
 
 .SH DESCRIPTION
 
@@ -20,7 +20,7 @@ system image files, can be copied or flashed a lot faster with \fIbmaptool\fR th
 with traditional tools, like "dd" or "cp".
 
 .PP
-\fIBmaptool\fR supports 2 subcommands:
+\fIBmaptool\fR supports 2 commands:
 .RS 2
 1. \fBcopy\fR - copy a file to another file using bmap or flash an image to a block device
 .RE
@@ -164,7 +164,7 @@ signature verification can be disabled using the "--no-sig-verify" option.
 .RS 2
 \-h, \-\-help
 .RS 2
-Print short help text about the "copy" subcommand and exit.
+Print short help text about the "copy" command and exit.
 .RE
 
 .PP
@@ -243,7 +243,7 @@ from "imag.bmap.asc".
 .SS \fBcreate\fR [options] IMAGE
 
 .PP
-Generate bmap for a regular file IMAGE. Internally, this subcommand uses the
+Generate bmap for a regular file IMAGE. Internally, this command uses the
 Linux "FIEMAP" ioctl to find out which IMAGE blocks are mapped. However, if
 "FIEMAP" is not supported, the "SEEK_HOLE" feature of the "lseek" system call
 is used instead. By default, the resulting bmap file is printed to stdout,
@@ -266,7 +266,7 @@ The image file can further be signed using OpenPGP.
 .RS 2
 \-h, \-\-help
 .RS 2
-Print short help text about the "create" subcommand and exit.
+Print short help text about the "create" command and exit.
 .RE
 
 .PP
