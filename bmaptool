@@ -555,41 +555,40 @@ def create_command(args):
 def parse_arguments():
     """A helper function which parses the input arguments."""
     text = sys.modules[__name__].__doc__
-    parser = argparse.ArgumentParser(description = text, prog = 'bmaptool')
+    parser = argparse.ArgumentParser(description=text, prog='bmaptool')
 
     # The --version option
-    parser.add_argument("--version", action = "version",
+    parser.add_argument("--version", action="version",
                         version = "%(prog)s " + "%s" % VERSION)
 
     # The --quiet option
     text = "be quiet"
-    parser.add_argument("-q", "--quiet", action = "store_true", help = text)
+    parser.add_argument("-q", "--quiet", action="store_true", help=text)
 
     # The --debug option
     text = "print debugging information"
-    parser.add_argument("-d", "--debug", action = "store_true", help = text)
+    parser.add_argument("-d", "--debug", action="store_true", help=text)
 
-    subparsers = parser.add_subparsers(title = "commands")
+    subparsers = parser.add_subparsers(title="commands")
 
     #
     # Create parser for the "create" command
     #
     text = "generate bmap for an image file (which should be a sparse file)"
-    parser_create = subparsers.add_parser("create", help = text)
-    parser_create.set_defaults(func = create_command)
+    parser_create = subparsers.add_parser("create", help=text)
+    parser_create.set_defaults(func=create_command)
 
     # Mandatory command-line argument - image file
     text = "the image to generate bmap for"
-    parser_create.add_argument("image", help = text)
+    parser_create.add_argument("image", help=text)
 
     # The --output option
     text = "the output file name (otherwise stdout is used)"
-    parser_create.add_argument("-o", "--output", help = text)
+    parser_create.add_argument("-o", "--output", help=text)
 
     # The --no-checksum option
     text = "do not generate the checksum for block ranges in the bmap"
-    parser_create.add_argument("--no-checksum", action="store_true",
-                               help = text)
+    parser_create.add_argument("--no-checksum", action="store_true", help=text)
 
     #
     # Create parser for the "copy" command
