@@ -21,9 +21,12 @@ Source0: %{name}_%{version}.tar.gz
 Requires: bzip2
 Requires: pbzip2
 Requires: gzip
-Requires: pigz
 Requires: xz
 Requires: tar
+%if ! 0%{?tizen_version:1}
+# pigz is not present in Tizen
+Requires: pigz
+%endif
 
 %if 0%{?suse_version}
 %if 0%{?suse_version} > 1210
