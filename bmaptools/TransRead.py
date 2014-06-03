@@ -342,16 +342,23 @@ class TransRead(object):
             args = archiver + " " + args
         else:
             args = decompressor + " " + args
+
+        if hasattr(self._f_objs[-1], 'fileno'):
+            child_stdin = self._f_objs[-1].fileno()
+        else:
+            child_stdin = subprocess.PIPE
+
         child_process = subprocess.Popen(args, shell=True,
                                          bufsize=1024*1024,
-                                         stdin=subprocess.PIPE,
+                                         stdin=child_stdin,
                                          stdout=subprocess.PIPE,
                                          stderr=subprocess.PIPE)
 
-        args = (self._f_objs[-1], child_process.stdin, )
-        self._rthread = threading.Thread(target=self._read_thread, args=args)
-        self._rthread.daemon = True
-        self._rthread.start()
+        if child_stdin == subprocess.PIPE:
+            args = (self._f_objs[-1], child_process.stdin, )
+            self._rthread = threading.Thread(target=self._read_thread, args=args)
+            self._rthread.daemon = True
+            self._rthread.start()
 
         self._force_fake_seek = True
         self._f_objs.append(child_process.stdout)
