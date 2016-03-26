@@ -29,8 +29,6 @@ source.tizen.org/documentation/reference/bmaptool
 # pylint: disable=R0915
 # pylint: disable=R0912
 
-VERSION = "3.2"
-
 import argparse
 import sys
 import os
@@ -43,7 +41,10 @@ import shutil
 import io
 from bmaptools import BmapCreate, BmapCopy, BmapHelpers, TransRead
 
-log = logging.getLogger() # pylint: disable=C0103
+VERSION = "3.2"
+
+log = logging.getLogger()  # pylint: disable=C0103
+
 
 class NamedFile(object):
     """
@@ -60,6 +61,7 @@ class NamedFile(object):
 
     def __getattr__(self, name):
         return getattr(self._file_obj, name)
+
 
 def open_block_device(path):
     """
@@ -92,6 +94,7 @@ def open_block_device(path):
 
     return NamedFile(file_obj, path)
 
+
 def report_verification_results(context, sigs):
     """
     This is a helper function which reports the GPG signature verification
@@ -111,6 +114,7 @@ def report_verification_results(context, sigs):
             log.error("either fix the problem or use --no-sig-verify"
                       "to disable signature verification")
             raise SystemExit(1)
+
 
 def verify_detached_bmap_signature(args, bmap_obj, bmap_path):
     """
@@ -187,6 +191,7 @@ def verify_detached_bmap_signature(args, bmap_obj, bmap_path):
 
     return None
 
+
 def verify_clearsign_bmap_signature(args, bmap_obj):
     """
     This is a helper function for 'verify_bmap_signature()' which handles the
@@ -234,6 +239,7 @@ def verify_clearsign_bmap_signature(args, bmap_obj):
     tmp_obj.write(plaintext.getvalue())
     tmp_obj.seek(0)
     return tmp_obj
+
 
 def verify_bmap_signature(args, bmap_obj, bmap_path):
     """
@@ -333,6 +339,7 @@ def find_and_open_bmap(args):
     bmap_obj.close()
     return (tmp_obj, bmap_path)
 
+
 def open_files(args):
     """
     This is a helper function for 'copy_command()' which the image, bmap, and
@@ -342,7 +349,7 @@ def open_files(args):
         3 file-like object for the bmap
         4 full path to the bmap file
         5 image size in bytes
-        6 'True' if the destination file is a block device and 'False' otherwise
+        6 'True' if the destination file is a block device, otherwise 'False'
     """
 
     # Open the image file using the TransRead module, which will automatically
@@ -375,10 +382,10 @@ def open_files(args):
     # the destination file is not a special device for some reasons.
     if os.path.normpath(args.dest).startswith("/dev/"):
         if not os.path.exists(args.dest):
-            log.warning("\"%s\" does not exist, creating a regular file " \
+            log.warning("\"%s\" does not exist, creating a regular file "
                         "\"%s\"" % (args.dest, args.dest))
         elif stat.S_ISREG(os.stat(args.dest).st_mode):
-            log.warning("\"%s\" is under \"/dev\", but it is a regular file, " \
+            log.warning("\"%s\" is under \"/dev\", but it is a regular file, "
                         "not a device node" % args.dest)
 
     # Try to open the destination file. If it does not exist, a new regular
@@ -413,7 +420,7 @@ def copy_command(args):
         raise SystemExit(1)
 
     image_obj, dest_obj, bmap_obj, bmap_path, image_size, dest_is_blkdev = \
-                                                   open_files(args)
+        open_files(args)
 
     if args.bmap_sig and not bmap_obj:
         log.error("the bmap signature file was specified, but bmap file "
@@ -493,6 +500,7 @@ def copy_command(args):
         bmap_obj.close()
     image_obj.close()
 
+
 def create_command(args):
     """
     Generate block map (AKA bmap) for an image. The idea is that while images
@@ -552,6 +560,7 @@ def create_command(args):
         log.warning("was the image handled incorrectly and holes "
                     "were expanded?")
 
+
 def parse_arguments():
     """A helper function which parses the input arguments."""
     text = sys.modules[__name__].__doc__
@@ -559,7 +568,7 @@ def parse_arguments():
 
     # The --version option
     parser.add_argument("--version", action="version",
-                        version = "%(prog)s " + "%s" % VERSION)
+                        version="%(prog)s " + "%s" % VERSION)
 
     # The --quiet option
     text = "be quiet"
@@ -628,6 +637,7 @@ def parse_arguments():
 
     return parser.parse_args()
 
+
 def setup_logger(loglevel):
     """
     A helper function which configures the root logger. The log level is
@@ -635,10 +645,10 @@ def setup_logger(loglevel):
     """
 
     # Esc-sequences for coloured output
-    esc_red = '\033[91m'    # pylint: disable=W1401
-    esc_yellow = '\033[93m' # pylint: disable=W1401
-    esc_green = '\033[92m' # pylint: disable=W1401
-    esc_end = '\033[0m'     # pylint: disable=W1401
+    esc_red = '\033[91m'     # pylint: disable=W1401
+    esc_yellow = '\033[93m'  # pylint: disable=W1401
+    esc_green = '\033[92m'   # pylint: disable=W1401
+    esc_end = '\033[0m'      # pylint: disable=W1401
 
     class MyFormatter(logging.Formatter):
         """
@@ -681,6 +691,7 @@ def setup_logger(loglevel):
     where = logging.StreamHandler(sys.stderr)
     where.setFormatter(formatter)
     log.addHandler(where)
+
 
 def main():
     """Script entry point."""
