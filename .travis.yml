@@ -1,0 +1,26 @@
+language: python
+python:
+  - "2.6"
+  - "2.7"
+# bmap-tools don't support 3.x yet, thus disable.
+# pypy 2.x currently also disabled, until testing fixed.
+#  - "3.2"
+#  - "3.3"
+#  - "3.4"
+#  - "3.5"
+#  - "3.5-dev" # 3.5 development branch
+#  - "nightly" # currently points to 3.6-dev
+#  - "pypy"
+#  - "pypy3"
+# command to install dependencies
+install:
+  - pip install nose-cov
+  - pip install .
+# command to run tests
+script: nosetests --with-cov --verbosity=3 -s
+# Don't bug people yet
+notifications:
+  email: false
+# bmap-tools at the moment can't run on xfs inside docker container
+sudo: required
+dist: trusty
