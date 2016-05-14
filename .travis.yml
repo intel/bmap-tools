@@ -14,10 +14,12 @@ python:
 #  - "pypy3"
 # command to install dependencies
 install:
-  - pip install nose-cov
+  - pip install codecov
   - pip install .
 # command to run tests
-script: nosetests --with-cov --verbosity=3 -s | cat
+script: python setup.py nosetests --with-coverage --cover-xml
+after_success:
+  - codecov
 # Don't bug people yet
 notifications:
   email: false
