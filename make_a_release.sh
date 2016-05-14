@@ -94,8 +94,8 @@ ask_question "Did you update tests: test-data and oldcodebase"
 # Make sure the git index is up-to-date
 [ -z "$(git status --porcelain)" ] || fatal "git index is not up-to-date"
 
-# Change the version in the 'bmaptool' file
-sed -i -e "s/^VERSION = \"[0-9]\+\.[0-9]\+\"$/VERSION = \"$new_ver\"/" bmaptool
+# Change the version in the 'bmaptools/CLI.py' file
+sed -i -e "s/^VERSION = \"[0-9]\+\.[0-9]\+\"$/VERSION = \"$new_ver\"/" bmaptools/CLI.py
 # Sed the version in the RPM spec file
 sed -i -e "s/^Version: [0-9]\+\.[0-9]\+$/Version: $new_ver/" packaging/bmap-tools.spec
 # Remove the "rc_num" macro from the RPM spec file to make sure we do not have

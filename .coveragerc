@@ -1,3 +1,2 @@
 [run]
-include = bmaptool
-          bmaptools/*
+include = bmaptools/*
