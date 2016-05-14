@@ -17,7 +17,7 @@ install:
   - pip install nose-cov
   - pip install .
 # command to run tests
-script: nosetests --with-cov --verbosity=3 -s
+script: nosetests --with-cov --verbosity=3 -s | cat
 # Don't bug people yet
 notifications:
   email: false
