@@ -28,6 +28,7 @@ import random
 import itertools
 import hashlib
 import sys
+import os
 from bmaptools import BmapHelpers, BmapCopy, TransRead
 
 def _create_random_sparse_file(file_obj, size):
@@ -286,7 +287,7 @@ def copy_and_verify_image(image, dest, bmap, image_chksum, image_size):
 
     writer = BmapCopy.BmapCopy(f_image, f_dest, f_bmap, image_size)
     # Randomly decide whether we want the progress bar or not
-    if bool(random.getrandbits(1)):
+    if bool(random.getrandbits(1)) and os.isatty(sys.stdout.fileno()):
         writer.set_progress_indicator(sys.stdout, None)
     writer.copy(bool(random.getrandbits(1)), bool(random.getrandbits(1)))
 
