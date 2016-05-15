@@ -23,6 +23,3 @@ after_success:
 # Don't bug people yet
 notifications:
   email: false
-# bmap-tools at the moment can't run on xfs inside docker container
-sudo: required
-dist: trusty

@@ -555,6 +555,15 @@ class BmapCopy(object):
         self._progress_index = 0
         self._progress_time = datetime.datetime.now()
 
+        if self.image_size and self._dest_is_regfile:
+            # If we already know image size, make sure that destination file
+            # has the same size as the image
+            try:
+                os.ftruncate(self._f_dest.fileno(), self.image_size)
+            except OSError as err:
+                raise Error("cannot truncate file '%s': %s"
+                            % (self._dest_path, err))
+
         # Read the image in '_batch_blocks' chunks and write them to the
         # destination file
         while True:

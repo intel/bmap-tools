@@ -40,7 +40,7 @@ def _create_random_sparse_file(file_obj, size):
          'Filemap.get_unmapped_ranges()'
     """
 
-    file_obj.truncate(0)
+    file_obj.truncate(size)
     block_size = BmapHelpers.get_block_size(file_obj)
     blocks_cnt = (size + block_size - 1) / block_size
 
@@ -60,8 +60,6 @@ def _create_random_sparse_file(file_obj, size):
             assert seek + write <= block_size
             file_obj.seek(block * block_size + seek)
             file_obj.write(chr(random.getrandbits(8)) * write)
-        else:
-            file_obj.truncate(block * block_size)
 
         return map_the_block
 
