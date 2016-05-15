@@ -31,6 +31,7 @@ import sys
 import os
 from bmaptools import BmapHelpers, BmapCopy, TransRead
 
+
 def _create_random_sparse_file(file_obj, size):
     """
     Create a sparse file with randomly distributed holes. The mapped areas are
@@ -84,6 +85,7 @@ def _create_random_sparse_file(file_obj, size):
 
     return (mapped, unmapped)
 
+
 def _create_random_file(file_obj, size):
     """
     Fill the 'file_obj' file object with semi-random data up to the size 'size'.
@@ -101,7 +103,8 @@ def _create_random_file(file_obj, size):
 
     file_obj.flush()
 
-def generate_test_files(max_size=4*1024*1024, directory=None, delete=True):
+
+def generate_test_files(max_size=4 * 1024 * 1024, directory=None, delete=True):
     """
     This is a generator which yields files which other tests use as the input
     for the testing. The generator tries to yield "interesting" files which
@@ -162,7 +165,7 @@ def generate_test_files(max_size=4*1024*1024, directory=None, delete=True):
         size = random.randint(1, max_size)
         file_obj = tempfile.NamedTemporaryFile("wb+", suffix=".img",
                                                delete=delete, dir=directory,
-                                               prefix="rand_hole_%d_"%i)
+                                               prefix="rand_hole_%d_" % i)
         file_obj.truncate(size)
         blocks_cnt = (size + block_size - 1) / block_size
         yield (file_obj, size, [], [(0, blocks_cnt - 1)])
@@ -201,7 +204,7 @@ def generate_test_files(max_size=4*1024*1024, directory=None, delete=True):
         size = random.randint(1, max_size)
         file_obj = tempfile.NamedTemporaryFile("wb+", suffix=".img",
                                                delete=delete, dir=directory,
-                                               prefix="sparse_%d_"%i)
+                                               prefix="sparse_%d_" % i)
         mapped, unmapped = _create_random_sparse_file(file_obj, size)
         yield (file_obj, size, mapped, unmapped)
         file_obj.close()
@@ -253,13 +256,14 @@ def generate_test_files(max_size=4*1024*1024, directory=None, delete=True):
         yield (file_obj, size, [(0, blocks_cnt - 1)], [])
         file_obj.close()
 
+
 def calculate_chksum(file_path):
     """Calculates checksum for the contents of file 'file_path'."""
 
     file_obj = TransRead.TransRead(file_path)
     hash_obj = hashlib.new("sha256")
 
-    chunk_size = 1024*1024
+    chunk_size = 1024 * 1024
 
     while True:
         chunk = file_obj.read(chunk_size)
@@ -269,6 +273,7 @@ def calculate_chksum(file_path):
 
     file_obj.close()
     return hash_obj.hexdigest()
+
 
 def copy_and_verify_image(image, dest, bmap, image_chksum, image_size):
     """

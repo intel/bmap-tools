@@ -18,6 +18,7 @@
 This module contains various shared helper functions.
 """
 
+
 def human_size(size):
     """Transform size in bytes into a human-readable form."""
     if size == 1:
@@ -33,6 +34,7 @@ def human_size(size):
 
     return "%.1f %s" % (size, 'EiB')
 
+
 def human_time(seconds):
     """Transform time in seconds to the HH:MM:SS format."""
     (minutes, seconds) = divmod(seconds, 60)
@@ -45,6 +47,7 @@ def human_time(seconds):
         result += "%dm " % minutes
 
     return result + "%.1fs" % seconds
+
 
 def get_block_size(file_obj):
     """
@@ -59,6 +62,7 @@ def get_block_size(file_obj):
     # the FIGETBSZ ioctl (number 2).
     binary_data = ioctl(file_obj, 2, struct.pack('I', 0))
     return struct.unpack('I', binary_data)[0]
+
 
 def program_is_available(name):
     """

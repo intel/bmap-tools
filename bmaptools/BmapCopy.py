@@ -67,10 +67,11 @@ import datetime
 from xml.etree import ElementTree
 from bmaptools.BmapHelpers import human_size
 
-_log = logging.getLogger(__name__) # pylint: disable=C0103
+_log = logging.getLogger(__name__)  # pylint: disable=C0103
 
 # The highest supported bmap format version
 SUPPORTED_BMAP_VERSION = 2
+
 
 class Error(Exception):
     """
@@ -79,6 +80,7 @@ class Error(Exception):
     problem description in case of errors.
     """
     pass
+
 
 class BmapCopy(object):
     """
@@ -260,7 +262,7 @@ class BmapCopy(object):
         # value stored in the file with all zeroes. For these purposes we
         # create private memory mapping of the bmap file.
         mapped_bmap = mmap.mmap(self._f_bmap.fileno(), 0,
-                                access = mmap.ACCESS_COPY)
+                                access=mmap.ACCESS_COPY)
 
         chksum_pos = mapped_bmap.find(correct_chksum)
         assert chksum_pos != -1
@@ -285,7 +287,7 @@ class BmapCopy(object):
 
         try:
             self._xml = ElementTree.parse(self._f_bmap)
-        except  ElementTree.ParseError as err:
+        except ElementTree.ParseError as err:
             # Extrace the erroneous line with some context
             self._f_bmap.seek(0)
             xml_extract = ""
@@ -395,7 +397,7 @@ class BmapCopy(object):
         # exception - the error message will start form new line.
         if self._progress_started:
             # The "move cursor up" escape sequence
-            self._progress_file.write('\033[1A') # pylint: disable=W1401
+            self._progress_file.write('\033[1A')  # pylint: disable=W1401
         else:
             self._progress_started = True
 
@@ -717,8 +719,8 @@ class BmapBdevCopy(BmapCopy):
                 f_scheduler.seek(0)
                 f_scheduler.write("noop")
         except IOError as err:
-            _log.warning("failed to enable I/O optimization, expect " \
-                         "suboptimal speed (reason: cannot switch to the " \
+            _log.warning("failed to enable I/O optimization, expect "
+                         "suboptimal speed (reason: cannot switch to the "
                          "'noop' I/O scheduler: %s)" % err)
         else:
             # The file contains a list of schedulers with the current

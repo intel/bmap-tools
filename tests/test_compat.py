@@ -35,7 +35,7 @@ from bmaptools import TransRead, BmapCopy
 
 # This is a work-around for Centos 6
 try:
-    import unittest2 as unittest # pylint: disable=F0401
+    import unittest2 as unittest  # pylint: disable=F0401
 except ImportError:
     import unittest
 
@@ -47,6 +47,7 @@ _BMAP_TEMPL = "test.image.bmap.v"
 _TEST_DATA_SUBDIR = "test-data"
 # Name of the subdirectory where old BmapCopy modules are stored
 _OLDCODEBASE_SUBDIR = "oldcodebase"
+
 
 class TestCompat(unittest.TestCase):
     """The test class for this unit test."""
@@ -67,9 +68,9 @@ class TestCompat(unittest.TestCase):
 
         # Create and open a temporary file for uncompressed image and its copy
         self._f_image = tempfile.NamedTemporaryFile("wb+", prefix=_IMAGE_NAME,
-                                                   suffix=".image")
+                                                    suffix=".image")
         self._f_copy = tempfile.NamedTemporaryFile("wb+", prefix=_IMAGE_NAME,
-                                                  suffix=".copy")
+                                                   suffix=".copy")
 
         # Uncompress the test image into 'self._f_image'
         f_tmp_img = TransRead.TransRead(image_path)
@@ -110,8 +111,7 @@ class TestCompat(unittest.TestCase):
         old_modules = []
         for dentry in os.listdir(oldcodebase_dir):
             if dentry.startswith("BmapCopy") and dentry.endswith(".py"):
-                old_modules.append("tests." + _OLDCODEBASE_SUBDIR + "."
-                                   + dentry[:-3])
+                old_modules.append("tests." + _OLDCODEBASE_SUBDIR + "." + dentry[:-3])
 
         for old_module in old_modules:
             modref = import_module(old_module)
@@ -141,7 +141,7 @@ class TestCompat(unittest.TestCase):
             if supported_ver >= bmap_version:
                 writer = old_bmapcopy_class(self._f_image, self._f_copy, f_bmap)
                 writer.copy(True, True)
-        except: # pylint: disable=W0702
+        except:  # pylint: disable=W0702
             if supported_ver >= bmap_version_major:
                 # The BmapCopy which we are testing is supposed to support this
                 # version of bmap file format. However, bmap format version 1.4
