@@ -15,7 +15,7 @@ Release: %{rc_str}.0.0
 Group: Development/Tools/Other
 License: GPL-2.0
 BuildArch: noarch
-URL: http://www.tizen.org
+URL: https://github.com/01org/bmap-tools
 Source0: %{name}_%{version}.tar.gz
 
 Requires: bzip2
@@ -23,6 +23,7 @@ Requires: pbzip2
 Requires: gzip
 Requires: xz
 Requires: tar
+Requires: unzip
 %if ! 0%{?tizen_version:1}
 # pigz is not present in Tizen
 Requires: pigz

@@ -21,7 +21,7 @@ them on-the-fly if needed. Remote files are read using urllib2 (except of
 'bz2', 'gz', 'xz', 'lzo' and a "tar" version of them: 'tar.bz2', 'tbz2', 'tbz',
 'tb2', 'tar.gz', 'tgz', 'tar.xz', 'txz', 'tar.lzo', 'tzo'. This module uses
 the following system programs for decompressing: pbzip2, bzip2, gzip, pigz, xz,
-lzop, and tar.
+lzop, tar and unzip.
 """
 
 import os
@@ -50,7 +50,7 @@ _log = logging.getLogger(__name__)  # pylint: disable=C0103
 
 # A list of supported compression types
 SUPPORTED_COMPRESSION_TYPES = ('bz2', 'gz', 'xz', 'lzo', 'tar.gz', 'tar.bz2',
-                               'tar.xz', 'tar.lzo')
+                               'tar.xz', 'tar.lzo', 'zip')
 
 
 def _fake_seek_forward(file_obj, cur_pos, offset, whence=os.SEEK_SET):
@@ -326,6 +326,10 @@ class TransRead(object):
             else:
                 archiver = "tar"
                 args = "-x --lzo -O"
+        elif self.name.endswith(".zip"):
+            self.compression_type = 'zip'
+            decompressor = "funzip"
+            args = ""
         else:
             if not self.is_url:
                 self.size = os.fstat(self._f_objs[-1].fileno()).st_size

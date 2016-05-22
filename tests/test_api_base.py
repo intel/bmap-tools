@@ -94,7 +94,8 @@ def _generate_compressed_files(file_path, delete=True):
                    ("bzip2", "tar", ".tar.bz2", "-c -j -O -P -C /"),
                    ("gzip",  "tar", ".tar.gz",  "-c -z -O -P -C /"),
                    ("xz",    "tar", ".tar.xz",  "-c -J -O -P -C /"),
-                   ("lzop",  "tar", ".tar.lzo", "-c --lzo -O -P -C /")]
+                   ("lzop",  "tar", ".tar.lzo", "-c --lzo -O -P -C /"),
+                   ("zip",   None,  ".zip",     "-q -j -")]
 
     for decompressor, archiver, suffix, options in compressors:
         if not BmapHelpers.program_is_available(decompressor):
