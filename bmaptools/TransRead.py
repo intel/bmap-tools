@@ -19,9 +19,9 @@ This module allows opening and reading local and remote files and decompress
 them on-the-fly if needed. Remote files are read using urllib2 (except of
 "ssh://" URLs, which are handled differently). Supported file extentions are:
 'bz2', 'gz', 'xz', 'lzo' and a "tar" version of them: 'tar.bz2', 'tbz2', 'tbz',
-'tb2', 'tar.gz', 'tgz', 'tar.xz', 'txz', 'tar.lzo', 'tzo'. This module uses
-the following system programs for decompressing: pbzip2, bzip2, gzip, pigz, xz,
-lzop, tar and unzip.
+'tb2', 'tar.gz', 'tgz', 'tar.xz', 'txz', 'tar.lzo', 'tzo', 'tar.lz4', 'tlz4'.
+This module uses the following system programs for decompressing: pbzip2, bzip2,
+gzip, pigz, xz, lzop, lz4, tar and unzip.
 """
 
 import os
@@ -49,8 +49,9 @@ _log = logging.getLogger(__name__)  # pylint: disable=C0103
 # pylint: disable=R0915
 
 # A list of supported compression types
-SUPPORTED_COMPRESSION_TYPES = ('bz2', 'gz', 'xz', 'lzo', 'tar.gz', 'tar.bz2',
-                               'tar.xz', 'tar.lzo', 'zip')
+SUPPORTED_COMPRESSION_TYPES = ('bz2', 'gz', 'xz', 'lzo', 'lz4', 'tar.gz',
+                               'tar.bz2', 'tar.xz', 'tar.lzo', 'tar.lz4',
+                               'zip')
 
 
 def _fake_seek_forward(file_obj, cur_pos, offset, whence=os.SEEK_SET):
@@ -245,6 +246,12 @@ class TransRead(object):
                 return True
             return False
 
+        def is_lz4(name):
+            """Returns 'True' if file 'name' is compressed with 'lz4'."""
+            if name.endswith('.lz4') and not name.endswith('.tar.lz4'):
+                return True
+            return False
+
         def is_tar_gz(name):
             """
             Returns 'True' if file 'name' is a tar archive compressed with
@@ -282,6 +289,16 @@ class TransRead(object):
             """
 
             if name.endswith('.tar.lzo') or name.endswith('.tzo'):
+                return True
+            return False
+
+        def is_tar_lz4(name):
+            """
+            Returns 'True' if file 'name' is a tar archive compressed with
+            'lz4'.
+            """
+
+            if name.endswith('.tar.lz4') or name.endswith('.tlz4'):
                 return True
             return False
 
@@ -330,6 +347,14 @@ class TransRead(object):
             self.compression_type = 'zip'
             decompressor = "funzip"
             args = ""
+        elif is_tar_lz4(self.name) or is_lz4(self.name):
+            self.compression_type = 'lz4'
+            decompressor = "lz4"
+            if is_lz4(self.name):
+                args = "-d -c"
+            else:
+                archiver = "tar"
+                args = "-x -Ilz4 -O"
         else:
             if not self.is_url:
                 self.size = os.fstat(self._f_objs[-1].fileno()).st_size
