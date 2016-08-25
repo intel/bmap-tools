@@ -19,6 +19,7 @@ Depends: python (>=2.7),
 	 gzip,
 	 pigz,
 	 lzop,
+	 liblz4-tool,
 	 xz-utils,
 	 tar,
 	 unzip
