@@ -23,3 +23,17 @@ after_success:
 # Don't bug people yet
 notifications:
   email: false
+
+# Perform testing also using optional compressors
+sudo: required
+dist: trusty
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y pbzip2 pigz lzop liblz4-tool
+# addons:
+#   apt:
+#     packages:
+#     - pbzip2
+#     - pigz
+#     - lzop
+#     - liblz4-tool
