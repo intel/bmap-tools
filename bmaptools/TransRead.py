@@ -376,7 +376,7 @@ class TransRead(object):
         else:
             args = decompressor + " " + args
 
-        if hasattr(self._f_objs[-1], 'fileno'):
+        if type(self._f_objs[-1]) == file:
             child_stdin = self._f_objs[-1].fileno()
         else:
             child_stdin = subprocess.PIPE
