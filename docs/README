@@ -22,11 +22,8 @@ http://lists.infradead.org/pipermail/bmap-tools/
 Subscribe here:
 http://lists.infradead.org/mailman/listinfo/bmap-tools
 
-The project git tree is here:
-git://git.infradead.org/users/dedekind/bmap-tools.git
-
-The git tree web view is here:
-http://git.infradead.org/users/dedekind/bmap-tools.git
+The project git is here:
+https://github.com/01org/bmap-tools.git
 
 Signed release tarballs are available here:
 ftp://ftp.infradead.org/pub/bmap-tools/
