@@ -61,9 +61,14 @@ import stat
 import sys
 import hashlib
 import logging
-import Queue
-import thread
 import datetime
+if sys.version[0] == '2':
+    import Queue
+    import thread
+else:
+    import queue as  Queue
+    import _thread as thread
+
 from xml.etree import ElementTree
 from bmaptools.BmapHelpers import human_size
 

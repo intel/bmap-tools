@@ -26,7 +26,11 @@ gzip, pigz, xz, lzop, lz4, tar and unzip.
 
 import os
 import errno
-import urlparse
+import sys
+if sys.version[0] == '2':
+    import urlparse
+else:
+    import urllib.parse as urlparse
 import logging
 import threading
 import subprocess
@@ -487,9 +491,14 @@ class TransRead(object):
                          "proxy configured correctly? Keep trying ..." %
                          timeout)
 
-        import urllib2
-        import httplib
         import socket
+
+        if sys.version[0] == '2':
+            import httplib
+            import urllib2
+        else:
+            import http.client as httplib
+            import urllib.request as urllib2
 
         parsed_url = urlparse.urlparse(url)
 

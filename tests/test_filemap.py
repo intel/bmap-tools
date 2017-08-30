@@ -25,10 +25,15 @@ files and makes sure the module returns correct information about the holes.
 # pylint: disable=R0904
 # pylint: disable=R0913
 
-
+import sys
 import random
 import itertools
 import tests.helpers
+if sys.version[0] == '2':
+    from itertools import izip_longest as zip_longest
+else:
+    from itertools import zip_longest
+
 from bmaptools import Filemap
 
 # This is a work-around for Centos 6
@@ -70,7 +75,7 @@ def _check_ranges(f_image, filemap, first_block, blocks_cnt,
     # 'first_block'/'blocks_cnt' file region.
     ranges_iterator = (x for x in ranges if x[1] >= first_block and
                        x[0] <= last_block)
-    iterator = itertools.izip_longest(ranges_iterator, filemap_iterator)
+    iterator = zip_longest(ranges_iterator, filemap_iterator)
 
     # Iterate over both - the (filtered) 'ranges' list which contains correct
     # ranges and the Filemap generator, and verify the mapped/unmapped ranges
