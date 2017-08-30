@@ -43,7 +43,7 @@ def _create_random_sparse_file(file_obj, size):
 
     file_obj.truncate(size)
     block_size = BmapHelpers.get_block_size(file_obj)
-    blocks_cnt = (size + block_size - 1) / block_size
+    blocks_cnt = (size + block_size - 1) // block_size
 
     def process_block(block):
         """
@@ -167,7 +167,7 @@ def generate_test_files(max_size=4 * 1024 * 1024, directory=None, delete=True):
                                                delete=delete, dir=directory,
                                                prefix="rand_hole_%d_" % i)
         file_obj.truncate(size)
-        blocks_cnt = (size + block_size - 1) / block_size
+        blocks_cnt = (size + block_size - 1) // block_size
         yield (file_obj, size, [], [(0, blocks_cnt - 1)])
         file_obj.close()
 
@@ -252,7 +252,7 @@ def generate_test_files(max_size=4 * 1024 * 1024, directory=None, delete=True):
                                                delete=delete, dir=directory,
                                                prefix="rand_mapped_%d_" % i)
         _create_random_file(file_obj, size)
-        blocks_cnt = (size + block_size - 1) / block_size
+        blocks_cnt = (size + block_size - 1) // block_size
         yield (file_obj, size, [(0, blocks_cnt - 1)], [])
         file_obj.close()
 

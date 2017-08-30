@@ -491,7 +491,7 @@ def copy_command(args):
         raise SystemExit(1)
 
     copying_time = time.time() - start_time
-    copying_speed = writer.mapped_size / copying_time
+    copying_speed = writer.mapped_size // copying_time
     log.info("copying time: %s, copying speed %s/sec"
              % (BmapHelpers.human_time(copying_time),
                 BmapHelpers.human_size(copying_speed)))

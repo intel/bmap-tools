@@ -135,8 +135,7 @@ class BmapCopy:
 
         self.image_size = image_size
         self.image_size_human = human_size(image_size)
-        self.blocks_cnt = self.image_size + self.block_size - 1
-        self.blocks_cnt /= self.block_size
+        self.blocks_cnt = (self.image_size + self.block_size - 1) // self.block_size
 
         if self.mapped_cnt is None:
             self.mapped_cnt = self.blocks_cnt
@@ -173,7 +172,7 @@ class BmapCopy:
         self.mapped_size_human = human_size(self.mapped_size)
         self.mapped_percent = (self.mapped_cnt * 100.0) / self.blocks_cnt
 
-        blocks_cnt = (self.image_size + self.block_size - 1) / self.block_size
+        blocks_cnt = (self.image_size + self.block_size - 1) // self.block_size
         if self.blocks_cnt != blocks_cnt:
             raise Error("Inconsistent bmap - image size does not match " \
                         "blocks count (%d bytes != %d blocks * %d bytes)" \
@@ -247,7 +246,7 @@ class BmapCopy:
         if image_size:
             self._set_image_size(image_size)
 
-        self._batch_blocks = self._batch_bytes / self.block_size
+        self._batch_blocks = self._batch_bytes // self.block_size
 
     def _update_progress(self, blocks_written):
         """ Print the progress indicator if the mapped area size is known and
@@ -391,7 +390,7 @@ class BmapCopy:
                     if verify and sha1:
                         hash_obj.update(buf)
 
-                    blocks = (len(buf) + self.block_size - 1) / self.block_size
+                    blocks = (len(buf) + self.block_size - 1) // self.block_size
                     self._batch_queue.put(("range", start, start + blocks - 1,
                                            buf))
 
@@ -599,9 +598,9 @@ class BmapBdevCopy(BmapCopy):
         BmapCopy.__init__(self, image, dest, bmap, image_size)
 
         self._batch_bytes = 1024 * 1024
-        self._batch_blocks = self._batch_bytes / self.block_size
+        self._batch_blocks = self._batch_bytes // self.block_size
         self._batch_queue_len = 6
-        self._dest_fsync_watermark = (6 * 1024 * 1024) / self.block_size
+        self._dest_fsync_watermark = (6 * 1024 * 1024) // self.block_size
 
         self._sysfs_base = None
         self._sysfs_scheduler_path = None

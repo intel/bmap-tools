@@ -213,7 +213,7 @@ class BmapCopy(object):
         if image_size:
             self._set_image_size(image_size)
 
-        self._batch_blocks = self._batch_bytes / self.block_size
+        self._batch_blocks = self._batch_bytes // self.block_size
 
     def set_progress_indicator(self, file_obj, format_string):
         """
@@ -246,8 +246,7 @@ class BmapCopy(object):
 
         self.image_size = image_size
         self.image_size_human = human_size(image_size)
-        self.blocks_cnt = self.image_size + self.block_size - 1
-        self.blocks_cnt /= self.block_size
+        self.blocks_cnt = (self.image_size + self.block_size - 1) // self.block_size
 
         if self.mapped_cnt is None:
             self.mapped_cnt = self.blocks_cnt
@@ -325,7 +324,7 @@ class BmapCopy(object):
         self.mapped_size_human = human_size(self.mapped_size)
         self.mapped_percent = (self.mapped_cnt * 100.0) / self.blocks_cnt
 
-        blocks_cnt = (self.image_size + self.block_size - 1) / self.block_size
+        blocks_cnt = (self.image_size + self.block_size - 1) // self.block_size
         if self.blocks_cnt != blocks_cnt:
             raise Error("Inconsistent bmap - image size does not match "
                         "blocks count (%d bytes != %d blocks * %d bytes)"
@@ -519,7 +518,7 @@ class BmapCopy(object):
                     if verify and chksum:
                         hash_obj.update(buf)
 
-                    blocks = (len(buf) + self.block_size - 1) / self.block_size
+                    blocks = (len(buf) + self.block_size - 1) // self.block_size
                     _log.debug("queueing %d blocks, queue length is %d" %
                                (blocks, self._batch_queue.qsize()))
 
@@ -669,7 +668,7 @@ class BmapBdevCopy(BmapCopy):
         # Call the base class constructor first
         BmapCopy.__init__(self, image, dest, bmap, image_size)
 
-        self._dest_fsync_watermark = (6 * 1024 * 1024) / self.block_size
+        self._dest_fsync_watermark = (6 * 1024 * 1024) // self.block_size
 
         self._sysfs_base = None
         self._sysfs_scheduler_path = None
