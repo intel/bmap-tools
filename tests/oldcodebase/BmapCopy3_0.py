@@ -54,14 +54,20 @@ import stat
 import sys
 import hashlib
 import logging
-import Queue
-import thread
 import datetime
+
+if sys.version[0] == '2':
+    import Queue
+    import thread
+else:
+    import queue as  Queue
+    import _thread as thread
+
 from xml.etree import ElementTree
 from bmaptools.BmapHelpers import human_size
 
 # The highest supported bmap format version
-SUPPORTED_BMAP_VERSION = 1
+SUPPORTED_BMAP_VERSION = "1.0"
 
 class Error(Exception):
     """
@@ -552,7 +558,7 @@ class BmapCopy:
                 # The reader thread encountered an error and passed us the
                 # exception.
                 exc_info = batch[1]
-                raise exc_info[0], exc_info[1], exc_info[2]
+                raise exc_info[1].with_traceback(exc_info[2])
 
             (start, end, buf) = batch[1:4]
 

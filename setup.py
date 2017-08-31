@@ -34,5 +34,9 @@ setup(
                      "can be copied or flashed a lot faster with bmaptool "
                      "than with traditional tools like \"dd\" or \"cp\". See "
                      "source.tizen.org/documentation/reference/bmaptool for "
-                     "more information."
+                     "more information.",
+    classifiers=[
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3"
+    ]
 )

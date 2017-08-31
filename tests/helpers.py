@@ -27,6 +27,7 @@ import tempfile
 import random
 import itertools
 import hashlib
+import struct
 import sys
 import os
 from bmaptools import BmapHelpers, BmapCopy, TransRead
@@ -43,7 +44,7 @@ def _create_random_sparse_file(file_obj, size):
 
     file_obj.truncate(size)
     block_size = BmapHelpers.get_block_size(file_obj)
-    blocks_cnt = (size + block_size - 1) / block_size
+    blocks_cnt = (size + block_size - 1) // block_size
 
     def process_block(block):
         """
@@ -60,17 +61,16 @@ def _create_random_sparse_file(file_obj, size):
             write = random.randint(1, block_size - seek)
             assert seek + write <= block_size
             file_obj.seek(block * block_size + seek)
-            file_obj.write(chr(random.getrandbits(8)) * write)
-
+            file_obj.write(struct.pack("=B", random.getrandbits(8)) * write)
         return map_the_block
 
     mapped = []
     unmapped = []
-    iterator = xrange(0, blocks_cnt)
+    iterator = range(0, blocks_cnt)
     for was_mapped, group in itertools.groupby(iterator, process_block):
         # Start of a mapped region or a hole. Find the last element in the
         # group.
-        first = group.next()
+        first = next(group)
         last = first
         for last in group:
             pass
@@ -98,7 +98,8 @@ def _create_random_file(file_obj, size):
         if written + chunk_size > size:
             chunk_size = size - written
 
-        file_obj.write(chr(random.getrandbits(8)) * chunk_size)
+        file_obj.write(struct.pack("=B", random.getrandbits(8)) * chunk_size)
+
         written += chunk_size
 
     file_obj.flush()
@@ -161,13 +162,13 @@ def generate_test_files(max_size=4 * 1024 * 1024, directory=None, delete=True):
     file_obj.close()
 
     # And 10 holes of random size
-    for i in xrange(10):
+    for i in range(10):
         size = random.randint(1, max_size)
         file_obj = tempfile.NamedTemporaryFile("wb+", suffix=".img",
                                                delete=delete, dir=directory,
                                                prefix="rand_hole_%d_" % i)
         file_obj.truncate(size)
-        blocks_cnt = (size + block_size - 1) / block_size
+        blocks_cnt = (size + block_size - 1) // block_size
         yield (file_obj, size, [], [(0, blocks_cnt - 1)])
         file_obj.close()
 
@@ -200,7 +201,7 @@ def generate_test_files(max_size=4 * 1024 * 1024, directory=None, delete=True):
     file_obj.close()
 
     # And 10 files of random size
-    for i in xrange(10):
+    for i in range(10):
         size = random.randint(1, max_size)
         file_obj = tempfile.NamedTemporaryFile("wb+", suffix=".img",
                                                delete=delete, dir=directory,
@@ -246,13 +247,13 @@ def generate_test_files(max_size=4 * 1024 * 1024, directory=None, delete=True):
     file_obj.close()
 
     # And 10 mapped files of random size
-    for i in xrange(10):
+    for i in range(10):
         size = random.randint(1, max_size)
         file_obj = tempfile.NamedTemporaryFile("wb+", suffix=".img",
                                                delete=delete, dir=directory,
                                                prefix="rand_mapped_%d_" % i)
         _create_random_file(file_obj, size)
-        blocks_cnt = (size + block_size - 1) / block_size
+        blocks_cnt = (size + block_size - 1) // block_size
         yield (file_obj, size, [(0, blocks_cnt - 1)], [])
         file_obj.close()
 
@@ -282,7 +283,7 @@ def copy_and_verify_image(image, dest, bmap, image_chksum, image_size):
     """
 
     f_image = TransRead.TransRead(image)
-    f_dest = open(dest, "w+")
+    f_dest = open(dest, "w+b")
     if (bmap):
         f_bmap = open(bmap, "r")
     else:
@@ -290,8 +291,7 @@ def copy_and_verify_image(image, dest, bmap, image_chksum, image_size):
 
     writer = BmapCopy.BmapCopy(f_image, f_dest, f_bmap, image_size)
     # Randomly decide whether we want the progress bar or not
-    if bool(random.getrandbits(1)) and hasattr(sys.stdout, 'fileno') and \
-            os.isatty(sys.stdout.fileno()):
+    if bool(random.getrandbits(1)) and sys.stdout.isatty():
         writer.set_progress_indicator(sys.stdout, None)
     writer.copy(bool(random.getrandbits(1)), bool(random.getrandbits(1)))
 

@@ -30,10 +30,16 @@ file and the copy and verifies that they are identical.
 # pylint: disable=R0915
 
 import os
+import sys
 import tempfile
 import filecmp
-import itertools
 import subprocess
+
+if sys.version[0] == '2':
+    from itertools import izip_longest as zip_longest
+else:
+    from itertools import zip_longest
+
 from tests import helpers
 from bmaptools import BmapHelpers, BmapCreate, Filemap
 
@@ -61,7 +67,7 @@ def _compare_holes(file1, file2):
     iterator1 = filemap1.get_unmapped_ranges(0, filemap1.blocks_cnt)
     iterator2 = filemap2.get_unmapped_ranges(0, filemap2.blocks_cnt)
 
-    iterator = itertools.izip_longest(iterator1, iterator2)
+    iterator = zip_longest(iterator1, iterator2)
     for range1, range2 in iterator:
         if range1 != range2:
             raise Error("mismatch for hole %d-%d, it is %d-%d in file2"

@@ -26,7 +26,11 @@ gzip, pigz, xz, lzop, lz4, tar and unzip.
 
 import os
 import errno
-import urlparse
+import sys
+if sys.version[0] == '2':
+    import urlparse
+else:
+    import urllib.parse as urlparse
 import logging
 import threading
 import subprocess
@@ -376,7 +380,7 @@ class TransRead(object):
         else:
             args = decompressor + " " + args
 
-        if type(self._f_objs[-1]) == file:
+        if hasattr(self._f_objs[-1], 'fileno'):
             child_stdin = self._f_objs[-1].fileno()
         else:
             child_stdin = subprocess.PIPE
@@ -487,9 +491,14 @@ class TransRead(object):
                          "proxy configured correctly? Keep trying ..." %
                          timeout)
 
-        import urllib2
-        import httplib
         import socket
+
+        if sys.version[0] == '2':
+            import httplib
+            import urllib2
+        else:
+            import http.client as httplib
+            import urllib.request as urllib2
 
         parsed_url = urlparse.urlparse(url)
 
@@ -535,7 +544,7 @@ class TransRead(object):
             try:
                 f_obj = opener.open(url, timeout=timeout)
             # Handling the timeout case in Python 2.7
-            except socket.timeout, err:
+            except socket.timeout as err:
                 if timeout is not None:
                     _print_warning(timeout)
                 else:

@@ -61,16 +61,21 @@ import stat
 import sys
 import hashlib
 import logging
-import Queue
-import thread
 import datetime
+if sys.version[0] == '2':
+    import Queue
+    import thread
+else:
+    import queue as  Queue
+    import _thread as thread
+
 from xml.etree import ElementTree
 from bmaptools.BmapHelpers import human_size
 
 _log = logging.getLogger(__name__)  # pylint: disable=C0103
 
 # The highest supported bmap format version
-SUPPORTED_BMAP_VERSION = 2
+SUPPORTED_BMAP_VERSION = "2.0"
 
 
 class Error(Exception):
@@ -208,7 +213,7 @@ class BmapCopy(object):
         if image_size:
             self._set_image_size(image_size)
 
-        self._batch_blocks = self._batch_bytes / self.block_size
+        self._batch_blocks = self._batch_bytes // self.block_size
 
     def set_progress_indicator(self, file_obj, format_string):
         """
@@ -241,8 +246,7 @@ class BmapCopy(object):
 
         self.image_size = image_size
         self.image_size_human = human_size(image_size)
-        self.blocks_cnt = self.image_size + self.block_size - 1
-        self.blocks_cnt /= self.block_size
+        self.blocks_cnt = (self.image_size + self.block_size - 1) // self.block_size
 
         if self.mapped_cnt is None:
             self.mapped_cnt = self.blocks_cnt
@@ -264,10 +268,10 @@ class BmapCopy(object):
         mapped_bmap = mmap.mmap(self._f_bmap.fileno(), 0,
                                 access=mmap.ACCESS_COPY)
 
-        chksum_pos = mapped_bmap.find(correct_chksum)
+        chksum_pos = mapped_bmap.find(correct_chksum.encode())
         assert chksum_pos != -1
 
-        mapped_bmap[chksum_pos:chksum_pos + self._cs_len] = '0' * self._cs_len
+        mapped_bmap[chksum_pos:chksum_pos + self._cs_len] = b'0' * self._cs_len
 
         hash_obj = hashlib.new(self._cs_type)
         hash_obj.update(mapped_bmap)
@@ -305,7 +309,7 @@ class BmapCopy(object):
         # Make sure we support this version
         self.bmap_version_major = int(self.bmap_version.split('.', 1)[0])
         self.bmap_version_minor = int(self.bmap_version.split('.', 1)[1])
-        if self.bmap_version_major > SUPPORTED_BMAP_VERSION:
+        if self.bmap_version_major > int(SUPPORTED_BMAP_VERSION.split('.', 1)[0]):
             raise Error("only bmap format version up to %d is supported, "
                         "version %d is not supported"
                         % (SUPPORTED_BMAP_VERSION, self.bmap_version_major))
@@ -320,7 +324,7 @@ class BmapCopy(object):
         self.mapped_size_human = human_size(self.mapped_size)
         self.mapped_percent = (self.mapped_cnt * 100.0) / self.blocks_cnt
 
-        blocks_cnt = (self.image_size + self.block_size - 1) / self.block_size
+        blocks_cnt = (self.image_size + self.block_size - 1) // self.block_size
         if self.blocks_cnt != blocks_cnt:
             raise Error("Inconsistent bmap - image size does not match "
                         "blocks count (%d bytes != %d blocks * %d bytes)"
@@ -514,7 +518,7 @@ class BmapCopy(object):
                     if verify and chksum:
                         hash_obj.update(buf)
 
-                    blocks = (len(buf) + self.block_size - 1) / self.block_size
+                    blocks = (len(buf) + self.block_size - 1) // self.block_size
                     _log.debug("queueing %d blocks, queue length is %d" %
                                (blocks, self._batch_queue.qsize()))
 
@@ -577,7 +581,7 @@ class BmapCopy(object):
                 # The reader thread encountered an error and passed us the
                 # exception.
                 exc_info = batch[1]
-                raise exc_info[0], exc_info[1], exc_info[2]
+                raise exc_info[1].with_traceback(exc_info[2])
 
             (start, end, buf) = batch[1:4]
 
@@ -664,7 +668,7 @@ class BmapBdevCopy(BmapCopy):
         # Call the base class constructor first
         BmapCopy.__init__(self, image, dest, bmap, image_size)
 
-        self._dest_fsync_watermark = (6 * 1024 * 1024) / self.block_size
+        self._dest_fsync_watermark = (6 * 1024 * 1024) // self.block_size
 
         self._sysfs_base = None
         self._sysfs_scheduler_path = None

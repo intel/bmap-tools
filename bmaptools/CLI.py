@@ -451,7 +451,7 @@ def copy_command(args):
 
     # Print the progress indicator while copying
     if not args.quiet and not args.debug and \
-            os.isatty(sys.stderr.fileno()) and os.isatty(sys.stdout.fileno()):
+       sys.stderr.isatty() and sys.stdout.isatty():
         writer.set_progress_indicator(sys.stderr, "bmaptool: info: %d%% copied")
 
     start_time = time.time()
@@ -491,7 +491,7 @@ def copy_command(args):
         raise SystemExit(1)
 
     copying_time = time.time() - start_time
-    copying_speed = writer.mapped_size / copying_time
+    copying_speed = writer.mapped_size // copying_time
     log.info("copying time: %s, copying speed %s/sec"
              % (BmapHelpers.human_time(copying_time),
                 BmapHelpers.human_size(copying_speed)))
@@ -720,12 +720,12 @@ def main():
         log.info("The contents of /proc/meminfo:")
         with open('/proc/meminfo', 'rt') as file_obj:
             for line in file_obj:
-                print line,
+                print(line.strip())
 
         log.info("The contents of /proc/self/status:")
         with open('/proc/self/status', 'rt') as file_obj:
             for line in file_obj:
-                print line,
+                print(line.strip())
 
 if __name__ == "__main__":
     sys.exit(main())

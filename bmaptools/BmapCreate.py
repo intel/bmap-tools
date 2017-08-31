@@ -282,7 +282,7 @@ class BmapCreate(object):
 
         self._f_bmap.seek(0)
         hash_obj = hashlib.new(self._cs_type)
-        hash_obj.update(self._f_bmap.read())
+        hash_obj.update(self._f_bmap.read().encode())
         chksum = hash_obj.hexdigest()
         self._f_bmap.seek(self._chksum_pos)
         self._f_bmap.write("%s" % chksum)
