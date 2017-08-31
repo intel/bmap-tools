@@ -67,7 +67,7 @@ from xml.etree import ElementTree
 from bmaptools.BmapHelpers import human_size
 
 # The highest supported bmap format version
-SUPPORTED_BMAP_VERSION = 1
+SUPPORTED_BMAP_VERSION = "1.0"
 
 class Error(Exception):
     """

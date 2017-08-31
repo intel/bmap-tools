@@ -75,7 +75,7 @@ from bmaptools.BmapHelpers import human_size
 _log = logging.getLogger(__name__)  # pylint: disable=C0103
 
 # The highest supported bmap format version
-SUPPORTED_BMAP_VERSION = 2
+SUPPORTED_BMAP_VERSION = "2.0"
 
 
 class Error(Exception):
@@ -309,7 +309,7 @@ class BmapCopy(object):
         # Make sure we support this version
         self.bmap_version_major = int(self.bmap_version.split('.', 1)[0])
         self.bmap_version_minor = int(self.bmap_version.split('.', 1)[1])
-        if self.bmap_version_major > SUPPORTED_BMAP_VERSION:
+        if self.bmap_version_major > int(SUPPORTED_BMAP_VERSION.split('.', 1)[0]):
             raise Error("only bmap format version up to %d is supported, "
                         "version %d is not supported"
                         % (SUPPORTED_BMAP_VERSION, self.bmap_version_major))
