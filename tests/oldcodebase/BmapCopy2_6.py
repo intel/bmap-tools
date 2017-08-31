@@ -514,7 +514,7 @@ class BmapCopy:
                 # The reader thread encountered an error and passed us the
                 # exception.
                 exc_info = batch[1]
-                raise exc_info[0], exc_info[1], exc_info[2]
+                raise exc_info[1].with_traceback(exc_info[2])
 
             (start, end, buf) = batch[1:4]
 
