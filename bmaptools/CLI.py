@@ -720,12 +720,12 @@ def main():
         log.info("The contents of /proc/meminfo:")
         with open('/proc/meminfo', 'rt') as file_obj:
             for line in file_obj:
-                print line,
+                print(line.strip())
 
         log.info("The contents of /proc/self/status:")
         with open('/proc/self/status', 'rt') as file_obj:
             for line in file_obj:
-                print line,
+                print(line.strip())
 
 if __name__ == "__main__":
     sys.exit(main())

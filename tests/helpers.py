@@ -66,11 +66,11 @@ def _create_random_sparse_file(file_obj, size):
 
     mapped = []
     unmapped = []
-    iterator = xrange(0, blocks_cnt)
+    iterator = range(0, blocks_cnt)
     for was_mapped, group in itertools.groupby(iterator, process_block):
         # Start of a mapped region or a hole. Find the last element in the
         # group.
-        first = group.next()
+        first = next(group)
         last = first
         for last in group:
             pass
@@ -162,7 +162,7 @@ def generate_test_files(max_size=4 * 1024 * 1024, directory=None, delete=True):
     file_obj.close()
 
     # And 10 holes of random size
-    for i in xrange(10):
+    for i in range(10):
         size = random.randint(1, max_size)
         file_obj = tempfile.NamedTemporaryFile("wb+", suffix=".img",
                                                delete=delete, dir=directory,
@@ -201,7 +201,7 @@ def generate_test_files(max_size=4 * 1024 * 1024, directory=None, delete=True):
     file_obj.close()
 
     # And 10 files of random size
-    for i in xrange(10):
+    for i in range(10):
         size = random.randint(1, max_size)
         file_obj = tempfile.NamedTemporaryFile("wb+", suffix=".img",
                                                delete=delete, dir=directory,
@@ -247,7 +247,7 @@ def generate_test_files(max_size=4 * 1024 * 1024, directory=None, delete=True):
     file_obj.close()
 
     # And 10 mapped files of random size
-    for i in xrange(10):
+    for i in range(10):
         size = random.randint(1, max_size)
         file_obj = tempfile.NamedTemporaryFile("wb+", suffix=".img",
                                                delete=delete, dir=directory,

@@ -380,7 +380,7 @@ class TransRead(object):
         else:
             args = decompressor + " " + args
 
-        if type(self._f_objs[-1]) == file:
+        if hasattr(self._f_objs[-1], 'fileno'):
             child_stdin = self._f_objs[-1].fileno()
         else:
             child_stdin = subprocess.PIPE
@@ -544,7 +544,7 @@ class TransRead(object):
             try:
                 f_obj = opener.open(url, timeout=timeout)
             # Handling the timeout case in Python 2.7
-            except socket.timeout, err:
+            except socket.timeout as err:
                 if timeout is not None:
                     _print_warning(timeout)
                 else:

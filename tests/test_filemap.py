@@ -96,7 +96,7 @@ def _check_ranges(f_image, filemap, first_block, blocks_cnt,
                            ranges_type, first_block, blocks_cnt,
                            check[0], check[1]))
 
-        for block in xrange(correct[0], correct[1] + 1):
+        for block in range(correct[0], correct[1] + 1):
             if ranges_type is "mapped" and filemap.block_is_unmapped(block):
                 raise Error("range %d-%d of file '%s' is mapped, but"
                             "'block_is_unmapped(%d) returned 'True'"
@@ -124,7 +124,7 @@ def _do_test(f_image, filemap, mapped, unmapped):
                   "unmapped")
 
     # Select a random area in the file and repeat the test few times
-    for _ in xrange(0, 10):
+    for _ in range(0, 10):
         first_block = random.randint(0, filemap.blocks_cnt - 1)
         blocks_cnt = random.randint(1, filemap.blocks_cnt - first_block)
         _check_ranges(f_image, filemap, first_block, blocks_cnt, mapped,
