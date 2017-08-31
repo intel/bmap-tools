@@ -268,10 +268,10 @@ class BmapCopy(object):
         mapped_bmap = mmap.mmap(self._f_bmap.fileno(), 0,
                                 access=mmap.ACCESS_COPY)
 
-        chksum_pos = mapped_bmap.find(correct_chksum)
+        chksum_pos = mapped_bmap.find(correct_chksum.encode())
         assert chksum_pos != -1
 
-        mapped_bmap[chksum_pos:chksum_pos + self._cs_len] = '0' * self._cs_len
+        mapped_bmap[chksum_pos:chksum_pos + self._cs_len] = b'0' * self._cs_len
 
         hash_obj = hashlib.new(self._cs_type)
         hash_obj.update(mapped_bmap)

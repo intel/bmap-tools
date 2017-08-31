@@ -27,6 +27,7 @@ import tempfile
 import random
 import itertools
 import hashlib
+import struct
 import sys
 import os
 from bmaptools import BmapHelpers, BmapCopy, TransRead
@@ -60,8 +61,7 @@ def _create_random_sparse_file(file_obj, size):
             write = random.randint(1, block_size - seek)
             assert seek + write <= block_size
             file_obj.seek(block * block_size + seek)
-            file_obj.write(chr(random.getrandbits(8)) * write)
-
+            file_obj.write(struct.pack("=B", random.getrandbits(8)) * write)
         return map_the_block
 
     mapped = []
@@ -98,7 +98,8 @@ def _create_random_file(file_obj, size):
         if written + chunk_size > size:
             chunk_size = size - written
 
-        file_obj.write(chr(random.getrandbits(8)) * chunk_size)
+        file_obj.write(struct.pack("=B", random.getrandbits(8)) * chunk_size)
+
         written += chunk_size
 
     file_obj.flush()
@@ -282,7 +283,7 @@ def copy_and_verify_image(image, dest, bmap, image_chksum, image_size):
     """
 
     f_image = TransRead.TransRead(image)
-    f_dest = open(dest, "w+")
+    f_dest = open(dest, "w+b")
     if (bmap):
         f_bmap = open(bmap, "r")
     else:
