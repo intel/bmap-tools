@@ -291,8 +291,7 @@ def copy_and_verify_image(image, dest, bmap, image_chksum, image_size):
 
     writer = BmapCopy.BmapCopy(f_image, f_dest, f_bmap, image_size)
     # Randomly decide whether we want the progress bar or not
-    if bool(random.getrandbits(1)) and hasattr(sys.stdout, 'fileno') and \
-            os.isatty(sys.stdout.fileno()):
+    if bool(random.getrandbits(1)) and sys.stdout.isatty():
         writer.set_progress_indicator(sys.stdout, None)
     writer.copy(bool(random.getrandbits(1)), bool(random.getrandbits(1)))
 

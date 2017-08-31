@@ -451,7 +451,7 @@ def copy_command(args):
 
     # Print the progress indicator while copying
     if not args.quiet and not args.debug and \
-            os.isatty(sys.stderr.fileno()) and os.isatty(sys.stdout.fileno()):
+       sys.stderr.isatty() and sys.stdout.isatty():
         writer.set_progress_indicator(sys.stderr, "bmaptool: info: %d%% copied")
 
     start_time = time.time()
