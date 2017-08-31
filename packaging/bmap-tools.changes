@@ -1,3 +1,11 @@
+Thu Aug 31 12:40:00 UTC 2017 Alexander Kanevskiy <kad@linux.intel.com> 3.4-1
+- New homepage: https://github.com/01org/bmap-tools
+- Python 3.x support.
+- bmaptool can now be shipped as standalone application.
+- Added support for ZIP archives.
+- Added support for LZ4 archives.
+- Fixed bugs related to specific filesystems.
+
 Wed Feb 19 14:50:12 UTC 2014 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 3.2-1
 - Add support for LZO and archives ('.lzo' and '.tar.lzo').
 - Add support for multi-stream bzip2 archives (creted with "pbzip2").
