@@ -1,3 +1,14 @@
+bmap-tools (3.4) unstable; urgency=low
+
+  * New homepage: https://github.com/01org/bmap-tools
+  * Python 3.x support.
+  * bmaptool can now be shipped as standalone application.
+  * Added support for ZIP archives.
+  * Added support for LZ4 archives.
+  * Fixed bugs related to specific filesystems.
+
+ -- Alexander Kanevskiy <kad@linux.intel.com>  Thu, 31 Aug 2017 15:40:12 +0300
+
 bmap-tools (3.2) unstable; urgency=low
 
   * Add support for LZO and archives ('.lzo' and '.tar.lzo').

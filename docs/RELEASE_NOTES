@@ -1,3 +1,25 @@
+Release 3.4
+~~~~~~~~~~~
+
+1. bmap-tools has now new home: https://github.com/01org/bmap-tools
+
+2. Python 3.x support: bmap-tools now compatible with Python 3.3+
+
+3. bmaptool now can be shipped as standalone application.
+   See PEP441 (zipapp) for implementation details.
+
+4. ZIP archives now supported. Similar to tar.* archives, image must be
+   first file in archive.
+
+5. LZ4 compression now supported. Files with the following extensions are
+   recognized as LZ4-compressed: ".lz4", ".tar.lz4" and ".tlz4".
+
+6. Fixed copying images on XFS file system where predictive caching lead
+   to more blocks to be mapped than needed.
+
+7. Fixed detection of block size on file systems that do not report it
+   correctly via ioctl FIGETBSZ.
+
 Release 3.2
 ~~~~~~~~~~~
 
