@@ -5,7 +5,6 @@
 Name: bmap-tools
 Summary: Tools to generate block map (AKA bmap) and flash images using bmap
 Version: 3.4
-
 %if 0%{?opensuse_bs}
 Release: %{rc_str}.<CI_CNT>.<B_CNT>
 %else
@@ -15,8 +14,8 @@ Release: %{rc_str}.0.0
 Group: Development/Tools/Other
 License: GPL-2.0
 BuildArch: noarch
-URL: https://github.com/01org/bmap-tools
-Source0: %{name}_%{version}.tar.gz
+URL: https://github.com/intel/bmap-tools
+Source0: %{name}-%{version}.tar.gz
 
 Requires: bzip2
 Requires: pbzip2
@@ -24,21 +23,18 @@ Requires: gzip
 Requires: xz
 Requires: tar
 Requires: unzip
+Requires: lzop
 %if ! 0%{?tizen_version:1}
 # pigz is not present in Tizen
 Requires: pigz
 %endif
 
 %if 0%{?suse_version}
-%if 0%{?suse_version} > 1210
-# lzop is present in OpenSuse since version 12.1
-Requires: lzop
-%endif
-%else
-Requires: lzop
-%endif
-
 BuildRequires: python-distribute
+%endif
+%if 0%{?fedora_version}
+BuildRequires: python-setuptools
+%endif
 
 %if 0%{?suse_version}
 # In OpenSuse the xml.etree module is provided by the python-xml package
@@ -75,7 +71,6 @@ source.tizen.org/documentation/reference/bmaptool for more information.
 
 %install
 rm -rf %{buildroot}
-
 %{__python} setup.py install --prefix=%{_prefix} --root=%{buildroot}
 
 mkdir -p %{buildroot}/%{_mandir}/man1
@@ -83,10 +78,11 @@ install -m644 docs/man1/bmaptool.1 %{buildroot}/%{_mandir}/man1
 
 %files
 %defattr(-,root,root,-)
+%license COPYING
 %dir /usr/lib/python*/site-packages/bmaptools
 /usr/lib/python*/site-packages/bmap_tools*
 /usr/lib/python*/site-packages/bmaptools/*
 %{_bindir}/*
 
-%doc docs/RELEASE_NOTES COPYING
+%doc docs/RELEASE_NOTES
 %{_mandir}/man1/*
