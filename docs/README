@@ -52,7 +52,7 @@ The project structure
 | - tests/               | Contains the project unit-tests.                    |
 |   | - test_api_base.py | Tests the base API modules: 'BmapCreate.py' and     |
 |   |                    | 'BmapCopy.py'.                                      |
-|   | - test_fiemap.py   | Tests the 'Filemap.py' module.                      |
+|   | - test_filemap.py  | Tests the 'Filemap.py' module.                      |
 |   | - test_compat.py   | Tests that new BmapCopy implementations support old |
 |   |                    | bmap formats, and old BmapCopy implementations      |
 |   |                    | support new compatible bmap fomrats.                |
