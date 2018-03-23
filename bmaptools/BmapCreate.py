@@ -39,7 +39,7 @@ etc. The end result should be a sparse file where mapped areas represent useful
 parts of the image and holes represent useless parts of the image, which do not
 have to be copied when copying the image to the target device.
 
-This module uses the FIBMAP ioctl to detect holes.
+This module uses the FIEMAP ioctl to detect holes.
 """
 
 # Disable the following pylint recommendations:
