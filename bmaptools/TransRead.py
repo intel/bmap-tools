@@ -18,8 +18,9 @@
 This module allows opening and reading local and remote files and decompress
 them on-the-fly if needed. Remote files are read using urllib2 (except of
 "ssh://" URLs, which are handled differently). Supported file extentions are:
-'bz2', 'gz', 'xz', 'lzo' and a "tar" version of them: 'tar.bz2', 'tbz2', 'tbz',
-'tb2', 'tar.gz', 'tgz', 'tar.xz', 'txz', 'tar.lzo', 'tzo', 'tar.lz4', 'tlz4'.
+'bz2', 'gz', 'xz', 'lzo', 'lz4' and a "tar" version of them: 'tar.bz2', 'tbz2',
+'tbz', 'tb2', 'tar.gz', 'tgz', 'tar.xz', 'txz', 'tar.lzo', 'tzo', 'tar.lz4',
+'tlz4', and also plain 'tar' and 'zip'.
 This module uses the following system programs for decompressing: pbzip2, bzip2,
 gzip, pigz, xz, lzop, lz4, tar and unzip.
 """
@@ -55,7 +56,44 @@ _log = logging.getLogger(__name__)  # pylint: disable=C0103
 # A list of supported compression types
 SUPPORTED_COMPRESSION_TYPES = ('bz2', 'gz', 'xz', 'lzo', 'lz4', 'tar.gz',
                                'tar.bz2', 'tar.xz', 'tar.lzo', 'tar.lz4',
-                               'zip')
+                               'zip', 'tar')
+
+# Allow some file extensions to be recognised as aliases of others
+EXTENSION_ALIASES = {
+    '.tbz2': '.tar.bz2',
+    '.tbz':  '.tar.bz2',
+    '.tb2':  '.tar.bz2',
+    '.tgz':  '.tar.gz',
+    '.txz':  '.tar.xz',
+    '.tzo':  '.tar.lzo',
+    '.tlz4': '.tar.lz4',
+    '.gzip': '.gz',
+}
+
+# These need to be checked *before* those in EXTENSION_ALIASES
+NESTED_EXTENSION_ALIASES = {
+    '.tar.gzip': '.tar.gz',
+}
+
+# Info on how to decompress different archive formats
+DECOMPRESSER_EXTENSIONS = {
+    '.bz2': {'type': "bzip2", 'program': "bzip2",  'args': "-d -c"},
+    '.gz':  {'type': "gzip",  'program': "gzip",   'args': "-d -c"},
+    '.xz':  {'type': "xz",    'program': "xz",     'args': "-d -c"},
+    '.lzo': {'type': "lzo",   'program': "lzop",   'args': "-d -c"},
+    '.lz4': {'type': "lz4",   'program': "lz4",    'args': "-d -c"},
+    '.zip': {'type': "zip",   'program': "funzip", 'args': ""},
+    '.tar': {'type': "tar",   'program': "tar",    'args': "-x -O"},
+}
+
+# These need to be checked *before* those in DECOMPRESSER_EXTENSIONS
+NESTED_DECOMPRESSER_EXTENSIONS = {
+    '.tar.bz2': {'program': "tar", 'args': "-x -j -O"},
+    '.tar.gz':  {'program': "tar", 'args': "-x -z -O"},
+    '.tar.xz':  {'program': "tar", 'args': "-x -J -O"},
+    '.tar.lzo': {'program': "tar", 'args': "-x --lzo -O"},
+    '.tar.lz4': {'program': "tar", 'args': "-x -Ilz4 -O"},
+}
 
 
 def _fake_seek_forward(file_obj, cur_pos, offset, whence=os.SEEK_SET):
@@ -225,140 +263,37 @@ class TransRead(object):
         compressed.
         """
 
-        def is_gzip(name):
-            """Returns 'True' if file 'name' is compressed with 'gzip'."""
-            if name.endswith('.gzip') or \
-               (name.endswith('.gz') and not name.endswith('.tar.gz')):
-                return True
-            return False
-
-        def is_bzip2(name):
-            """Returns 'True' if file 'name' is compressed with 'bzip2'."""
-            if name.endswith('.bz2') and not name.endswith('.tar.bz2'):
-                return True
-            return False
-
-        def is_xz(name):
-            """Returns 'True' if file 'name' is compressed with 'xz'."""
-            if name.endswith('.xz') and not name.endswith('.tar.xz'):
-                return True
-            return False
-
-        def is_lzop(name):
-            """Returns 'True' if file 'name' is compressed with 'lzop'."""
-            if name.endswith('.lzo') and not name.endswith('.tar.lzo'):
-                return True
-            return False
-
-        def is_lz4(name):
-            """Returns 'True' if file 'name' is compressed with 'lz4'."""
-            if name.endswith('.lz4') and not name.endswith('.tar.lz4'):
-                return True
-            return False
-
-        def is_tar_gz(name):
-            """
-            Returns 'True' if file 'name' is a tar archive compressed with
-            'gzip'.
-            """
-
-            if name.endswith('.tar.gz') or name.endswith('.tgz'):
-                return True
-            return False
-
-        def is_tar_bz2(name):
-            """
-            Returns 'True' if file 'name' is a tar archive compressed with
-            'bzip2'.
-            """
-
-            if name.endswith('.tar.bz2') or name.endswith('.tbz') or \
-               name.endswith('.tbz2') or name.endswith('.tb2'):
-                return True
-            return False
-
-        def is_tar_xz(name):
-            """
-            Returns 'True' if file 'name' is a tar archive compressed with 'xz'.
-            """
-
-            if name.endswith('.tar.xz') or name.endswith('.txz'):
-                return True
-            return False
-
-        def is_tar_lzo(name):
-            """
-            Returns 'True' if file 'name' is a tar archive compressed with
-            'lzop'.
-            """
-
-            if name.endswith('.tar.lzo') or name.endswith('.tzo'):
-                return True
-            return False
-
-        def is_tar_lz4(name):
-            """
-            Returns 'True' if file 'name' is a tar archive compressed with
-            'lz4'.
-            """
-
-            if name.endswith('.tar.lz4') or name.endswith('.tlz4'):
-                return True
-            return False
+        def _get_archive_extension(name):
+            for extension in NESTED_EXTENSION_ALIASES:
+                if name.endswith(extension):
+                    return NESTED_EXTENSION_ALIASES[extension]
+            for extension in EXTENSION_ALIASES:
+                if name.endswith(extension):
+                    return EXTENSION_ALIASES[extension]
+            for extension in NESTED_DECOMPRESSER_EXTENSIONS:
+                if name.endswith(extension):
+                    return extension
+            for extension in DECOMPRESSER_EXTENSIONS:
+                if name.endswith(extension):
+                    return extension
+            return None
 
         archiver = None
-        if is_tar_gz(self.name) or is_gzip(self.name):
-            self.compression_type = 'gzip'
-            if BmapHelpers.program_is_available("pigz"):
+        archive_extension = _get_archive_extension(self.name)
+        if archive_extension is not None:
+            for extension in DECOMPRESSER_EXTENSIONS:
+                if archive_extension.endswith(extension):
+                    self.compression_type = DECOMPRESSER_EXTENSIONS[extension]['type']
+                    decompressor = DECOMPRESSER_EXTENSIONS[extension]['program']
+                    args = DECOMPRESSER_EXTENSIONS[extension]['args']
+                    break
+            if decompressor == "gzip" and BmapHelpers.program_is_available("pigz"):
                 decompressor = "pigz"
-            else:
-                decompressor = "gzip"
-
-            if is_gzip(self.name):
-                args = "-d -c"
-            else:
-                archiver = "tar"
-                args = "-x -z -O"
-        elif is_tar_bz2(self.name) or is_bzip2(self.name):
-            self.compression_type = 'bzip2'
-            if BmapHelpers.program_is_available("pbzip2"):
-                decompressor = "pbzip2"
-            else:
-                decompressor = "bzip2"
-
-            if is_bzip2(self.name):
-                args = "-d -c"
-            else:
-                archiver = "tar"
-                args = "-x -j -O"
-        elif is_tar_xz(self.name) or is_xz(self.name):
-            self.compression_type = 'xz'
-            decompressor = "xz"
-            if is_xz(self.name):
-                args = "-d -c"
-            else:
-                archiver = "tar"
-                args = "-x -J -O"
-        elif is_tar_lzo(self.name) or is_lzop(self.name):
-            self.compression_type = 'lzo'
-            decompressor = "lzop"
-            if is_lzop(self.name):
-                args = "-d -c"
-            else:
-                archiver = "tar"
-                args = "-x --lzo -O"
-        elif self.name.endswith(".zip"):
-            self.compression_type = 'zip'
-            decompressor = "funzip"
-            args = ""
-        elif is_tar_lz4(self.name) or is_lz4(self.name):
-            self.compression_type = 'lz4'
-            decompressor = "lz4"
-            if is_lz4(self.name):
-                args = "-d -c"
-            else:
-                archiver = "tar"
-                args = "-x -Ilz4 -O"
+            elif decompressor == "bzip2" and BmapHelpers.program_is_available("pbzip2"):
+               decompressor = "pbzip2"
+            if archive_extension in NESTED_DECOMPRESSER_EXTENSIONS:
+                archiver = NESTED_DECOMPRESSER_EXTENSIONS[archive_extension]['program']
+                args = NESTED_DECOMPRESSER_EXTENSIONS[archive_extension]['args']
         else:
             if not self.is_url:
                 self.size = os.fstat(self._f_objs[-1].fileno()).st_size
