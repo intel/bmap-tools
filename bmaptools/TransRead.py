@@ -499,6 +499,7 @@ class TransRead(object):
         else:
             import http.client as httplib
             import urllib.request as urllib2
+            self._force_fake_seek = True
 
         parsed_url = urlparse.urlparse(url)
 
