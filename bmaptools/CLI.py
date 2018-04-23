@@ -151,7 +151,7 @@ def verify_detached_bmap_signature(args, bmap_obj, bmap_path):
     # If the stand-alone signature file is not local, make a local copy
     if sig_obj.is_url:
         try:
-            tmp_obj = tempfile.NamedTemporaryFile("w+")
+            tmp_obj = tempfile.NamedTemporaryFile("wb+")
         except IOError as err:
             log.error("cannot create a temporary file for the "
                       "signature: %s" % err)
@@ -327,7 +327,7 @@ def find_and_open_bmap(args):
 
     try:
         # Create a temporary file for the bmap
-        tmp_obj = tempfile.NamedTemporaryFile("w+")
+        tmp_obj = tempfile.NamedTemporaryFile("wb+")
     except IOError as err:
         log.error("cannot create a temporary file for bmap: %s" % err)
         raise SystemExit(1)
