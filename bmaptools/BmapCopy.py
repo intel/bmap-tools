@@ -63,13 +63,8 @@ import hashlib
 import logging
 import datetime
 from six import reraise
-if sys.version[0] == '2':
-    import Queue
-    import thread
-else:
-    import queue as  Queue
-    import _thread as thread
-
+from six.moves import queue as Queue
+from six.moves import _thread as thread
 from xml.etree import ElementTree
 from bmaptools.BmapHelpers import human_size
 

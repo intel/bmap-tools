@@ -34,12 +34,7 @@ import sys
 import tempfile
 import filecmp
 import subprocess
-
-if sys.version[0] == '2':
-    from itertools import izip_longest as zip_longest
-else:
-    from itertools import zip_longest
-
+from six.moves import zip_longest
 from tests import helpers
 from bmaptools import BmapHelpers, BmapCreate, Filemap
 

@@ -16,7 +16,7 @@
 
 """
 This module allows opening and reading local and remote files and decompress
-them on-the-fly if needed. Remote files are read using urllib2 (except of
+them on-the-fly if needed. Remote files are read using urllib (except of
 "ssh://" URLs, which are handled differently). Supported file extentions are:
 'bz2', 'gz', 'xz', 'lzo' and a "tar" version of them: 'tar.bz2', 'tbz2', 'tbz',
 'tb2', 'tar.gz', 'tgz', 'tar.xz', 'txz', 'tar.lzo', 'tzo', 'tar.lz4', 'tlz4'.
@@ -27,13 +27,10 @@ gzip, pigz, xz, lzop, lz4, tar and unzip.
 import os
 import errno
 import sys
-if sys.version[0] == '2':
-    import urlparse
-else:
-    import urllib.parse as urlparse
 import logging
 import threading
 import subprocess
+from six.moves.urllib import parse as urlparse
 from bmaptools import BmapHelpers
 
 _log = logging.getLogger(__name__)  # pylint: disable=C0103
@@ -202,7 +199,7 @@ class TransRead(object):
         """
         This function is used when reading compressed files. It runs in a
         spearate thread, reads data from the 'f_from' file-like object, and
-        writes them to the 'f_to' file-like object. 'F_from' may be a urllib2
+        writes them to the 'f_to' file-like object. 'F_from' may be a urllib
         object, while 'f_to' is usually stdin of the decompressor process.
         """
 
@@ -493,12 +490,9 @@ class TransRead(object):
 
         import socket
 
-        if sys.version[0] == '2':
-            import httplib
-            import urllib2
-        else:
-            import http.client as httplib
-            import urllib.request as urllib2
+        from six.moves import http_client as httplib
+        from six.moves.urllib import request as urllib
+        from six.moves.urllib.error import URLError
 
         parsed_url = urlparse.urlparse(url)
 
@@ -522,15 +516,15 @@ class TransRead(object):
             url = urlparse.urlunparse(new_url)
 
             # Build an URL opener which will do the authentication
-            password_manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
+            password_manager = urllib.HTTPPasswordMgrWithDefaultRealm()
             password_manager.add_password(None, url, username, password)
-            auth_handler = urllib2.HTTPBasicAuthHandler(password_manager)
-            opener = urllib2.build_opener(auth_handler)
+            auth_handler = urllib.HTTPBasicAuthHandler(password_manager)
+            opener = urllib.build_opener(auth_handler)
         else:
-            opener = urllib2.build_opener()
+            opener = urllib.build_opener()
 
         opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
-        urllib2.install_opener(opener)
+        urllib.install_opener(opener)
 
         # Open the URL. First try with a short timeout, and print a message
         # which should supposedly give the a clue that something may be going
@@ -549,7 +543,7 @@ class TransRead(object):
                     _print_warning(timeout)
                 else:
                     raise Error("cannot open URL '%s': %s" % (url, err))
-            except urllib2.URLError as err:
+            except URLError as err:
                 # Handling the timeout case in Python 2.6
                 if timeout is not None and \
                    isinstance(err.reason, socket.timeout):
