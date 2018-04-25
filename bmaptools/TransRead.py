@@ -25,6 +25,7 @@ gzip, pigz, xz, lzop, lz4, tar and unzip.
 """
 
 import os
+import io
 import errno
 import sys
 if sys.version[0] == '2':
@@ -584,7 +585,12 @@ class TransRead(object):
             self._pos = _fake_seek_forward(self._f_objs[-1], self._pos,
                                            offset, whence)
         else:
-            self._f_objs[-1].seek(offset, whence)
+            try:
+                self._f_objs[-1].seek(offset, whence)
+            except io.UnsupportedOperation:
+                self._fake_seek = True
+                self._pos = _fake_seek_forward(self._f_objs[-1], self._pos,
+                                               offset, whence)
 
     def tell(self):
         """The 'tell()' method, similar to the one file objects have."""
