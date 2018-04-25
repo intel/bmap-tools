@@ -14,15 +14,13 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License for more details.
 
-import os
-import struct
-from fcntl import ioctl
-
-
 """
 This module contains various shared helper functions.
 """
 
+import os
+import struct
+from fcntl import ioctl
 
 def human_size(size):
     """Transform size in bytes into a human-readable form."""
@@ -39,7 +37,6 @@ def human_size(size):
 
     return "%.1f %s" % (size, 'EiB')
 
-
 def human_time(seconds):
     """Transform time in seconds to the HH:MM:SS format."""
     (minutes, seconds) = divmod(seconds, 60)
@@ -52,7 +49,6 @@ def human_time(seconds):
         result += "%dm " % minutes
 
     return result + "%.1fs" % seconds
-
 
 def get_block_size(file_obj):
     """
@@ -74,7 +70,6 @@ def get_block_size(file_obj):
         else:
             raise IOError("Unable to determine block size")
     return bsize
-
 
 def program_is_available(name):
     """
