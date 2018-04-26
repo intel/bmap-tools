@@ -25,6 +25,7 @@ gzip, pigz, xz, lzop, lz4, tar and unzip.
 """
 
 import os
+import io
 import errno
 import sys
 import logging
@@ -168,7 +169,7 @@ class TransRead(object):
         #   o self._f_objs[1] is the stdout of the 'bzip2' process
         self._f_objs = []
 
-        self._force_fake_seek = False
+        self._fake_seek = False
         self._pos = 0
 
         try:
@@ -394,7 +395,7 @@ class TransRead(object):
             self._rthread.daemon = True
             self._rthread.start()
 
-        self._force_fake_seek = True
+        self._fake_seek = True
         self._f_objs.append(child_process.stdout)
         self._child_processes.append(child_process)
 
@@ -472,7 +473,7 @@ class TransRead(object):
 
         self._child_processes.append(child_process)
         self.is_url = True
-        self._force_fake_seek = True
+        self._fake_seek = True
 
     def _open_url(self, url):
         """
@@ -574,15 +575,20 @@ class TransRead(object):
 
     def seek(self, offset, whence=os.SEEK_SET):
         """The 'seek()' method, similar to the one file objects have."""
-        if self._force_fake_seek or not hasattr(self._f_objs[-1], "seek"):
+        if self._fake_seek or not hasattr(self._f_objs[-1], "seek"):
             self._pos = _fake_seek_forward(self._f_objs[-1], self._pos,
                                            offset, whence)
         else:
-            self._f_objs[-1].seek(offset, whence)
+            try:
+                self._f_objs[-1].seek(offset, whence)
+            except io.UnsupportedOperation:
+                self._fake_seek = True
+                self._pos = _fake_seek_forward(self._f_objs[-1], self._pos,
+                                               offset, whence)
 
     def tell(self):
         """The 'tell()' method, similar to the one file objects have."""
-        if self._force_fake_seek or not hasattr(self._f_objs[-1], "tell"):
+        if self._fake_seek or not hasattr(self._f_objs[-1], "tell"):
             return self._pos
         else:
             return self._f_objs[-1].tell()
