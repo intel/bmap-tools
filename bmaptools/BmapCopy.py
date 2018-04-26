@@ -491,6 +491,7 @@ class BmapCopy(object):
           * 'buf' a buffer containing the batch data.
         """
 
+        _log.debug("the reader thread has started")
         try:
             for (first, last, chksum) in self._get_block_ranges():
                 if verify and chksum:
@@ -508,6 +509,8 @@ class BmapCopy(object):
                                     % (start, end, self._image_path, err))
 
                     if not buf:
+                        _log.debug("no more data to read from file '%s'",
+                                   self._image_path)
                         self._batch_queue.put(None)
                         return
 

@@ -45,6 +45,42 @@ VERSION = "3.4"
 
 log = logging.getLogger()  # pylint: disable=C0103
 
+def print_error_with_tb(msgformat, *args):
+    """Print an error message occurred along with the traceback."""
+
+    tback = []
+
+    if sys.exc_info()[0]:
+        lines = traceback.format_exc().splitlines()
+    else:
+        lines = [line.strip() for line in traceback.format_stack()]
+
+    idx = 0
+    last_idx = len(lines) - 1
+    while idx < len(lines):
+        if lines[idx].startswith('  File "'):
+            idx += 2
+            last_idx = idx
+        else:
+            idx += 1
+
+    tback = lines[0:last_idx]
+    if tback:
+        log.error("An error occurred, here is the traceback:\n%s\n", "\n".join(tback))
+
+    if args:
+        errmsg = msgformat % args
+    else:
+        errmsg = str(msgformat)
+    log.error(errmsg)
+
+
+def error_out(msgformat, *args):
+    """Print an error message and terminate program execution."""
+
+    print_error_with_tb(str(msgformat) + "\n", *args)
+    raise SystemExit(1)
+
 
 class NamedFile(object):
     """
@@ -61,7 +97,6 @@ class NamedFile(object):
 
     def __getattr__(self, name):
         return getattr(self._file_obj, name)
-
 
 def open_block_device(path):
     """
@@ -80,20 +115,17 @@ def open_block_device(path):
     try:
         descriptor = os.open(path, os.O_WRONLY | os.O_EXCL)
     except OSError as err:
-        log.error("cannot open block device '%s' in exclusive mode: %s"
-                  % (path, err))
-        raise SystemExit(1)
+        error_out("cannot open block device '%s' in exclusive mode: %s",
+                  path, err)
 
     # Turn the block device file descriptor into a file object
     try:
         file_obj = os.fdopen(descriptor, "wb")
     except OSError as err:
         os.close(descriptor)
-        log.error("cannot open block device '%s': %s" % (path, err))
-        raise SystemExit(1)
+        error_out("cannot open block device '%s':\n%s", path, err)
 
     return NamedFile(file_obj, path)
-
 
 def report_verification_results(context, sigs):
     """
@@ -109,12 +141,10 @@ def report_verification_results(context, sigs):
             log.info("successfully verified bmap file signature of %s "
                      "(fingerprint %s)" % (author, sig.fpr))
         else:
-            log.error("signature verification failed (fingerprint %s): "
-                      "%s" % (sig.fpr, sig.status[2].lower()))
-            log.error("either fix the problem or use --no-sig-verify"
-                      "to disable signature verification")
-            raise SystemExit(1)
-
+            error_out("signature verification failed (fingerprint %s): %s\n"
+                      "Either fix the problem or use --no-sig-verify to "
+                      "disable signature verification",
+                      sig.fpr, sig.status[2].lower())
 
 def verify_detached_bmap_signature(args, bmap_obj, bmap_path):
     """
@@ -129,9 +159,8 @@ def verify_detached_bmap_signature(args, bmap_obj, bmap_path):
         try:
             sig_obj = TransRead.TransRead(args.bmap_sig)
         except TransRead.Error as err:
-            log.error("cannot open bmap signature file '%s': %s" %
-                      (args.bmap_sig, str(err)))
-            raise SystemExit(1)
+            error_out("cannot open bmap signature file '%s':\n%s",
+                      args.bmap_sig, err)
         sig_path = args.bmap_sig
     else:
         # Check if there is a stand-alone signature file
@@ -153,9 +182,8 @@ def verify_detached_bmap_signature(args, bmap_obj, bmap_path):
         try:
             tmp_obj = tempfile.NamedTemporaryFile("wb+")
         except IOError as err:
-            log.error("cannot create a temporary file for the "
-                      "signature: %s" % err)
-            raise SystemExit(1)
+            error_out("cannot create a temporary file for the signature:\n%s",
+                      err)
 
         shutil.copyfileobj(sig_obj, tmp_obj)
         tmp_obj.seek(0)
@@ -165,10 +193,9 @@ def verify_detached_bmap_signature(args, bmap_obj, bmap_path):
     try:
         import gpgme
     except ImportError:
-        log.error("cannot verify the signature because the python \"gpgme\""
-                  "module is not installed on your system")
-        log.error("please, either install the module or use --no-sig-verify")
-        raise SystemExit(1)
+        error_out("cannot verify the signature because the python \"gpgme\" "
+                  "module is not installed on your system\nPlease, either "
+                  "install the module or use --no-sig-verify")
 
     try:
         context = gpgme.Context()
@@ -176,10 +203,9 @@ def verify_detached_bmap_signature(args, bmap_obj, bmap_path):
         signed_data = io.FileIO(bmap_obj.name)
         sigs = context.verify(signature, signed_data, None)
     except gpgme.GpgmeError as err:
-        log.error("failure when trying to verify GPG signature: %s" %
-                  err[2].lower())
-        log.error("make sure file \"%s\" has proper GPG format" % sig_path)
-        raise SystemExit(1)
+        error_out("failure when trying to verify GPG signature: %s\n"
+                  "Make sure file \"%s\" has proper GPG format",
+                  err[2].lower(), sig_path)
 
     sig_obj.close()
 
@@ -199,18 +225,16 @@ def verify_clearsign_bmap_signature(args, bmap_obj):
     """
 
     if args.bmap_sig:
-        log.error("the bmap file has clearsign format and already contains "
+        error_out("the bmap file has clearsign format and already contains "
                   "the signature, so --bmap-sig option should not be used")
-        raise SystemExit(1)
 
     try:
         import gpgme
     except ImportError:
-        log.error("cannot verify the signature because the python \"gpgme\""
-                  "module is not installed on your system")
-        log.error("cannot extract block map from the bmap file which has "
-                  "clearsign format, please, install the module")
-        raise SystemExit(1)
+        error_out("cannot verify the signature because the python \"gpgme\""
+                  "module is not installed on your system\nCannot extract "
+                  "block map from the bmap file which has clearsign format, "
+                  "please, install the module")
 
     try:
         context = gpgme.Context()
@@ -218,10 +242,9 @@ def verify_clearsign_bmap_signature(args, bmap_obj):
         plaintext = io.BytesIO()
         sigs = context.verify(signature, None, plaintext)
     except gpgme.GpgmeError as err:
-        log.error("failure when trying to verify GPG signature: %s" %
+        error_out("failure when trying to verify GPG signature: %s\n"
+                  "make sure the bmap file has proper GPG format",
                   err[2].lower())
-        log.error("make sure the bmap file has proper GPG format ")
-        raise SystemExit(1)
 
     if not args.no_sig_verify:
         if len(sigs) == 0:
@@ -233,8 +256,7 @@ def verify_clearsign_bmap_signature(args, bmap_obj):
     try:
         tmp_obj = tempfile.TemporaryFile("w+")
     except IOError as err:
-        log.error("cannot create a temporary file for bmap: %s" % err)
-        raise SystemExit(1)
+        error_out("cannot create a temporary file for bmap:\n%s", err)
 
     tmp_obj.write(plaintext.getvalue())
     tmp_obj.seek(0)
@@ -303,8 +325,7 @@ def find_and_open_bmap(args):
         try:
             bmap_obj = TransRead.TransRead(args.bmap)
         except TransRead.Error as err:
-            log.error("cannot open bmap file '%s': %s" % (args.bmap, str(err)))
-            raise SystemExit(1)
+            error_out("cannot open bmap file '%s':\n%s", args.bmap, err)
         bmap_path = args.bmap
     else:
         # Automatically discover the bmap file
@@ -329,8 +350,7 @@ def find_and_open_bmap(args):
         # Create a temporary file for the bmap
         tmp_obj = tempfile.NamedTemporaryFile("wb+")
     except IOError as err:
-        log.error("cannot create a temporary file for bmap: %s" % err)
-        raise SystemExit(1)
+        error_out("cannot create a temporary file for bmap:\n%s", err)
 
     shutil.copyfileobj(bmap_obj, tmp_obj)
 
@@ -357,8 +377,7 @@ def open_files(args):
     try:
         image_obj = TransRead.TransRead(args.image)
     except TransRead.Error as err:
-        log.error("cannot open image: %s" % str(err))
-        raise SystemExit(1)
+        error_out("cannot open image:\n%s" % err)
 
     # Open the bmap file. Try to discover the bmap file automatically if it
     # was not specified.
@@ -394,9 +413,7 @@ def open_files(args):
     try:
         dest_obj = open(args.dest, 'wb+')
     except IOError as err:
-        log.error("cannot open destination file '%s': %s"
-                  % (args.dest, err))
-        raise SystemExit(1)
+        error_out("cannot open destination file '%s':\n%s", args.dest, err)
 
     # Check whether the destination file is a block device
     dest_is_blkdev = stat.S_ISBLK(os.fstat(dest_obj.fileno()).st_mode)
@@ -412,20 +429,17 @@ def copy_command(args):
     """Copy an image to a block device or a regular file using bmap."""
 
     if args.nobmap and args.bmap:
-        log.error("--nobmap and --bmap cannot be used together")
-        raise SystemExit(1)
+        error_out("--nobmap and --bmap cannot be used together")
 
     if args.bmap_sig and args.no_sig_verify:
-        log.error("--bmap-sig and --no-sig-verify cannot be used together")
-        raise SystemExit(1)
+        error_out("--bmap-sig and --no-sig-verify cannot be used together")
 
     image_obj, dest_obj, bmap_obj, bmap_path, image_size, dest_is_blkdev = \
         open_files(args)
 
     if args.bmap_sig and not bmap_obj:
-        log.error("the bmap signature file was specified, but bmap file "
-                  "was not found")
-        raise SystemExit(1)
+        error_out("the bmap signature file was specified, but bmap file was "
+                  "not found")
 
     f_obj = verify_bmap_signature(args, bmap_obj, bmap_path)
     if f_obj:
@@ -446,8 +460,7 @@ def copy_command(args):
             writer = BmapCopy.BmapCopy(image_obj, dest_obj, bmap_obj,
                                        image_size)
     except BmapCopy.Error as err:
-        log.error(str(err))
-        raise SystemExit(1)
+        error_out(err)
 
     # Print the progress indicator while copying
     if not args.quiet and not args.debug and \
@@ -459,9 +472,8 @@ def copy_command(args):
         if args.nobmap:
             log.info("no bmap given, copy entire image to '%s'" % args.dest)
         else:
-            log.error("bmap file not found, please, use --nobmap option to "
+            error_out("bmap file not found, please, use --nobmap option to "
                       "flash without bmap")
-            raise SystemExit(1)
     else:
         log.info("block map format version %s" % writer.bmap_version)
         log.info("%d blocks of size %d (%s), mapped %d blocks (%s or %.1f%%)"
@@ -476,19 +488,16 @@ def copy_command(args):
         try:
             writer.copy(False, not args.no_verify)
         except (BmapCopy.Error, TransRead.Error) as err:
-            log.error(str(err))
-            raise SystemExit(1)
+            error_out(err)
 
         # Synchronize the block device
         log.info("synchronizing '%s'" % args.dest)
         try:
             writer.sync()
         except BmapCopy.Error as err:
-            log.error(str(err))
-            raise SystemExit(1)
+            error_out(err)
     except KeyboardInterrupt:
-        log.error("the program is interrupted, exiting")
-        raise SystemExit(1)
+        error_out("interrupted, exiting")
 
     copying_time = time.time() - start_time
     copying_speed = writer.mapped_size // copying_time
@@ -533,23 +542,19 @@ def create_command(args):
         try:
             output = open(args.output, "w+")
         except IOError as err:
-            log.error("cannot open the output file '%s': %s"
-                      % (args.output, err))
-            raise SystemExit(1)
+            error_out("cannot open the output file '%s':\n%s", args.output, err)
     else:
         try:
             # Create a temporary file for the bmap
             output = tempfile.TemporaryFile("w+")
         except IOError as err:
-            log.error("cannot create a temporary file: %s" % err)
-            raise SystemExit(1)
+            error_out("cannot create a temporary file:\n%s", err)
 
     try:
         creator = BmapCreate.BmapCreate(args.image, output, "sha256")
         creator.generate(not args.no_checksum)
     except BmapCreate.Error as err:
-        log.error(str(err))
-        raise SystemExit(1)
+        error_out(err)
 
     if not args.output:
         output.seek(0)
@@ -708,8 +713,7 @@ def main():
     setup_logger(loglevel)
 
     if args.quiet and args.debug:
-        log.error("--quiet and --debug cannot be used together")
-        raise SystemExit(1)
+        error_out("--quiet and --debug cannot be used together")
 
     try:
         args.func(args)
