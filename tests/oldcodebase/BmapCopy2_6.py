@@ -55,14 +55,9 @@ import sys
 import hashlib
 import logging
 import datetime
-
-if sys.version[0] == '2':
-    import Queue
-    import thread
-else:
-    import queue as  Queue
-    import _thread as thread
-
+from six import reraise
+from six.moves import queue as Queue
+from six.moves import _thread as thread
 from xml.etree import ElementTree
 from bmaptools.BmapHelpers import human_size
 
@@ -478,7 +473,7 @@ class BmapCopy:
             # pylint: enable=W0703
             # In case of any exception - just pass it to the main thread
             # through the queue.
-            self._batch_queue.put(("error", sys.exc_info()))
+            reraise(exc_info[0], exc_info[1], exc_info[2])
 
         self._batch_queue.put(None)
 

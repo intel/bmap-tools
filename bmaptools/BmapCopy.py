@@ -62,13 +62,9 @@ import sys
 import hashlib
 import logging
 import datetime
-if sys.version[0] == '2':
-    import Queue
-    import thread
-else:
-    import queue as  Queue
-    import _thread as thread
-
+from six import reraise
+from six.moves import queue as Queue
+from six.moves import _thread as thread
 from xml.etree import ElementTree
 from bmaptools.BmapHelpers import human_size
 
@@ -581,7 +577,7 @@ class BmapCopy(object):
                 # The reader thread encountered an error and passed us the
                 # exception.
                 exc_info = batch[1]
-                raise exc_info[1].with_traceback(exc_info[2])
+                reraise(exc_info[0], exc_info[1], exc_info[2])
 
             (start, end, buf) = batch[1:4]
 
