@@ -165,7 +165,7 @@ class TransRead(object):
         #
         # For example, when the path is an URL to a bz2 file, the chain of
         # opened file will be:
-        #   o self._f_objs[0] is the liburl2 file-like object
+        #   o self._f_objs[0] is the urllib2 file-like object
         #   o self._f_objs[1] is the stdout of the 'bzip2' process
         self._f_objs = []
 
@@ -378,10 +378,10 @@ class TransRead(object):
         else:
             args = decompressor + " " + args
 
-        if hasattr(self._f_objs[-1], 'fileno'):
-            child_stdin = self._f_objs[-1].fileno()
-        else:
+        if self.is_url:
             child_stdin = subprocess.PIPE
+        else:
+            child_stdin = self._f_objs[-1].fileno()
 
         child_process = subprocess.Popen(args, shell=True,
                                          bufsize=1024 * 1024,
@@ -390,6 +390,8 @@ class TransRead(object):
                                          stderr=subprocess.PIPE)
 
         if child_stdin == subprocess.PIPE:
+            # A separate reader thread is created only when we are reading via
+            # urllib2.
             args = (self._f_objs[-1], child_process.stdin, )
             self._rthread = threading.Thread(target=self._read_thread, args=args)
             self._rthread.daemon = True
@@ -498,7 +500,7 @@ class TransRead(object):
         parsed_url = urlparse.urlparse(url)
 
         if parsed_url.scheme == "ssh":
-            # Unfortunately, liburl2 does not handle "ssh://" URLs
+            # Unfortunately, urllib2 does not handle "ssh://" URLs
             self._open_url_ssh(parsed_url)
             return
 
