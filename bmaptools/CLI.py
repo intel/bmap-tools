@@ -641,7 +641,7 @@ def parse_arguments():
     text = "do not verify the data checksum while writing"
     parser_copy.add_argument("--no-verify", action="store_true", help=text)
 
-    return parser.parse_args()
+    return (parser, parser.parse_args())
 
 
 def setup_logger(loglevel):
@@ -701,7 +701,7 @@ def setup_logger(loglevel):
 
 def main():
     """Script entry point."""
-    args = parse_arguments()
+    parser, args = parse_arguments()
 
     if args.quiet:
         loglevel = logging.WARNING
@@ -716,7 +716,10 @@ def main():
         error_out("--quiet and --debug cannot be used together")
 
     try:
-        args.func(args)
+        if hasattr(args, 'func'):
+            args.func(args)
+        else:
+            parser.print_help()
     except MemoryError:
         log.error("Out of memory!")
         traceback.print_exc()
