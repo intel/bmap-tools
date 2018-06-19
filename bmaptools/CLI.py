@@ -584,7 +584,8 @@ def parse_arguments():
     text = "print debugging information"
     parser.add_argument("-d", "--debug", action="store_true", help=text)
 
-    subparsers = parser.add_subparsers(title="commands")
+    subparsers = parser.add_subparsers(title="commands", dest="command")
+    subparsers.required = True
 
     #
     # Create parser for the "create" command
