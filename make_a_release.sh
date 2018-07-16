@@ -84,15 +84,15 @@ if [ "$current_branch" != "master" ]; then
 	fatal "current branch is '$current_branch' but must be 'master'"
 fi
 
+# Make sure the git index is up-to-date
+[ -z "$(git status --porcelain)" ] || fatal "git index is not up-to-date"
+
 # Remind the maintainer about various important things
 ask_question "Did you update the docs/RELEASE_NOTES file"
 ask_question "Did you update the docs/README file"
 ask_question "Did you update the man page"
 ask_question "Did you update documentation on tizen.org"
 ask_question "Did you update tests: test-data and oldcodebase"
-
-# Make sure the git index is up-to-date
-[ -z "$(git status --porcelain)" ] || fatal "git index is not up-to-date"
 
 # Change the version in the 'bmaptools/CLI.py' file
 sed -i -e "s/^VERSION = \"[0-9]\+\.[0-9]\+\"$/VERSION = \"$new_ver\"/" bmaptools/CLI.py
