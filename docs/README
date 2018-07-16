@@ -70,6 +70,8 @@ The project structure
 |   |                    | files (compressed, etc)                             |
 | - debian/*             | Debian packaging for the project.                   |
 | - packaging/*          | RPM packaging (Fedora & OpenSuse) for the project.  |
+| - contrib/*            | Various contributions that may be useful, but       |
+|                        | project maintainers do not really test or maintain. |
 --------------------------------------------------------------------------------
 
 How to run unit tests
