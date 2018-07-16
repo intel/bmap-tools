@@ -35,6 +35,7 @@ BuildRequires: python-distribute
 %if 0%{?fedora_version}
 BuildRequires: python-setuptools
 %endif
+BuildRequires: python2-rpm-macros
 
 %if 0%{?suse_version}
 # In OpenSuse the xml.etree module is provided by the python-xml package
@@ -71,7 +72,7 @@ source.tizen.org/documentation/reference/bmaptool for more information.
 
 %install
 rm -rf %{buildroot}
-%{__python} setup.py install --prefix=%{_prefix} --root=%{buildroot}
+%{__python2} setup.py install --prefix=%{_prefix} --root=%{buildroot}
 
 mkdir -p %{buildroot}/%{_mandir}/man1
 install -m644 docs/man1/bmaptool.1 %{buildroot}/%{_mandir}/man1
