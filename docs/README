@@ -2,10 +2,7 @@ Summary
 ~~~~~~~
 
 The bmap-tools project implements bmap-related tools and API modules. The
-entire project is written in python, and requires python 2.7+.
-
-Currently the main user of this project is Tizen IVI, but the project is
-generic and can be used everywhere, when dealing with raw images.
+entire project is written in python and supports python 2.7 and python 3.x.
 
 The project author and maintainer is Artem Bityutskiy <dedekind1@gmail.com>.
 Please, feel free to contact me if you have questions.
@@ -13,28 +10,9 @@ Please, feel free to contact me if you have questions.
 The project is documented here:
 https://source.tizen.org/documentation/reference/bmaptool
 
-The project mailing list is (no need to subscribe to post there):
-bmap-tools@lists.infradead.org
-
-Mailing list archives:
-http://lists.infradead.org/pipermail/bmap-tools/
-
-Subscribe here:
-http://lists.infradead.org/mailman/listinfo/bmap-tools
-
 The project git is here:
 https://github.com/01org/bmap-tools.git
 
-Signed release tarballs are available here:
-ftp://ftp.infradead.org/pub/bmap-tools/
-
-Packages for various distributions are available here:
-* The latest release: http://download.tizen.org/tools/latest-release/
-* The latest pre-release: http://download.tizen.org/tools/pre-release/
-* Older releases: http://download.tizen.org/tools/archive
-
-Please, contribute by sending patches to the mailing list, feel free to CC
-me: Artem Bityutskiy <dedekind1@gmail.com>
 
 The project structure
 ~~~~~~~~~~~~~~~~~~~~~
@@ -69,6 +47,7 @@ The project structure
 |   | - TransRead.py     | Provides a transparent way to read various kind of  |
 |   |                    | files (compressed, etc)                             |
 | - debian/*             | Debian packaging for the project.                   |
+| - doc/*                | Project documentation.                              |
 | - packaging/*          | RPM packaging (Fedora & OpenSuse) for the project.  |
 | - contrib/*            | Various contributions that may be useful, but       |
 |                        | project maintainers do not really test or maintain. |
