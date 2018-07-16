@@ -78,10 +78,10 @@ new_ver="$1"; shift
 printf "%s" "$new_ver" | egrep -q -x '[[:digit:]]+\.[[:digit:]]+' ||
         fatal "please, provide new version in X.Y format"
 
-# Make sure that the current branch is 'devel'
+# Make sure that the current branch is 'master'
 current_branch="$(git branch | sed -n -e '/^*/ s/^* //p')"
-if [ "$current_branch" != "devel" ]; then
-	fatal "current branch is '$current_branch' but must be 'devel'"
+if [ "$current_branch" != "master" ]; then
+	fatal "current branch is '$current_branch' but must be 'master'"
 fi
 
 # Remind the maintainer about various important things
@@ -161,9 +161,9 @@ cat <<EOF
 To finish the release:
   1. push the $tag_name tag out
   2. copy the tarball to ftp.infradead.org
-  3. update the $release_branch with the contents of the 'devel' branch
+  3. update the $release_branch with the contents of the 'master' branch
   4. point the master branch to the updated $release_branch branch
-  5. push the devel, master and the $release_branch branches out
+  5. push the master and $release_branch branches out
   6. (a bit later) push to the public tree and announce the new release
      in the public mailing list
 
@@ -174,21 +174,18 @@ git push origin $tag_name
 #2
 scp "$outdir/$release_name.tgz" "$outdir/$release_name.tgz.asc" casper.infradead.org:/var/ftp/pub/bmap-tools/
 #3
-git branch -f $release_branch devel
+git branch -f $release_branch master
 #4
 git branch -f master $release_branch
 #5
-git push origin devel:devel
 git push origin master:master
 git push origin $release_branch:$release_branch
 #6
 git push public $tag_name
-git push public devel:devel
 git push public master:master
 git push public $release_branch:$release_branch
 #7
 git push tizen $tag_name
-git push tizen devel:devel
 git push tizen master:master
 git push tizen $release_branch:$release_branch
 #8
