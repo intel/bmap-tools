@@ -147,62 +147,23 @@ release_name="bmap-tools-$new_ver"
 printf "%s\n" "Signing tag $tag_name"
 git tag -m "$release_name" -s "$tag_name"
 
-# Prepare a signed tarball
-git archive --format=tar --prefix="$release_name/" "$tag_name" | \
-        gzip > "$outdir/$release_name.tgz"
-printf "%s\n" "Signing the tarball"
-gpg -o "$outdir/$release_name.tgz.asc" --detach-sign -a "$outdir/$release_name.tgz"
-
 # Get the name of the release branch corresponding to this version
 release_branch="release-$(printf "%s" "$new_ver" | sed -e 's/\(.*\)\..*/\1.0/')"
 
 cat <<EOF
 To finish the release:
   1. push the $tag_name tag out
-  2. copy the tarball to ftp.infradead.org
-  3. update the $release_branch with the contents of the 'master' branch
-  4. point the master branch to the updated $release_branch branch
-  5. push the master and $release_branch branches out
-  6. (a bit later) push to the public tree and announce the new release
-     in the public mailing list
+  2. update the $release_branch with the contents of the 'master' branch
+  3. point the master branch to the updated $release_branch branch
+  4. push the master and $release_branch branches out
 
 The commands would be:
 
 #1
 git push origin $tag_name
 #2
-scp "$outdir/$release_name.tgz" "$outdir/$release_name.tgz.asc" casper.infradead.org:/var/ftp/pub/bmap-tools/
-#3
 git branch -f $release_branch master
-#4
-git branch -f master $release_branch
-#5
+#3
 git push origin master:master
 git push origin $release_branch:$release_branch
-#6
-git push public $tag_name
-git push public master:master
-git push public $release_branch:$release_branch
-#7
-git push tizen $tag_name
-git push tizen master:master
-git push tizen $release_branch:$release_branch
-#8
-git send-email --suppress-cc=all --from "Artem Bityutskiy <dedekind1@gmail.com>" --to bmap-tools@lists.infradead.org /proc/self/fd/0 <<END_OF_EMAIL
-Subject: Announcement: $release_name is out!
-
-Bmap-tools version $new_ver is out!
-
-Release notes: http://git.infradead.org/users/dedekind/bmap-tools.git/blob/refs/heads/$release_branch:/docs/RELEASE_NOTES
-Tarball: ftp://ftp.infradead.org/pub/bmap-tools/
-
-Packages for various distributions are available here:
-http://download.tizen.org/tools/pre-release/
-
-At some later point they will be propagated to here:
-http://download.tizen.org/tools/latest-release/
-
---
-Artem Bityutskiy
-END_OF_EMAIL
 EOF
