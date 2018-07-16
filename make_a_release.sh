@@ -91,7 +91,6 @@ fi
 ask_question "Did you update the docs/RELEASE_NOTES file"
 ask_question "Did you update the docs/README file"
 ask_question "Did you update the man page"
-ask_question "Did you update documentation on tizen.org"
 ask_question "Did you update tests: test-data and oldcodebase"
 
 # Change the version in the 'bmaptools/CLI.py' file
