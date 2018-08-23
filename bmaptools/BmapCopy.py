@@ -722,9 +722,9 @@ class BmapBdevCopy(BmapCopy):
                 f_scheduler.seek(0)
                 f_scheduler.write("noop")
         except IOError as err:
-            _log.warning("failed to enable I/O optimization, expect "
+            _log.debug("failed to enable I/O optimization, expect "
                          "suboptimal speed (reason: cannot switch to the "
-                         "'noop' I/O scheduler: %s)" % err)
+                         "'noop' I/O scheduler: %s or blk-mq in use)" % err)
         else:
             # The file contains a list of schedulers with the current
             # scheduler in square brackets, e.g., "noop deadline [cfq]".
