@@ -1,3 +1,12 @@
+Release 3.5
+~~~~~~~~~~~
+
+1. Fixed copying of compressed files from URLs, it was a regression introduced
+   in bmap-tools 3.4.
+2. Python 3.x support fixes and improvements.
+3. RPM packaging fixes.
+4. Improved help and error messages.
+
 Release 3.4
 ~~~~~~~~~~~
 
