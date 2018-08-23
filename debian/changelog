@@ -1,3 +1,10 @@
+bmap-tools (3.5) unstable; urgency=low
+
+  * Fixed copying of compressed files from URLs
+  * Python 3.x support fixes and improvements.
+
+ -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com> Thu, 23 Aug 2018 10:34:31 +0300
+
 bmap-tools (3.4) unstable; urgency=low
 
   * New homepage: https://github.com/01org/bmap-tools

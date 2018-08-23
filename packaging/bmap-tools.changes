@@ -1,3 +1,7 @@
+Thu Aug 23 07:34:31 UTC 2018 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 3.5-1
+- Fixed copying of compressed files from URLs
+- Python 3.x support fixes and improvements.
+
 Thu Aug 31 12:40:00 UTC 2017 Alexander Kanevskiy <kad@linux.intel.com> 3.4-1
 - New homepage: https://github.com/01org/bmap-tools
 - Python 3.x support.
