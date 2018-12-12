@@ -476,7 +476,11 @@ class FilemapFiemap(_FilemapBase):
         _log.debug("FilemapFiemap: get_mapped_ranges(%d,  %d(%d))"
                    % (start, count, start + count - 1))
         iterator = self._do_get_mapped_ranges(start, count)
-        first_prev, last_prev = next(iterator)
+
+        try:
+            first_prev, last_prev = next(iterator)
+        except StopIteration:
+            return
 
         for first, last in iterator:
             if last_prev == first - 1:
