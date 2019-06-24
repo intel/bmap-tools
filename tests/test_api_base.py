@@ -135,6 +135,12 @@ def _do_test(image, image_size, delete=True):
     have to be automatically deleted.
     """
 
+    try:
+        Filemap.filemap(image)
+    except Filemap.ErrorNotSupp as e:
+        sys.stderr.write('%s\n' % e)
+        return
+
     # Make sure the temporary files start with the same name as 'image' in
     # order to simplify debugging.
     prefix = os.path.splitext(os.path.basename(image))[0] + '.'
