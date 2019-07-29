@@ -18,10 +18,11 @@
 This module allows opening and reading local and remote files and decompress
 them on-the-fly if needed. Remote files are read using urllib (except of
 "ssh://" URLs, which are handled differently). Supported file extentions are:
-'bz2', 'gz', 'xz', 'lzo' and a "tar" version of them: 'tar.bz2', 'tbz2', 'tbz',
-'tb2', 'tar.gz', 'tgz', 'tar.xz', 'txz', 'tar.lzo', 'tzo', 'tar.lz4', 'tlz4'.
+'bz2', 'gz', 'xz', 'lzo', 'zst' and a "tar" version of them: 'tar.bz2', 'tbz2',
+'tbz', 'tb2', 'tar.gz', 'tgz', 'tar.xz', 'txz', 'tar.lzo', 'tzo', 'tar.lz4',
+'tlz4', '.tar.zst', 'tzst'.
 This module uses the following system programs for decompressing: pbzip2, bzip2,
-gzip, pigz, xz, lzop, lz4, tar and unzip.
+gzip, pigz, xz, lzop, lz4, zstd, tar and unzip.
 """
 
 import os
@@ -51,9 +52,9 @@ _log = logging.getLogger(__name__)  # pylint: disable=C0103
 # pylint: disable=R0915
 
 # A list of supported compression types
-SUPPORTED_COMPRESSION_TYPES = ('bz2', 'gz', 'xz', 'lzo', 'lz4', 'tar.gz',
-                               'tar.bz2', 'tar.xz', 'tar.lzo', 'tar.lz4',
-                               'zip')
+SUPPORTED_COMPRESSION_TYPES = ('bz2', 'gz', 'xz', 'lzo', 'lz4', 'zst',
+                               'tar.gz', 'tar.bz2', 'tar.xz', 'tar.lzo',
+                               'tar.lz4', 'tar.zst', 'zip')
 
 
 def _fake_seek_forward(file_obj, cur_pos, offset, whence=os.SEEK_SET):
@@ -254,6 +255,12 @@ class TransRead(object):
                 return True
             return False
 
+        def is_zst(name):
+            """Returns 'True' if file 'name' is compressed with 'zstd'."""
+            if name.endswith('.zst') and not name.endswith('.tar.zst'):
+                return True
+            return False
+
         def is_tar_gz(name):
             """
             Returns 'True' if file 'name' is a tar archive compressed with
@@ -301,6 +308,16 @@ class TransRead(object):
             """
 
             if name.endswith('.tar.lz4') or name.endswith('.tlz4'):
+                return True
+            return False
+
+        def is_tar_zst(name):
+            """
+            Returns 'True' if file 'name' is a tar archive compressed with
+            'zstd'.
+            """
+
+            if name.endswith('.tar.zst') or name.endswith('.tzst'):
                 return True
             return False
 
@@ -357,6 +374,14 @@ class TransRead(object):
             else:
                 archiver = "tar"
                 args = "-x -Ilz4 -O"
+        elif is_tar_zst(self.name) or is_zst(self.name):
+            self.compression_type = 'zst'
+            decompressor = "zstd"
+            if is_zst(self.name):
+                args = "-d"
+            else:
+                archiver = "tar"
+                args = "-x -Izstd -O"
         else:
             if not self.is_url:
                 self.size = os.fstat(self._f_objs[-1].fileno()).st_size

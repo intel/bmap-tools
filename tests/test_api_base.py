@@ -91,6 +91,7 @@ def _generate_compressed_files(file_path, delete=True):
                    ("xz",     None, ".xz",    "-c -k"),
                    ("lzop",   None, ".lzo",   "-c -k"),
                    ("lz4",    None, ".lz4",   "-c -k"),
+                   ("zstd",   None, ".zst",   ""),
                    # The "-P -C /" trick is used to avoid silly warnings:
                    # "tar: Removing leading `/' from member names"
                    ("bzip2", "tar", ".tar.bz2", "-c -j -O -P -C /"),
@@ -98,6 +99,7 @@ def _generate_compressed_files(file_path, delete=True):
                    ("xz",    "tar", ".tar.xz",  "-c -J -O -P -C /"),
                    ("lzop",  "tar", ".tar.lzo", "-c --lzo -O -P -C /"),
                    ("lz4",   "tar", ".tar.lz4", "-c -Ilz4 -O -P -C /"),
+                   ("zstd",  "tar", ".tar.zst", "-c -Izstd -O -P -C /"),
                    ("zip",   None,  ".zip",     "-q -j -")]
 
     for decompressor, archiver, suffix, options in compressors:
