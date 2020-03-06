@@ -384,13 +384,11 @@ def open_files(args):
     (bmap_obj, bmap_path) = find_and_open_bmap(args)
 
     if bmap_path == args.image:
-        # Most probably the specified the bmap file instead of the image file
-        # by mistake.
-        log.warning("image has the same path as the bmap file, dropping bmap")
+        # Most probably the user specified the bmap file instead of the image
+        # file by mistake. Don't let bmaptool copy any data
         bmap_obj.close()
-        bmap_obj = None
-        bmap_path = None
-        args.nobmap = True
+        error_out("Make sure you are flashing your image and not the bmap file "
+                  "because they have the same path.")
 
     # If the destination file is under "/dev", but does not exist, print a
     # warning. This is done in order to be more user-friendly, because
