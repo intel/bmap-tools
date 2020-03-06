@@ -172,6 +172,7 @@ class BmapCopy(object):
         self._progress_file = None
         self._progress_format = None
         self.set_progress_indicator(None, None)
+        self._psplash_pipe = None
 
         self._f_image = image
         self._image_path = image.name
@@ -210,6 +211,28 @@ class BmapCopy(object):
             self._set_image_size(image_size)
 
         self._batch_blocks = self._batch_bytes // self.block_size
+
+    def set_psplash_pipe(self, path):
+        """
+        Set the psplash named pipe file path to be used when updating the
+        progress - best effort.
+
+        The 'path' argument is the named pipe used by the psplash process to get
+        progress bar commands. When the path argument doesn't exist or is not a
+        pipe, the function will ignore with a warning. This behavior is
+        considered as such because the progress is considered a decoration
+        functionality which might or might not be available even if requested.
+        When used as a boot service, the unavailability of the psplash service
+        (due to various reasons: no screen, racing issues etc.) should not
+        break the writting process. This is why this implementation is done as
+        a best effort.
+        """
+
+        if os.path.exists(pipe) and stat.S_ISFIFO(os.stat(pipe).st_mode):
+            self._psplash_pipe = pipe
+        else:
+            _log.warning("'%s' is not a pipe, so psplash progress will not be "
+                         "updated" % pipe)
 
     def set_progress_indicator(self, file_obj, format_string):
         """
@@ -403,6 +426,17 @@ class BmapCopy(object):
 
         self._progress_file.write(progress)
         self._progress_file.flush()
+
+        # Update psplash progress when configured. This is using a best effort
+        # strategy to not affect the writing process when psplash breaks, is
+        # not available early enough or screen is not available.
+        if self._psplash_pipe and self.mapped_cnt:
+            try:
+                mode = os.O_WRONLY | os.O_NONBLOCK
+                with os.fdopen(os.open(self._psplash_pipe, mode), 'w') as p_fo:
+                    p_fo.write("PROGRESS %d\n" % percent)
+            except:
+                pass
 
     def _get_block_ranges(self):
         """

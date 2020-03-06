@@ -482,6 +482,9 @@ def copy_command(args):
                  % (os.path.basename(args.image), dest_str,
                     os.path.basename(bmap_path)))
 
+    if args.psplash_pipe:
+        writer.set_psplash_pipe(args.psplash_pipe)
+
     try:
         try:
             writer.copy(False, not args.no_verify)
@@ -639,6 +642,10 @@ def parse_arguments():
     # The --no-verify option
     text = "do not verify the data checksum while writing"
     parser_copy.add_argument("--no-verify", action="store_true", help=text)
+
+    # The --psplash-pipe option
+    text = "write progress to a psplash pipe"
+    parser_copy.add_argument("--psplash-pipe", help=text)
 
     return parser.parse_args()
 
