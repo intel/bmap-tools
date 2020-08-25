@@ -328,6 +328,36 @@ Just install the 'nose' python test framework and run the 'nosetests' command in
 the project root directory. If you want to see tests coverage report, run
 'nosetests --with-coverage'.
 
+
+Known Issues
+~~~~~~~~~~~~
+
+ZFS File System
+
+If running on the ZFS file system, the Linux ZFS kernel driver parameters
+configuration can cause the finding of mapped and unmapped areas to fail.
+This can be fixed temporarily by doing the following:
+
+$ echo 1 | sudo tee -a /sys/module/zfs/parameters/zfs_dmu_offset_next_sync
+
+However, if a permanent solution is required then perform the following:
+
+$ echo "options zfs zfs_dmu_offset_next_sync=1" | sudo tee -a /etc/modprobe.d/zfs.conf
+
+Depending upon your Linux distro, you may also need to do the following to
+ensure that the permanent change is updated in all your initramfs images:
+
+$ sudo update-initramfs -u -k all
+
+To verify the temporary or permanent change has worked you can use the following
+which should return "1":
+
+$ cat /sys/module/zfs/parameters/zfs_dmu_offset_next_sync
+
+More details can be found here:
+https://openzfs.github.io/openzfs-docs/Performance%20and%20Tuning/ZFS%20on%20Linux%20Module%20Parameters.html
+
+
 Credits
 ~~~~~~~
 
