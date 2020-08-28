@@ -55,9 +55,9 @@ def _check_ranges(f_image, filemap, first_block, blocks_cnt,
     that should be verified by this function.
     """
 
-    if ranges_type is "mapped":
+    if ranges_type == "mapped":
         filemap_iterator = filemap.get_mapped_ranges(first_block, blocks_cnt)
-    elif ranges_type is "unmapped":
+    elif ranges_type == "unmapped":
         filemap_iterator = filemap.get_unmapped_ranges(first_block, blocks_cnt)
     else:
         raise Error("incorrect list type")
@@ -93,11 +93,11 @@ def _check_ranges(f_image, filemap, first_block, blocks_cnt,
                            check[0], check[1]))
 
         for block in range(correct[0], correct[1] + 1):
-            if ranges_type is "mapped" and filemap.block_is_unmapped(block):
+            if ranges_type == "mapped" and filemap.block_is_unmapped(block):
                 raise Error("range %d-%d of file '%s' is mapped, but"
                             "'block_is_unmapped(%d) returned 'True'"
                             % (correct[0], correct[1], f_image.name, block))
-            if ranges_type is "unmapped" and filemap.block_is_mapped(block):
+            if ranges_type == "unmapped" and filemap.block_is_mapped(block):
                 raise Error("range %d-%d of file '%s' is unmapped, but"
                             "'block_is_mapped(%d) returned 'True'"
                             % (correct[0], correct[1], f_image.name, block))
