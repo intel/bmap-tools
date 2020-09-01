@@ -206,16 +206,17 @@ class TransRead(object):
         """
 
         chunk_size = 1024 * 1024
-        while not self._done:
-            buf = f_from.read(chunk_size)
-            if not buf:
-                break
+        try:
+            while not self._done:
+                buf = f_from.read(chunk_size)
+                if not buf:
+                    break
 
-            f_to.write(buf)
-
-        # This will make sure the process decompressor gets EOF and exits, as
-        # well as ublocks processes waiting on decompressor's stdin.
-        f_to.close()
+                f_to.write(buf)
+        finally:
+            # This will make sure the process decompressor gets EOF and exits, as
+            # well as ublocks processes waiting on decompressor's stdin.
+            f_to.close()
 
     def _open_compressed_file(self):
         """
