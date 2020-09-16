@@ -285,41 +285,42 @@ expand it. Later on, you may reconstruct it using the "bmaptool copy" command.
 Project structure
 ~~~~~~~~~~~~~~~~~
 
---------------------------------------------------------------------------------
-| - bmaptool             | A tools to create bmap and copy with bmap. Based    |
-|                        | on the 'BmapCreate.py' and 'BmapCopy.py' modules.   |
-| - setup.py             | A script to turn the entire bmap-tools project      |
-|                        | into a python egg.                                  |
-| - setup.cfg            | contains a piece of nose tests configuration        |
-| - .coveragerc          | lists files to include into test coverage report    |
-| - TODO                 | Just a list of things to be done for the project.   |
-| - make_a_release.sh    | Most people may ignore this script. It is used by   |
-|                        | maintainer when creating a new release.             |
-| - tests/               | Contains the project unit-tests.                    |
-|   | - test_api_base.py | Tests the base API modules: 'BmapCreate.py' and     |
-|   |                    | 'BmapCopy.py'.                                      |
-|   | - test_filemap.py  | Tests the 'Filemap.py' module.                      |
-|   | - test_compat.py   | Tests that new BmapCopy implementations support old |
-|   |                    | bmap formats, and old BmapCopy implementations      |
-|   |                    | support new compatible bmap fomrats.                |
-|   | - helpers.py       | Helper functions shared between the unit-tests.     |
-|   | - test-data/       | Data files for the unit-tests                       |
-|   | - oldcodebase/     | Copies of old BmapCopy implementations for bmap     |
-|   |                    | format forward-compatibility verification.          |
-| - bmaptools/           | The API modules which implement all the bmap        |
-|   |                    | functionality.                                      |
-|   | - BmapCreate.py    | Creates a bmap for a given file.                    |
-|   | - BmapCopy.py      | Implements copying of an image using its bmap.      |
-|   | - Filemap.py       | Allows for reading files' block map.                |
-|   | - BmapHelpers.py   | Just helper functions used all over the project.    |
-|   | - TransRead.py     | Provides a transparent way to read various kind of  |
-|   |                    | files (compressed, etc)                             |
-| - debian/*             | Debian packaging for the project.                   |
-| - doc/*                | Project documentation.                              |
-| - packaging/*          | RPM packaging (Fedora & OpenSuse) for the project.  |
-| - contrib/*            | Various contributions that may be useful, but       |
-|                        | project maintainers do not really test or maintain. |
---------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
+| - bmaptool                 | A tools to create bmap and copy with bmap. Based    |
+|                            | on the 'BmapCreate.py' and 'BmapCopy.py' modules.   |
+| - setup.py                 | A script to turn the entire bmap-tools project      |
+|                            | into a python egg.                                  |
+| - setup.cfg                | contains a piece of nose tests configuration        |
+| - .coveragerc              | lists files to include into test coverage report    |
+| - TODO                     | Just a list of things to be done for the project.   |
+| - make_a_release.sh        | Most people may ignore this script. It is used by   |
+|                            | maintainer when creating a new release.             |
+| - tests/                   | Contains the project unit-tests.                    |
+|   | - test_api_base.py     | Tests the base API modules: 'BmapCreate.py' and     |
+|   |                        | 'BmapCopy.py'.                                      |
+|   | - test_filemap.py      | Tests the 'Filemap.py' module.                      |
+|   | - test_compat.py       | Tests that new BmapCopy implementations support old |
+|   |                        | bmap formats, and old BmapCopy implementations      |
+|   |                        | support new compatible bmap fomrats.                |
+|   | - test_bmap_helpers.py | Tests the 'BmapHelpers.py' module.                  |
+|   | - helpers.py           | Helper functions shared between the unit-tests.     |
+|   | - test-data/           | Data files for the unit-tests                       |
+|   | - oldcodebase/         | Copies of old BmapCopy implementations for bmap     |
+|   |                        | format forward-compatibility verification.          |
+| - bmaptools/               | The API modules which implement all the bmap        |
+|   |                        | functionality.                                      |
+|   | - BmapCreate.py        | Creates a bmap for a given file.                    |
+|   | - BmapCopy.py          | Implements copying of an image using its bmap.      |
+|   | - Filemap.py           | Allows for reading files' block map.                |
+|   | - BmapHelpers.py       | Just helper functions used all over the project.    |
+|   | - TransRead.py         | Provides a transparent way to read various kind of  |
+|   |                        | files (compressed, etc)                             |
+| - debian/*                 | Debian packaging for the project.                   |
+| - doc/*                    | Project documentation.                              |
+| - packaging/*              | RPM packaging (Fedora & OpenSuse) for the project.  |
+| - contrib/*                | Various contributions that may be useful, but       |
+|                            | project maintainers do not really test or maintain. |
+------------------------------------------------------------------------------------
 
 How to run unit tests
 ~~~~~~~~~~~~~~~~~~~~~

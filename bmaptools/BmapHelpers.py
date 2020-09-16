@@ -20,7 +20,16 @@ This module contains various shared helper functions.
 
 import os
 import struct
+import subprocess
 from fcntl import ioctl
+from subprocess import PIPE
+
+# Path to check for zfs compatibility.
+ZFS_COMPAT_PARAM_PATH = '/sys/module/zfs/parameters/zfs_dmu_offset_next_sync'
+
+class Error(Exception):
+    """A class for all the other exceptions raised by this module."""
+    pass
 
 def human_size(size):
     """Transform size in bytes into a human-readable form."""
@@ -83,3 +92,52 @@ def program_is_available(name):
             return True
 
     return False
+
+def get_file_system_type(path):
+    """Return the file system type for 'path'."""
+
+    abspath = os.path.realpath(path)
+    proc = subprocess.Popen(["df", "-T", "--", abspath], stdout=PIPE, stderr=PIPE)
+    stdout, stderr = proc.communicate()
+
+    # Parse the output of subprocess, for example:
+    # Filesystem                Type 1K-blocks     Used Available Use% Mounted on
+    # rpool/USERDATA/foo_5ucog2 zfs  456499712 86956288 369543424  20% /home/foo
+    ftype = None
+    if stdout:
+        lines = stdout.splitlines()
+        if len(lines) >= 2:
+            fields = lines[1].split(None, 2)
+            if len(fields) >= 2:
+                ftype = fields[1].lower()
+
+    if not ftype:
+        raise Error("failed to find file system type for path at '%s'\n"
+                    "Here is the 'df -T' output\nstdout:\n%s\nstderr:\n%s"
+                    % (path, stdout, stderr))
+    return ftype
+
+def is_zfs_configuration_compatible():
+    """Return if hosts zfs configuration is compatible."""
+
+    path = ZFS_COMPAT_PARAM_PATH
+    if not os.path.isfile(path):
+        return False
+
+    try:
+        with open(path, "r") as fobj:
+            return int(fobj.readline()) == 1
+    except IOError as err:
+        raise Error("cannot open zfs param path '%s': %s"
+                    % (path, err))
+    except ValueError as err:
+        raise Error("invalid value read from param path '%s': %s"
+                    % (path, err))
+
+def is_compatible_file_system(path):
+    """Return if paths file system is compatible."""
+
+    fstype = get_file_system_type(path)
+    if fstype == "zfs":
+        return is_zfs_configuration_compatible()
+    return True
