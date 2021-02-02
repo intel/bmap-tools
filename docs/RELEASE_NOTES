@@ -1,3 +1,10 @@
+Release 3.6
+~~~~~~~~~~~
+
+1. Improve ZFS compatibility.
+2. Added the 'zstd' compression type support.
+3. Add '--psplash-pipe' option for interacting with psplash.
+
 Release 3.5
 ~~~~~~~~~~~
 
