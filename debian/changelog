@@ -1,3 +1,11 @@
+bmap-tools (3.6) unstable; urgency=low
+
+  * Improve ZFS compatibility.
+  * Added the 'zstd' compression type support.
+  * Add '--psplash-pipe' option for interacting with psplash.
+
+ -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com> Tue, 02 Feb 2021 14:08:41 +0200
+
 bmap-tools (3.5) unstable; urgency=low
 
   * Fixed copying of compressed files from URLs
