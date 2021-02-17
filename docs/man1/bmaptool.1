@@ -209,9 +209,11 @@ IMAGE matches the checksums.
 .RE
 
 .PP
-\-\-no-sig-verify
+\-\-psplash\-pipe PATH
 .RS 2
-Write progress to a psplash pipe.
+Write periodic machine-readable progress reports to a fifo in the format
+used by \fBpsplash\fR. Each progress report consists of "PROGRESS" followed
+by a space, an integer percentage and a newline.
 .RE
 .RE
 
