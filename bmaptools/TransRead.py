@@ -188,14 +188,21 @@ class TransRead(object):
         """The class destructor which closes opened files."""
         self._done = True
 
-        for child in self._child_processes:
-            child.kill()
+        if getattr(self, "_f_objs"):
+            for file_obj in self._f_objs:
+                file_obj.close()
+            self._f_objs = None
 
-        if self._rthread:
+        if getattr(self, "_rthread"):
             self._rthread.join()
+            self._rthread = None
 
-        for file_obj in self._f_objs:
-            file_obj.close()
+        if getattr(self, "_child_processes"):
+            for child in self._child_processes:
+                if child.poll() is None:
+                    child.kill()
+                    child.wait()
+            self._child_processes = []
 
     def _read_thread(self, f_from, f_to):
         """
