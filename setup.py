@@ -24,6 +24,7 @@ setup(
     entry_points={
         'console_scripts': ['bmaptool=bmaptools.CLI:main'],
     },
+    install_requires=["mock"],
     packages=find_packages(exclude=["test*"]),
     license='GPLv2',
     long_description="Tools to generate block map (AKA bmap) and flash "
