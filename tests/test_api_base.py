@@ -116,9 +116,7 @@ def _generate_compressed_files(file_path, delete=True):
             args = archiver + " " + options + " " + file_path
         else:
             args = decompressor + " " + options + " " + file_path
-        child_process = subprocess.Popen(args, shell=True,
-                                         stderr=subprocess.PIPE,
-                                         stdout=tmp_file_obj)
+        child_process = subprocess.Popen(args, shell=True, stdout=tmp_file_obj)
         child_process.wait()
         tmp_file_obj.flush()
         yield tmp_file_obj.name
