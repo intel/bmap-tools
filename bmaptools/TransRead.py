@@ -395,6 +395,11 @@ class TransRead(object):
                 self.size = os.fstat(self._f_objs[-1].fileno()).st_size
             return
 
+        if archiver == "tar":
+            # This will get rid of messages like:
+            #     tar: Removing leading `/' from member names'.
+            args += " -P -C /"
+
         # Make sure decompressor and the archiver programs are available
         if not BmapHelpers.program_is_available(decompressor):
             raise Error("the \"%s\" program is not available but it is "
