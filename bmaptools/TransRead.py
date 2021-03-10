@@ -419,8 +419,7 @@ class TransRead(object):
         child_process = subprocess.Popen(args, shell=True,
                                          bufsize=1024 * 1024,
                                          stdin=child_stdin,
-                                         stdout=subprocess.PIPE,
-                                         stderr=subprocess.PIPE)
+                                         stdout=subprocess.PIPE)
 
         if child_stdin == subprocess.PIPE:
             # A separate reader thread is created only when we are reading via
@@ -490,8 +489,7 @@ class TransRead(object):
         # host
         command = "test -f " + path + " && test -r " + path
         child_process = subprocess.Popen(popen_args + [command],
-                                         bufsize=1024 * 1024,
-                                         stdout=subprocess.PIPE)
+                                         bufsize=1024 * 1024)
         child_process.wait()
         if child_process.returncode != 0:
             raise Error("\"%s\" on \"%s\" cannot be read: make sure it "
