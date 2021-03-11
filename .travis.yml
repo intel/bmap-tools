@@ -13,7 +13,7 @@ python:
 #  - "pypy3"
 # command to install dependencies
 install:
-  - pip install codecov
+  - pip install codecov backports.tempfile mock
   - pip install .
 # command to run tests
 script: python setup.py nosetests --with-coverage --cover-xml
