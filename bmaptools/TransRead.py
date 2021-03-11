@@ -188,14 +188,21 @@ class TransRead(object):
         """The class destructor which closes opened files."""
         self._done = True
 
-        for child in self._child_processes:
-            child.kill()
+        if getattr(self, "_f_objs"):
+            for file_obj in self._f_objs:
+                file_obj.close()
+            self._f_objs = None
 
-        if self._rthread:
+        if getattr(self, "_rthread"):
             self._rthread.join()
+            self._rthread = None
 
-        for file_obj in self._f_objs:
-            file_obj.close()
+        if getattr(self, "_child_processes"):
+            for child in self._child_processes:
+                if child.poll() is None:
+                    child.kill()
+                    child.wait()
+            self._child_processes = []
 
     def _read_thread(self, f_from, f_to):
         """
@@ -388,6 +395,11 @@ class TransRead(object):
                 self.size = os.fstat(self._f_objs[-1].fileno()).st_size
             return
 
+        if archiver == "tar":
+            # This will get rid of messages like:
+            #     tar: Removing leading `/' from member names'.
+            args += " -P -C /"
+
         # Make sure decompressor and the archiver programs are available
         if not BmapHelpers.program_is_available(decompressor):
             raise Error("the \"%s\" program is not available but it is "
@@ -412,8 +424,7 @@ class TransRead(object):
         child_process = subprocess.Popen(args, shell=True,
                                          bufsize=1024 * 1024,
                                          stdin=child_stdin,
-                                         stdout=subprocess.PIPE,
-                                         stderr=subprocess.PIPE)
+                                         stdout=subprocess.PIPE)
 
         if child_stdin == subprocess.PIPE:
             # A separate reader thread is created only when we are reading via
@@ -483,8 +494,7 @@ class TransRead(object):
         # host
         command = "test -f " + path + " && test -r " + path
         child_process = subprocess.Popen(popen_args + [command],
-                                         bufsize=1024 * 1024,
-                                         stdout=subprocess.PIPE)
+                                         bufsize=1024 * 1024)
         child_process.wait()
         if child_process.returncode != 0:
             raise Error("\"%s\" on \"%s\" cannot be read: make sure it "

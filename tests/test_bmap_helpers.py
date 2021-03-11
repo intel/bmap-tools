@@ -102,7 +102,8 @@ class TestBmapHelpers(unittest.TestCase):
 
         mock_open.side_effect = IOError
         with self.assertRaises(BmapHelpers.Error):
-            BmapHelpers.is_zfs_configuration_compatible()
+            if not BmapHelpers.is_zfs_configuration_compatible():
+                raise BmapHelpers.Error
 
     def test_is_zfs_configuration_compatible_notinstalled(self):
         """Check compatiblilty check passes when zfs not installed"""
