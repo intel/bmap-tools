@@ -22,9 +22,9 @@ import os
 import sys
 import tempfile
 try:
-    from unittest.mock import patch, mock
+    from unittest.mock import patch
 except ImportError:     # for Python < 3.3
-    from mock import patch, mock
+    from mock import patch
 try:
     from tempfile import TemporaryDirectory
 except ImportError:     # for Python < 3.2
@@ -76,7 +76,7 @@ class TestBmapHelpers(unittest.TestCase):
                                          delete=True, dir=".", suffix=".txt") as fobj:
             fobj.write("1")
             fobj.flush()
-            mockobj = mock.patch.object(BmapHelpers, "ZFS_COMPAT_PARAM_PATH", fobj.name)
+            mockobj = patch.object(BmapHelpers, "ZFS_COMPAT_PARAM_PATH", fobj.name)
             with mockobj:
                 self.assertTrue(BmapHelpers.is_zfs_configuration_compatible())
 
@@ -88,7 +88,7 @@ class TestBmapHelpers(unittest.TestCase):
                                          delete=True, dir=".", suffix=".txt") as fobj:
             fobj.write("0")
             fobj.flush()
-            mockobj = mock.patch.object(BmapHelpers, "ZFS_COMPAT_PARAM_PATH", fobj.name)
+            mockobj = patch.object(BmapHelpers, "ZFS_COMPAT_PARAM_PATH", fobj.name)
             with mockobj:
                 self.assertFalse(BmapHelpers.is_zfs_configuration_compatible())
 
@@ -97,7 +97,7 @@ class TestBmapHelpers(unittest.TestCase):
 
         with tempfile.NamedTemporaryFile("a", prefix="testfile_",
                                          delete=True, dir=".", suffix=".txt") as fobj:
-            mockobj = mock.patch.object(BmapHelpers, "ZFS_COMPAT_PARAM_PATH", fobj.name)
+            mockobj = patch.object(BmapHelpers, "ZFS_COMPAT_PARAM_PATH", fobj.name)
             with self.assertRaises(BmapHelpers.Error):
                 with mockobj:
                     BmapHelpers.is_zfs_configuration_compatible()
@@ -116,7 +116,7 @@ class TestBmapHelpers(unittest.TestCase):
 
         directory = os.path.dirname(__file__)
         filepath = os.path.join(directory, "BmapHelpers/file/does/not/exist")
-        mockobj = mock.patch.object(BmapHelpers, "ZFS_COMPAT_PARAM_PATH", filepath)
+        mockobj = patch.object(BmapHelpers, "ZFS_COMPAT_PARAM_PATH", filepath)
         with mockobj:
             self.assertFalse(BmapHelpers.is_zfs_configuration_compatible())
 
@@ -128,7 +128,7 @@ class TestBmapHelpers(unittest.TestCase):
                                          delete=True, dir=".", suffix=".img") as fobj:
             fobj.write("1")
             fobj.flush()
-            mockobj = mock.patch.object(BmapHelpers, "ZFS_COMPAT_PARAM_PATH", fobj.name)
+            mockobj = patch.object(BmapHelpers, "ZFS_COMPAT_PARAM_PATH", fobj.name)
             with mockobj:
                 self.assertTrue(BmapHelpers.is_compatible_file_system(fobj.name))
 
@@ -140,7 +140,7 @@ class TestBmapHelpers(unittest.TestCase):
                                          delete=True, dir=".", suffix=".img") as fobj:
             fobj.write("0")
             fobj.flush()
-            mockobj = mock.patch.object(BmapHelpers, "ZFS_COMPAT_PARAM_PATH", fobj.name)
+            mockobj = patch.object(BmapHelpers, "ZFS_COMPAT_PARAM_PATH", fobj.name)
             with mockobj:
                 self.assertFalse(BmapHelpers.is_compatible_file_system(fobj.name))
 
