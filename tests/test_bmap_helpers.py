@@ -21,8 +21,14 @@ This test verifies 'BmapHelpers' module functionality.
 import os
 import sys
 import tempfile
-from mock import patch, mock
-from backports import tempfile as btempfile
+try:
+    from unittest.mock import patch, mock
+except ImportError:     # for Python < 3.3
+    from mock import patch, mock
+try:
+    from tempfile import TemporaryDirectory
+except ImportError:     # for Python < 3.2
+    from backports.tempfile import TemporaryDirectory
 from bmaptools import BmapHelpers
 
 
@@ -55,7 +61,7 @@ class TestBmapHelpers(unittest.TestCase):
     def test_get_file_system_type_symlink(self):
         """Check a file system type is returned when used with a symlink"""
 
-        with btempfile.TemporaryDirectory(prefix="testdir_", dir=".") as directory:
+        with TemporaryDirectory(prefix="testdir_", dir=".") as directory:
             fobj = tempfile.NamedTemporaryFile("r", prefix="testfile_", delete=False,
                                             dir=directory, suffix=".img")
             lnk = os.path.join(directory, "test_symlink")
