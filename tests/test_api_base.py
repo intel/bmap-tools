@@ -91,7 +91,7 @@ def _generate_compressed_files(file_path, delete=True):
                    ("xz",     None, ".xz",    "-c -k"),
                    ("lzop",   None, ".lzo",   "-c -k"),
                    ("lz4",    None, ".lz4",   "-c -k"),
-                   ("zstd",   None, ".zst",   ""),
+                   ("zstd",   None, ".zst",   "-c -k"),
                    # The "-P -C /" trick is used to avoid silly warnings:
                    # "tar: Removing leading `/' from member names"
                    ("bzip2", "tar", ".tar.bz2", "-c -j -O -P -C /"),
