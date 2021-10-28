@@ -1,4 +1,4 @@
 six
 nose
 backports.tempfile
-mock
+mock ; python_version < '3.3'
