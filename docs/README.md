@@ -103,7 +103,7 @@ a 4GiB file with all blocks unmapped, which means that the file consists of a
 huge 4GiB hole:
 
 ```bash
-$ truncate -s4G image.raw
+$ truncate -s 4G image.raw
 $ stat image.raw
   File: image.raw
   Size: 4294967296   Blocks: 0     IO Block: 4096   regular file
