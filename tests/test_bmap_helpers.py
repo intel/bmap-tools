@@ -21,14 +21,8 @@ This test verifies 'BmapHelpers' module functionality.
 import os
 import sys
 import tempfile
-try:
-    from unittest.mock import patch
-except ImportError:     # for Python < 3.3
-    from mock import patch
-try:
-    from tempfile import TemporaryDirectory
-except ImportError:     # for Python < 3.2
-    from backports.tempfile import TemporaryDirectory
+from unittest.mock import patch
+from tempfile import TemporaryDirectory
 from bmaptools import BmapHelpers
 
 
