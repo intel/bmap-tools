@@ -70,7 +70,7 @@ format_changelog() {
 }
 
 [ $# -eq 0 ] && usage
-[ $# -eq 1 ] || fatal "insufficient or too many argumetns"
+[ $# -eq 1 ] || fatal "insufficient or too many arguments"
 
 new_ver="$1"; shift
 
