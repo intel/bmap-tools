@@ -3,15 +3,20 @@
 The bmap-tools project implements bmap-related tools and API modules. The
 entire project is written in python and supports python 2.7 and python 3.x.
 
-The project author and maintainer is Artem Bityutskiy (dedekind1@gmail.com)
+The project author and maintainer is Artem Bityutskiy (dedekind1@gmail.com).
 Please, feel free to contact me if you have questions.
 
-Project git repository is here:
-https://github.com/01org/bmap-tools.git
+The project is released using the GPL-2+ license: you can also find a copy of if
+under docs/COPYING.
+
+If you want to help feel free to take a look on docs/TODO.md and if you find
+any issue please report at https://github.com/intel/bmap-tools/issues.
+
+Project git repository is here: https://github.com/intel/bmap-tools.git
 
 # Introduction
 
-Bmaptool is a generic tool for creating the block map (bmap) for a file and
+Bmaptool is a generic tool for creating the block map (bmap) of a file and
 copying files using the block map. The idea is that large files, like raw
 system image files, can be copied or flashed a lot faster and more reliably
 with bmaptool than with traditional tools, like `dd` or `cp`.
@@ -36,7 +41,6 @@ brought a number of advantages.
   protection mechanisms which, for example, prevent bmaptool from writing to a
   mounted block device.
 
-
 # Usage
 
 Bmaptool supports 2 subcommands:
@@ -56,7 +60,6 @@ You can also refer to the bmaptool manual page:
 ```bash
 $ man bmaptool
 ```
-
 
 # Concept
 
