@@ -228,11 +228,11 @@ class BmapCopy(object):
         a best effort.
         """
 
-        if os.path.exists(pipe) and stat.S_ISFIFO(os.stat(pipe).st_mode):
-            self._psplash_pipe = pipe
+        if os.path.exists(path) and stat.S_ISFIFO(os.stat(path).st_mode):
+            self._psplash_pipe = path
         else:
             _log.warning("'%s' is not a pipe, so psplash progress will not be "
-                         "updated" % pipe)
+                         "updated" % path)
 
     def set_progress_indicator(self, file_obj, format_string):
         """
