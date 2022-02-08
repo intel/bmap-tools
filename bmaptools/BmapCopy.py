@@ -396,36 +396,34 @@ class BmapCopy(object):
         else:
             _log.debug("wrote %d blocks" % blocks_written)
 
-        if not self._progress_file:
-            return
+        if self._progress_file:
+            if self.mapped_cnt:
+                progress = '\r' + self._progress_format % percent + '\n'
+            else:
+                # Do not rotate the wheel too fast
+                now = datetime.datetime.now()
+                min_delta = datetime.timedelta(milliseconds=250)
+                if now - self._progress_time < min_delta:
+                    return
+                self._progress_time = now
 
-        if self.mapped_cnt:
-            progress = '\r' + self._progress_format % percent + '\n'
-        else:
-            # Do not rotate the wheel too fast
-            now = datetime.datetime.now()
-            min_delta = datetime.timedelta(milliseconds=250)
-            if now - self._progress_time < min_delta:
-                return
-            self._progress_time = now
+                progress_wheel = ('-', '\\', '|', '/')
+                progress = '\r' + progress_wheel[self._progress_index % 4] + '\n'
+                self._progress_index += 1
 
-            progress_wheel = ('-', '\\', '|', '/')
-            progress = '\r' + progress_wheel[self._progress_index % 4] + '\n'
-            self._progress_index += 1
+            # This is a little trick we do in order to make sure that the next
+            # message will always start from a new line - we switch to the new
+            # line after each progress update and move the cursor up. As an
+            # example, this is useful when the copying is interrupted by an
+            # exception - the error message will start form new line.
+            if self._progress_started:
+                # The "move cursor up" escape sequence
+                self._progress_file.write('\033[1A')  # pylint: disable=W1401
+            else:
+                self._progress_started = True
 
-        # This is a little trick we do in order to make sure that the next
-        # message will always start from a new line - we switch to the new
-        # line after each progress update and move the cursor up. As an
-        # example, this is useful when the copying is interrupted by an
-        # exception - the error message will start form new line.
-        if self._progress_started:
-            # The "move cursor up" escape sequence
-            self._progress_file.write('\033[1A')  # pylint: disable=W1401
-        else:
-            self._progress_started = True
-
-        self._progress_file.write(progress)
-        self._progress_file.flush()
+            self._progress_file.write(progress)
+            self._progress_file.flush()
 
         # Update psplash progress when configured. This is using a best effort
         # strategy to not affect the writing process when psplash breaks, is
