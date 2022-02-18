@@ -174,7 +174,10 @@ class TransRead(object):
         self._pos = 0
 
         try:
-            self._f_objs.append(open(self.name, "rb"))
+            if self.name == "-":
+                self._f_objs.append(sys.stdin.buffer)
+            else:
+                self._f_objs.append(open(self.name, "rb"))
         except IOError as err:
             if err.errno == errno.ENOENT:
                 # This is probably an URL

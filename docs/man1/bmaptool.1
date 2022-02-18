@@ -122,7 +122,8 @@ extensions are supported:
 IMAGE files with other extensions are assumed to be uncompressed. Note,
 \fIbmaptool\fR uses "\fIpbzip2\fR" and "\fIpigz\fR" programs for decompressing
 bzip2 and gzip archives faster, unless they are not available, in which case if
-falls-back to using "\fIbzip2\fR" and "\fIgzip\fR".
+falls-back to using "\fIbzip2\fR" and "\fIgzip\fR". Furthermore, uncompressed
+IMAGE files can be piped to the standard input using "-".
 
 .PP
 If DEST is a block device node (e.g., "/dev/sdg"), \fIbmaptool\fR opens it in
@@ -248,6 +249,14 @@ too.
 Copy non-compressed local file "image.raw" to block device "/dev/sdg" using bmap file
 "image.bmap". Verify the bmap file signature using a detached OpenPGP signature
 from "imag.bmap.asc".
+.RE
+.RE
+
+.RS 2
+cat image.raw | \fIbmaptool\fR copy --bmap image.bmap - /dev/sdg
+.RS 2
+Copy non-compressed image from standard input to block device "/dev/sdg" using bmap file
+"image.bmap".
 .RE
 .RE
 
