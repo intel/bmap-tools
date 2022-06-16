@@ -130,12 +130,14 @@ def open_block_device(path):
 def report_verification_results(context, sigs):
     """
     This is a helper function which reports the GPG signature verification
-    results. The 'context' argument is the gpgme context object, and the 'sigs'
-    argument contains the results of the 'gpgme.verify()' function.
+    results. The 'context' argument is the gpg context object, and the 'sigs'
+    argument contains the results of the 'gpg.verify()' function.
     """
 
+    import gpg
+
     for sig in sigs:
-        if not sig.status:
+        if (sig.summary & gpg.constants.SIGSUM_VALID) != 0:
             key = context.get_key(sig.fpr)
             author = "%s <%s>" % (key.uids[0].name, key.uids[0].email)
             log.info("successfully verified bmap file signature of %s "
@@ -191,21 +193,23 @@ def verify_detached_bmap_signature(args, bmap_obj, bmap_path):
         sig_obj = tmp_obj
 
     try:
-        import gpgme
+        import gpg
     except ImportError:
-        error_out("cannot verify the signature because the python \"gpgme\" "
+        error_out("cannot verify the signature because the python \"gpg\" "
                   "module is not installed on your system\nPlease, either "
                   "install the module or use --no-sig-verify")
 
     try:
-        context = gpgme.Context()
+        context = gpg.Context()
         signature = io.FileIO(sig_obj.name)
         signed_data = io.FileIO(bmap_obj.name)
-        sigs = context.verify(signature, signed_data, None)
-    except gpgme.GpgmeError as err:
+        sigs = context.verify(signed_data, signature, None)[1].signatures
+    except gpg.errors.GPGMEError as err:
         error_out("failure when trying to verify GPG signature: %s\n"
                   "Make sure file \"%s\" has proper GPG format",
-                  err[2].lower(), sig_path)
+                  err.getstring(), sig_path)
+    except gpg.errors.BadSignatures as err:
+        error_out("discovered a BAD GPG signature: %s\n", sig_path)
 
     sig_obj.close()
 
@@ -229,22 +233,24 @@ def verify_clearsign_bmap_signature(args, bmap_obj):
                   "the signature, so --bmap-sig option should not be used")
 
     try:
-        import gpgme
+        import gpg
     except ImportError:
-        error_out("cannot verify the signature because the python \"gpgme\""
+        error_out("cannot verify the signature because the python \"gpg\""
                   "module is not installed on your system\nCannot extract "
                   "block map from the bmap file which has clearsign format, "
                   "please, install the module")
 
     try:
-        context = gpgme.Context()
+        context = gpg.Context()
         signature = io.FileIO(bmap_obj.name)
         plaintext = io.BytesIO()
-        sigs = context.verify(signature, None, plaintext)
-    except gpgme.GpgmeError as err:
+        sigs = context.verify(plaintext, signature, None)
+    except gpg.errors.GPGMEError as err:
         error_out("failure when trying to verify GPG signature: %s\n"
                   "make sure the bmap file has proper GPG format",
                   err[2].lower())
+    except gpg.errors.BadSignatures as err:
+        error_out("discovered a BAD GPG signature: %s\n", sig_path)
 
     if not args.no_sig_verify:
         if len(sigs) == 0:
