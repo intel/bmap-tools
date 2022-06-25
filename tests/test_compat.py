@@ -55,8 +55,7 @@ class TestCompat(unittest.TestCase):
     def test(self):
         """The test entry point."""
 
-        test_data_dir = os.path.join(os.path.dirname(__file__),
-                                     _TEST_DATA_SUBDIR)
+        test_data_dir = os.path.join(os.path.dirname(__file__), _TEST_DATA_SUBDIR)
         image_path = os.path.join(test_data_dir, _IMAGE_NAME)
 
         # Construct the list of bmap files to test
@@ -67,10 +66,12 @@ class TestCompat(unittest.TestCase):
                 self._bmap_paths.append(dentry_path)
 
         # Create and open a temporary file for uncompressed image and its copy
-        self._f_image = tempfile.NamedTemporaryFile("wb+", prefix=_IMAGE_NAME,
-                                                    suffix=".image")
-        self._f_copy = tempfile.NamedTemporaryFile("wb+", prefix=_IMAGE_NAME,
-                                                   suffix=".copy")
+        self._f_image = tempfile.NamedTemporaryFile(
+            "wb+", prefix=_IMAGE_NAME, suffix=".image"
+        )
+        self._f_copy = tempfile.NamedTemporaryFile(
+            "wb+", prefix=_IMAGE_NAME, suffix=".copy"
+        )
 
         # Uncompress the test image into 'self._f_image'
         f_tmp_img = TransRead.TransRead(image_path)
@@ -83,9 +84,9 @@ class TestCompat(unittest.TestCase):
 
         # Test the current version of BmapCopy
         for bmap_path in self._bmap_paths:
-            helpers.copy_and_verify_image(image_path, self._f_copy.name,
-                                          bmap_path, image_chksum,
-                                          image_size)
+            helpers.copy_and_verify_image(
+                image_path, self._f_copy.name, bmap_path, image_chksum, image_size
+            )
 
         # Test the older versions of BmapCopy
         self._test_older_bmapcopy()
@@ -104,8 +105,7 @@ class TestCompat(unittest.TestCase):
                 modref = getattr(modref, name)
             return modref
 
-        oldcodebase_dir = os.path.join(os.path.dirname(__file__),
-                                       _OLDCODEBASE_SUBDIR)
+        oldcodebase_dir = os.path.join(os.path.dirname(__file__), _OLDCODEBASE_SUBDIR)
 
         # Construct the list of old BmapCopy modules
         old_modules = []
@@ -148,8 +148,10 @@ class TestCompat(unittest.TestCase):
                 # was a screw-up, because it actually had incompatible changes,
                 # so old versions of BmapCopy are supposed to fail.
                 if not (supported_ver == 1 and bmap_version == "1.4"):
-                    print("Module \"%s\" failed to handle \"%s\"" %
-                          (modref.__name__, bmap_path))
+                    print(
+                        'Module "%s" failed to handle "%s"'
+                        % (modref.__name__, bmap_path)
+                    )
                     raise
 
         f_bmap.close()

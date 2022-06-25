@@ -39,22 +39,22 @@ if not os.path.isfile(raw_file):
     print("raw-file '%s' doesn't exist" % raw_file)
     sys.exit(1)
 file_root, file_ext = os.path.splitext(raw_file)
-bmap_file = file_root + '.bmap'
+bmap_file = file_root + ".bmap"
 if not os.path.isfile(bmap_file):
     print("bmap-file '%s' doesn't exist" % bmap_file)
     sys.exit(1)
 
 bmap_root = ET.parse(bmap_file).getroot()
-blocksize = int(bmap_root.find('BlockSize').text)
-with open(raw_file, 'rb') as filedata:
-    with open(output_file, 'wb') as outdata:
+blocksize = int(bmap_root.find("BlockSize").text)
+with open(raw_file, "rb") as filedata:
+    with open(output_file, "wb") as outdata:
         try:
-            outdata.truncate(int(bmap_root.find('ImageSize').text)) # optional
+            outdata.truncate(int(bmap_root.find("ImageSize").text))  # optional
         except:
             pass
-        for bmap_range in bmap_root.find('BlockMap').findall('Range'):
+        for bmap_range in bmap_root.find("BlockMap").findall("Range"):
             blockrange = bmap_range.text
-            m = re.match('^\s*(\d+)\s*-\s*(\d+)\s*$', blockrange)
+            m = re.match("^\s*(\d+)\s*-\s*(\d+)\s*$", blockrange)
             if m:
                 start = int(m.group(1))
                 end = int(m.group(2))

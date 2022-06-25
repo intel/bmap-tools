@@ -22,41 +22,79 @@ import sys
 import tempfile
 import tests.helpers
 
+
 class TestCLI(unittest.TestCase):
     def test_valid_signature(self):
-        completed_process = subprocess.run ([ './bmaptool', 'copy', '--bmap',
-	    'tests/test-data/test.image.bmap.v2.0', '--bmap-sig',
-	    'tests/test-data/test.image.bmap.v2.0.valid-sig',
-	    'tests/test-data/test.image.gz', self.tmpfile ], check=False)
+        completed_process = subprocess.run(
+            [
+                "./bmaptool",
+                "copy",
+                "--bmap",
+                "tests/test-data/test.image.bmap.v2.0",
+                "--bmap-sig",
+                "tests/test-data/test.image.bmap.v2.0.valid-sig",
+                "tests/test-data/test.image.gz",
+                self.tmpfile,
+            ],
+            check=False,
+        )
         self.assertEqual(completed_process.returncode, 0)
 
     def test_unknown_signer(self):
-        completed_process = subprocess.run ([ './bmaptool', 'copy', '--bmap',
-        'tests/test-data/test.image.bmap.v2.0', '--bmap-sig',
-        'tests/test-data/test.image.bmap.v2.0.sig-by-wrong-key',
-        'tests/test-data/test.image.gz', self.tmpfile ], check=False)
+        completed_process = subprocess.run(
+            [
+                "./bmaptool",
+                "copy",
+                "--bmap",
+                "tests/test-data/test.image.bmap.v2.0",
+                "--bmap-sig",
+                "tests/test-data/test.image.bmap.v2.0.sig-by-wrong-key",
+                "tests/test-data/test.image.gz",
+                self.tmpfile,
+            ],
+            check=False,
+        )
         self.assertEqual(completed_process.returncode, 1)
-    
+
     def test_wrong_signature(self):
-        completed_process = subprocess.run ([ './bmaptool', 'copy', '--bmap',
-        'tests/test-data/test.image.bmap.v1.4', '--bmap-sig',
-        'tests/test-data/test.image.bmap.v2.0.valid-sig',
-        'tests/test-data/test.image.gz', self.tmpfile ], check=False)
+        completed_process = subprocess.run(
+            [
+                "./bmaptool",
+                "copy",
+                "--bmap",
+                "tests/test-data/test.image.bmap.v1.4",
+                "--bmap-sig",
+                "tests/test-data/test.image.bmap.v2.0.valid-sig",
+                "tests/test-data/test.image.gz",
+                self.tmpfile,
+            ],
+            check=False,
+        )
         self.assertEqual(completed_process.returncode, 1)
 
     def test_wrong_signature_uknown_signer(self):
-        completed_process = subprocess.run ([ './bmaptool', 'copy', '--bmap',
-        'tests/test-data/test.image.bmap.v1.4', '--bmap-sig',
-        'tests/test-data/test.image.bmap.v2.0.sig-by-wrong-key',
-        'tests/test-data/test.image.gz', self.tmpfile ], check=False)
+        completed_process = subprocess.run(
+            [
+                "./bmaptool",
+                "copy",
+                "--bmap",
+                "tests/test-data/test.image.bmap.v1.4",
+                "--bmap-sig",
+                "tests/test-data/test.image.bmap.v2.0.sig-by-wrong-key",
+                "tests/test-data/test.image.gz",
+                self.tmpfile,
+            ],
+            check=False,
+        )
         self.assertEqual(completed_process.returncode, 1)
 
     def setUp(self):
-        os.environ['GNUPGHOME']='tests/test-data/gnupg/'
+        os.environ["GNUPGHOME"] = "tests/test-data/gnupg/"
         self.tmpfile = tempfile.mkstemp(prefix="testfile_", dir=".")[1]
 
     def tearDown(self):
         os.unlink(self.tmpfile)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

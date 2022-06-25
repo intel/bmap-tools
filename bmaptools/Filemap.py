@@ -44,11 +44,13 @@ class ErrorNotSupp(Exception):
     An exception of this type is raised when the 'FIEMAP' or 'SEEK_HOLE' feature
     is not supported either by the kernel or the file-system.
     """
+
     pass
 
 
 class Error(Exception):
     """A class for all the other exceptions raised by this module."""
+
     pass
 
 
@@ -77,37 +79,42 @@ class _FilemapBase(object):
         try:
             self.image_size = os.fstat(self._f_image.fileno()).st_size
         except IOError as err:
-            raise Error("cannot get information about file '%s': %s"
-                        % (self._f_image.name, err))
+            raise Error(
+                "cannot get information about file '%s': %s" % (self._f_image.name, err)
+            )
 
         try:
             self.block_size = BmapHelpers.get_block_size(self._f_image)
         except IOError as err:
-            raise Error("cannot get block size for '%s': %s"
-                        % (self._image_path, err))
+            raise Error("cannot get block size for '%s': %s" % (self._image_path, err))
 
         self.blocks_cnt = (self.image_size + self.block_size - 1) // self.block_size
 
         try:
             self._f_image.flush()
         except IOError as err:
-            raise Error("cannot flush image file '%s': %s"
-                        % (self._image_path, err))
+            raise Error("cannot flush image file '%s': %s" % (self._image_path, err))
 
         try:
             os.fsync(self._f_image.fileno()),
         except OSError as err:
-            raise Error("cannot synchronize image file '%s': %s "
-                        % (self._image_path, err.strerror))
+            raise Error(
+                "cannot synchronize image file '%s': %s "
+                % (self._image_path, err.strerror)
+            )
 
         if not BmapHelpers.is_compatible_file_system(self._image_path):
             fstype = BmapHelpers.get_file_system_type(self._image_path)
-            raise Error("image file on incompatible file system '%s': '%s': see docs for fix"
-                        % (self._image_path, fstype))
+            raise Error(
+                "image file on incompatible file system '%s': '%s': see docs for fix"
+                % (self._image_path, fstype)
+            )
 
-        _log.debug("opened image \"%s\"" % self._image_path)
-        _log.debug("block size %d, blocks count %d, image size %d"
-                   % (self.block_size, self.blocks_cnt, self.image_size))
+        _log.debug('opened image "%s"' % self._image_path)
+        _log.debug(
+            "block size %d, blocks count %d, image size %d"
+            % (self.block_size, self.blocks_cnt, self.image_size)
+        )
 
     def __del__(self):
         """The class destructor which just closes the image file."""
@@ -117,10 +124,9 @@ class _FilemapBase(object):
     def _open_image_file(self):
         """Open the image file."""
         try:
-            self._f_image = open(self._image_path, 'rb')
+            self._f_image = open(self._image_path, "rb")
         except IOError as err:
-            raise Error("cannot open image file '%s': %s"
-                        % (self._image_path, err))
+            raise Error("cannot open image file '%s': %s" % (self._image_path, err))
 
         self._f_image_needs_close = True
 
@@ -185,8 +191,10 @@ def _lseek(file_obj, offset, whence):
         if err.errno == errno.ENXIO:
             return -1
         elif err.errno == errno.EINVAL:
-            raise ErrorNotSupp("the kernel or file-system does not support "
-                               "\"SEEK_HOLE\" and \"SEEK_DATA\"")
+            raise ErrorNotSupp(
+                "the kernel or file-system does not support "
+                '"SEEK_HOLE" and "SEEK_DATA"'
+            )
         else:
             raise
 
@@ -226,23 +234,27 @@ class FilemapSeek(_FilemapBase):
         try:
             tmp_obj = tempfile.TemporaryFile("w+", dir=directory)
         except OSError as err:
-            raise ErrorNotSupp("cannot create a temporary in \"%s\": %s"
-                               % (directory, err))
+            raise ErrorNotSupp(
+                'cannot create a temporary in "%s": %s' % (directory, err)
+            )
 
         try:
             os.ftruncate(tmp_obj.fileno(), self.block_size)
         except OSError as err:
-            raise ErrorNotSupp("cannot truncate temporary file in \"%s\": %s"
-                               % (directory, err))
+            raise ErrorNotSupp(
+                'cannot truncate temporary file in "%s": %s' % (directory, err)
+            )
 
         offs = _lseek(tmp_obj, 0, _SEEK_HOLE)
         if offs != 0:
             # We are dealing with the stub 'SEEK_HOLE' implementation which
             # always returns EOF.
             _log.debug("lseek(0, SEEK_HOLE) returned %d" % offs)
-            raise ErrorNotSupp("the file-system does not support "
-                               "\"SEEK_HOLE\" and \"SEEK_DATA\" but only "
-                               "provides a stub implementation")
+            raise ErrorNotSupp(
+                "the file-system does not support "
+                '"SEEK_HOLE" and "SEEK_DATA" but only '
+                "provides a stub implementation"
+            )
 
         tmp_obj.close()
 
@@ -252,10 +264,9 @@ class FilemapSeek(_FilemapBase):
         if offs == -1:
             result = False
         else:
-            result = (offs // self.block_size == block)
+            result = offs // self.block_size == block
 
-        _log.debug("FilemapSeek: block_is_mapped(%d) returns %s"
-                   % (block, result))
+        _log.debug("FilemapSeek: block_is_mapped(%d) returns %s" % (block, result))
         return result
 
     def block_is_unmapped(self, block):
@@ -286,20 +297,23 @@ class FilemapSeek(_FilemapBase):
 
             start_blk = start // self.block_size
             end_blk = end // self.block_size - 1
-            _log.debug("FilemapSeek: yielding range (%d, %d)"
-                       % (start_blk, end_blk))
+            _log.debug("FilemapSeek: yielding range (%d, %d)" % (start_blk, end_blk))
             yield (start_blk, end_blk)
 
     def get_mapped_ranges(self, start, count):
         """Refer the '_FilemapBase' class for the documentation."""
-        _log.debug("FilemapSeek: get_mapped_ranges(%d,  %d(%d))"
-                   % (start, count, start + count - 1))
+        _log.debug(
+            "FilemapSeek: get_mapped_ranges(%d,  %d(%d))"
+            % (start, count, start + count - 1)
+        )
         return self._get_ranges(start, count, _SEEK_DATA, _SEEK_HOLE)
 
     def get_unmapped_ranges(self, start, count):
         """Refer the '_FilemapBase' class for the documentation."""
-        _log.debug("FilemapSeek: get_unmapped_ranges(%d,  %d(%d))"
-                   % (start, count, start + count - 1))
+        _log.debug(
+            "FilemapSeek: get_unmapped_ranges(%d,  %d(%d))"
+            % (start, count, start + count - 1)
+        )
         return self._get_ranges(start, count, _SEEK_HOLE, _SEEK_DATA)
 
 
@@ -356,7 +370,7 @@ class FilemapFiemap(_FilemapBase):
         self._buf_size += _FIEMAP_SIZE
 
         # Allocate a mutable buffer for the FIEMAP ioctl
-        self._buf = array.array('B', [0] * self._buf_size)
+        self._buf = array.array("B", [0] * self._buf_size)
 
         # Check if the FIEMAP ioctl is supported
         self.block_is_mapped(0)
@@ -372,17 +386,27 @@ class FilemapFiemap(_FilemapBase):
         """
 
         if self.blocks_cnt != 0 and (block < 0 or block >= self.blocks_cnt):
-            raise Error("bad block number %d, should be within [0, %d]"
-                        % (block, self.blocks_cnt))
+            raise Error(
+                "bad block number %d, should be within [0, %d]"
+                % (block, self.blocks_cnt)
+            )
 
         # Initialize the 'struct fiemap' part of the buffer. We use the
         # '_FIEMAP_FLAG_SYNC' flag in order to make sure the file is
         # synchronized. The reason for this is that early FIEMAP
         # implementations had many bugs related to cached dirty data, and
         # synchronizing the file is a necessary work-around.
-        struct.pack_into(_FIEMAP_FORMAT, self._buf, 0, block * self.block_size,
-                         count * self.block_size, _FIEMAP_FLAG_SYNC, 0,
-                         self._fiemap_extent_cnt, 0)
+        struct.pack_into(
+            _FIEMAP_FORMAT,
+            self._buf,
+            0,
+            block * self.block_size,
+            count * self.block_size,
+            _FIEMAP_FLAG_SYNC,
+            0,
+            self._fiemap_extent_cnt,
+            0,
+        )
 
         try:
             fcntl.ioctl(self._f_image, _FIEMAP_IOCTL, self._buf, 1)
@@ -390,17 +414,21 @@ class FilemapFiemap(_FilemapBase):
             # Note, the FIEMAP ioctl is supported by the Linux kernel starting
             # from version 2.6.28 (year 2008).
             if err.errno == errno.EOPNOTSUPP:
-                errstr = "FilemapFiemap: the FIEMAP ioctl is not supported " \
-                         "by the file-system"
+                errstr = (
+                    "FilemapFiemap: the FIEMAP ioctl is not supported "
+                    "by the file-system"
+                )
                 _log.debug(errstr)
                 raise ErrorNotSupp(errstr)
             if err.errno == errno.ENOTTY:
-                errstr = "FilemapFiemap: the FIEMAP ioctl is not supported " \
-                         "by the kernel"
+                errstr = (
+                    "FilemapFiemap: the FIEMAP ioctl is not supported " "by the kernel"
+                )
                 _log.debug(errstr)
                 raise ErrorNotSupp(errstr)
-            raise Error("the FIEMAP ioctl failed for '%s': %s"
-                        % (self._image_path, err))
+            raise Error(
+                "the FIEMAP ioctl failed for '%s': %s" % (self._image_path, err)
+            )
 
         return struct.unpack(_FIEMAP_FORMAT, self._buf[:_FIEMAP_SIZE])
 
@@ -412,8 +440,7 @@ class FilemapFiemap(_FilemapBase):
         # If it contains zero, the block is not mapped, otherwise it is
         # mapped.
         result = bool(struct_fiemap[3])
-        _log.debug("FilemapFiemap: block_is_mapped(%d) returns %s"
-                   % (block, result))
+        _log.debug("FilemapFiemap: block_is_mapped(%d) returns %s" % (block, result))
         return result
 
     def block_is_unmapped(self, block):
@@ -427,8 +454,9 @@ class FilemapFiemap(_FilemapBase):
         """
 
         offset = _FIEMAP_SIZE + _FIEMAP_EXTENT_SIZE * index
-        return struct.unpack(_FIEMAP_EXTENT_FORMAT,
-                             self._buf[offset: offset + _FIEMAP_EXTENT_SIZE])
+        return struct.unpack(
+            _FIEMAP_EXTENT_FORMAT, self._buf[offset : offset + _FIEMAP_EXTENT_SIZE]
+        )
 
     def _do_get_mapped_ranges(self, start, count):
         """
@@ -478,8 +506,10 @@ class FilemapFiemap(_FilemapBase):
 
     def get_mapped_ranges(self, start, count):
         """Refer the '_FilemapBase' class for the documentation."""
-        _log.debug("FilemapFiemap: get_mapped_ranges(%d,  %d(%d))"
-                   % (start, count, start + count - 1))
+        _log.debug(
+            "FilemapFiemap: get_mapped_ranges(%d,  %d(%d))"
+            % (start, count, start + count - 1)
+        )
         iterator = self._do_get_mapped_ranges(start, count)
 
         try:
@@ -491,31 +521,36 @@ class FilemapFiemap(_FilemapBase):
             if last_prev == first - 1:
                 last_prev = last
             else:
-                _log.debug("FilemapFiemap: yielding range (%d, %d)"
-                           % (first_prev, last_prev))
+                _log.debug(
+                    "FilemapFiemap: yielding range (%d, %d)" % (first_prev, last_prev)
+                )
                 yield (first_prev, last_prev)
                 first_prev, last_prev = first, last
 
-        _log.debug("FilemapFiemap: yielding range (%d, %d)"
-                   % (first_prev, last_prev))
+        _log.debug("FilemapFiemap: yielding range (%d, %d)" % (first_prev, last_prev))
         yield (first_prev, last_prev)
 
     def get_unmapped_ranges(self, start, count):
         """Refer the '_FilemapBase' class for the documentation."""
-        _log.debug("FilemapFiemap: get_unmapped_ranges(%d,  %d(%d))"
-                   % (start, count, start + count - 1))
+        _log.debug(
+            "FilemapFiemap: get_unmapped_ranges(%d,  %d(%d))"
+            % (start, count, start + count - 1)
+        )
         hole_first = start
         for first, last in self._do_get_mapped_ranges(start, count):
             if first > hole_first:
-                _log.debug("FilemapFiemap: yielding range (%d, %d)"
-                           % (hole_first, first - 1))
+                _log.debug(
+                    "FilemapFiemap: yielding range (%d, %d)" % (hole_first, first - 1)
+                )
                 yield (hole_first, first - 1)
 
             hole_first = last + 1
 
         if hole_first < start + count:
-            _log.debug("FilemapFiemap: yielding range (%d, %d)"
-                       % (hole_first, start + count - 1))
+            _log.debug(
+                "FilemapFiemap: yielding range (%d, %d)"
+                % (hole_first, start + count - 1)
+            )
             yield (hole_first, start + count - 1)
 
 

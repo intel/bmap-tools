@@ -25,11 +25,14 @@ from fcntl import ioctl
 from subprocess import PIPE
 
 # Path to check for zfs compatibility.
-ZFS_COMPAT_PARAM_PATH = '/sys/module/zfs/parameters/zfs_dmu_offset_next_sync'
+ZFS_COMPAT_PARAM_PATH = "/sys/module/zfs/parameters/zfs_dmu_offset_next_sync"
+
 
 class Error(Exception):
     """A class for all the other exceptions raised by this module."""
+
     pass
+
 
 def human_size(size):
     """Transform size in bytes into a human-readable form."""
@@ -44,7 +47,8 @@ def human_size(size):
         if size < 1024:
             return "%.1f %s" % (size, modifier)
 
-    return "%.1f %s" % (size, 'EiB')
+    return "%.1f %s" % (size, "EiB")
+
 
 def human_time(seconds):
     """Transform time in seconds to the HH:MM:SS format."""
@@ -59,6 +63,7 @@ def human_time(seconds):
 
     return result + "%.1fs" % seconds
 
+
 def get_block_size(file_obj):
     """
     Return block size for file object 'file_obj'. Errors are indicated by the
@@ -68,17 +73,18 @@ def get_block_size(file_obj):
     # Get the block size of the host file-system for the image file by calling
     # the FIGETBSZ ioctl (number 2).
     try:
-        binary_data = ioctl(file_obj, 2, struct.pack('I', 0))
-        bsize = struct.unpack('I', binary_data)[0]
+        binary_data = ioctl(file_obj, 2, struct.pack("I", 0))
+        bsize = struct.unpack("I", binary_data)[0]
         if not bsize:
             raise IOError("get 0 bsize by FIGETBSZ ioctl")
     except IOError as err:
         stat = os.fstat(file_obj.fileno())
-        if hasattr(stat, 'st_blksize'):
+        if hasattr(stat, "st_blksize"):
             bsize = stat.st_blksize
         else:
             raise IOError("Unable to determine block size")
     return bsize
+
 
 def program_is_available(name):
     """
@@ -92,6 +98,7 @@ def program_is_available(name):
             return True
 
     return False
+
 
 def get_file_system_type(path):
     """Return the file system type for 'path'."""
@@ -112,10 +119,13 @@ def get_file_system_type(path):
                 ftype = fields[1].lower()
 
     if not ftype:
-        raise Error("failed to find file system type for path at '%s'\n"
-                    "Here is the 'df -T' output\nstdout:\n%s\nstderr:\n%s"
-                    % (path, stdout, stderr))
+        raise Error(
+            "failed to find file system type for path at '%s'\n"
+            "Here is the 'df -T' output\nstdout:\n%s\nstderr:\n%s"
+            % (path, stdout, stderr)
+        )
     return ftype
+
 
 def is_zfs_configuration_compatible():
     """Return if hosts zfs configuration is compatible."""
@@ -128,11 +138,10 @@ def is_zfs_configuration_compatible():
         with open(path, "r") as fobj:
             return int(fobj.readline()) == 1
     except IOError as err:
-        raise Error("cannot open zfs param path '%s': %s"
-                    % (path, err))
+        raise Error("cannot open zfs param path '%s': %s" % (path, err))
     except ValueError as err:
-        raise Error("invalid value read from param path '%s': %s"
-                    % (path, err))
+        raise Error("invalid value read from param path '%s': %s" % (path, err))
+
 
 def is_compatible_file_system(path):
     """Return if paths file system is compatible."""

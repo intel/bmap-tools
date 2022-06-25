@@ -45,6 +45,7 @@ VERSION = "3.6"
 
 log = logging.getLogger()  # pylint: disable=C0103
 
+
 def print_error_with_tb(msgformat, *args):
     """Print an error message occurred along with the traceback."""
 
@@ -98,6 +99,7 @@ class NamedFile(object):
     def __getattr__(self, name):
         return getattr(self._file_obj, name)
 
+
 def open_block_device(path):
     """
     This is a helper function for 'open_files()' which is called if the
@@ -115,8 +117,7 @@ def open_block_device(path):
     try:
         descriptor = os.open(path, os.O_WRONLY | os.O_EXCL)
     except OSError as err:
-        error_out("cannot open block device '%s' in exclusive mode: %s",
-                  path, err)
+        error_out("cannot open block device '%s' in exclusive mode: %s", path, err)
 
     # Turn the block device file descriptor into a file object
     try:
@@ -126,6 +127,7 @@ def open_block_device(path):
         error_out("cannot open block device '%s':\n%s", path, err)
 
     return NamedFile(file_obj, path)
+
 
 def report_verification_results(context, sigs):
     """
@@ -140,13 +142,19 @@ def report_verification_results(context, sigs):
         if (sig.summary & gpg.constants.SIGSUM_VALID) != 0:
             key = context.get_key(sig.fpr)
             author = "%s <%s>" % (key.uids[0].name, key.uids[0].email)
-            log.info("successfully verified bmap file signature of %s "
-                     "(fingerprint %s)" % (author, sig.fpr))
+            log.info(
+                "successfully verified bmap file signature of %s "
+                "(fingerprint %s)" % (author, sig.fpr)
+            )
         else:
-            error_out("signature verification failed (fingerprint %s): %s\n"
-                      "Either fix the problem or use --no-sig-verify to "
-                      "disable signature verification",
-                      sig.fpr, sig.status[2].lower())
+            error_out(
+                "signature verification failed (fingerprint %s): %s\n"
+                "Either fix the problem or use --no-sig-verify to "
+                "disable signature verification",
+                sig.fpr,
+                sig.status[2].lower(),
+            )
+
 
 def verify_detached_bmap_signature(args, bmap_obj, bmap_path):
     """
@@ -161,8 +169,7 @@ def verify_detached_bmap_signature(args, bmap_obj, bmap_path):
         try:
             sig_obj = TransRead.TransRead(args.bmap_sig)
         except TransRead.Error as err:
-            error_out("cannot open bmap signature file '%s':\n%s",
-                      args.bmap_sig, err)
+            error_out("cannot open bmap signature file '%s':\n%s", args.bmap_sig, err)
         sig_path = args.bmap_sig
     else:
         # Check if there is a stand-alone signature file
@@ -184,8 +191,7 @@ def verify_detached_bmap_signature(args, bmap_obj, bmap_path):
         try:
             tmp_obj = tempfile.NamedTemporaryFile("wb+")
         except IOError as err:
-            error_out("cannot create a temporary file for the signature:\n%s",
-                      err)
+            error_out("cannot create a temporary file for the signature:\n%s", err)
 
         shutil.copyfileobj(sig_obj, tmp_obj)
         tmp_obj.seek(0)
@@ -195,9 +201,11 @@ def verify_detached_bmap_signature(args, bmap_obj, bmap_path):
     try:
         import gpg
     except ImportError:
-        error_out("cannot verify the signature because the python \"gpg\" "
-                  "module is not installed on your system\nPlease, either "
-                  "install the module or use --no-sig-verify")
+        error_out(
+            'cannot verify the signature because the python "gpg" '
+            "module is not installed on your system\nPlease, either "
+            "install the module or use --no-sig-verify"
+        )
 
     try:
         context = gpg.Context()
@@ -205,17 +213,22 @@ def verify_detached_bmap_signature(args, bmap_obj, bmap_path):
         signed_data = io.FileIO(bmap_obj.name)
         sigs = context.verify(signed_data, signature, None)[1].signatures
     except gpg.errors.GPGMEError as err:
-        error_out("failure when trying to verify GPG signature: %s\n"
-                  "Make sure file \"%s\" has proper GPG format",
-                  err.getstring(), sig_path)
+        error_out(
+            "failure when trying to verify GPG signature: %s\n"
+            'Make sure file "%s" has proper GPG format',
+            err.getstring(),
+            sig_path,
+        )
     except gpg.errors.BadSignatures as err:
         error_out("discovered a BAD GPG signature: %s\n", sig_path)
 
     sig_obj.close()
 
     if len(sigs) == 0:
-        log.warning("the \"%s\" signature file does not actually contain "
-                    "any valid signatures" % sig_path)
+        log.warning(
+            'the "%s" signature file does not actually contain '
+            "any valid signatures" % sig_path
+        )
     else:
         report_verification_results(context, sigs)
 
@@ -229,16 +242,20 @@ def verify_clearsign_bmap_signature(args, bmap_obj):
     """
 
     if args.bmap_sig:
-        error_out("the bmap file has clearsign format and already contains "
-                  "the signature, so --bmap-sig option should not be used")
+        error_out(
+            "the bmap file has clearsign format and already contains "
+            "the signature, so --bmap-sig option should not be used"
+        )
 
     try:
         import gpg
     except ImportError:
-        error_out("cannot verify the signature because the python \"gpg\""
-                  "module is not installed on your system\nCannot extract "
-                  "block map from the bmap file which has clearsign format, "
-                  "please, install the module")
+        error_out(
+            'cannot verify the signature because the python "gpg"'
+            "module is not installed on your system\nCannot extract "
+            "block map from the bmap file which has clearsign format, "
+            "please, install the module"
+        )
 
     try:
         context = gpg.Context()
@@ -246,16 +263,20 @@ def verify_clearsign_bmap_signature(args, bmap_obj):
         plaintext = io.BytesIO()
         sigs = context.verify(plaintext, signature, None)
     except gpg.errors.GPGMEError as err:
-        error_out("failure when trying to verify GPG signature: %s\n"
-                  "make sure the bmap file has proper GPG format",
-                  err[2].lower())
+        error_out(
+            "failure when trying to verify GPG signature: %s\n"
+            "make sure the bmap file has proper GPG format",
+            err[2].lower(),
+        )
     except gpg.errors.BadSignatures as err:
         error_out("discovered a BAD GPG signature: %s\n", sig_path)
 
     if not args.no_sig_verify:
         if len(sigs) == 0:
-            log.warning("the bmap file clearsign signature does not actually "
-                        "contain any valid signatures")
+            log.warning(
+                "the bmap file clearsign signature does not actually "
+                "contain any valid signatures"
+            )
         else:
             report_verification_results(context, sigs)
 
@@ -346,7 +367,7 @@ def find_and_open_bmap(args):
                 pass
 
             image_path, ext = os.path.splitext(image_path)
-            if ext == '':
+            if ext == "":
                 return (None, None)
 
     if not bmap_obj.is_url:
@@ -393,8 +414,10 @@ def open_files(args):
         # Most probably the user specified the bmap file instead of the image
         # file by mistake.
         bmap_obj.close()
-        error_out("Make sure you are writing your image and not the bmap file "
-                  "(you specified the same path for them)")
+        error_out(
+            "Make sure you are writing your image and not the bmap file "
+            "(you specified the same path for them)"
+        )
 
     # If the destination file is under "/dev", but does not exist, print a
     # warning. This is done in order to be more user-friendly, because
@@ -405,17 +428,21 @@ def open_files(args):
     # the destination file is not a special device for some reasons.
     if os.path.normpath(args.dest).startswith("/dev/"):
         if not os.path.exists(args.dest):
-            log.warning("\"%s\" does not exist, creating a regular file "
-                        "\"%s\"" % (args.dest, args.dest))
+            log.warning(
+                '"%s" does not exist, creating a regular file '
+                '"%s"' % (args.dest, args.dest)
+            )
         elif stat.S_ISREG(os.stat(args.dest).st_mode):
-            log.warning("\"%s\" is under \"/dev\", but it is a regular file, "
-                        "not a device node" % args.dest)
+            log.warning(
+                '"%s" is under "/dev", but it is a regular file, '
+                "not a device node" % args.dest
+            )
 
     # Try to open the destination file. If it does not exist, a new regular
     # file will be created. If it exists and it is a regular file - it'll be
     # truncated. If this is a block device, it'll just be opened.
     try:
-        dest_obj = open(args.dest, 'wb+')
+        dest_obj = open(args.dest, "wb+")
     except IOError as err:
         error_out("cannot open destination file '%s':\n%s", args.dest, err)
 
@@ -425,8 +452,7 @@ def open_files(args):
         dest_obj.close()
         dest_obj = open_block_device(args.dest)
 
-    return (image_obj, dest_obj, bmap_obj, bmap_path, image_obj.size,
-            dest_is_blkdev)
+    return (image_obj, dest_obj, bmap_obj, bmap_path, image_obj.size, dest_is_blkdev)
 
 
 def copy_command(args):
@@ -438,12 +464,14 @@ def copy_command(args):
     if args.bmap_sig and args.no_sig_verify:
         error_out("--bmap-sig and --no-sig-verify cannot be used together")
 
-    image_obj, dest_obj, bmap_obj, bmap_path, image_size, dest_is_blkdev = \
-        open_files(args)
+    image_obj, dest_obj, bmap_obj, bmap_path, image_size, dest_is_blkdev = open_files(
+        args
+    )
 
     if args.bmap_sig and not bmap_obj:
-        error_out("the bmap signature file was specified, but bmap file was "
-                  "not found")
+        error_out(
+            "the bmap signature file was specified, but bmap file was " "not found"
+        )
 
     f_obj = verify_bmap_signature(args, bmap_obj, bmap_path)
     if f_obj:
@@ -457,18 +485,20 @@ def copy_command(args):
         if dest_is_blkdev:
             dest_str = "block device '%s'" % args.dest
             # For block devices, use the specialized class
-            writer = BmapCopy.BmapBdevCopy(image_obj, dest_obj, bmap_obj,
-                                           image_size)
+            writer = BmapCopy.BmapBdevCopy(image_obj, dest_obj, bmap_obj, image_size)
         else:
             dest_str = "file '%s'" % os.path.basename(args.dest)
-            writer = BmapCopy.BmapCopy(image_obj, dest_obj, bmap_obj,
-                                       image_size)
+            writer = BmapCopy.BmapCopy(image_obj, dest_obj, bmap_obj, image_size)
     except BmapCopy.Error as err:
         error_out(err)
 
     # Print the progress indicator while copying
-    if not args.quiet and not args.debug and \
-       sys.stderr.isatty() and sys.stdout.isatty():
+    if (
+        not args.quiet
+        and not args.debug
+        and sys.stderr.isatty()
+        and sys.stdout.isatty()
+    ):
         writer.set_progress_indicator(sys.stderr, "bmaptool: info: %d%% copied")
 
     start_time = time.time()
@@ -476,17 +506,27 @@ def copy_command(args):
         if args.nobmap:
             log.info("no bmap given, copy entire image to '%s'" % args.dest)
         else:
-            error_out("bmap file not found, please, use --nobmap option to "
-                      "flash without bmap")
+            error_out(
+                "bmap file not found, please, use --nobmap option to "
+                "flash without bmap"
+            )
     else:
         log.info("block map format version %s" % writer.bmap_version)
-        log.info("%d blocks of size %d (%s), mapped %d blocks (%s or %.1f%%)"
-                 % (writer.blocks_cnt, writer.block_size,
-                    writer.image_size_human, writer.mapped_cnt,
-                    writer.mapped_size_human, writer.mapped_percent))
-        log.info("copying image '%s' to %s using bmap file '%s'"
-                 % (os.path.basename(args.image), dest_str,
-                    os.path.basename(bmap_path)))
+        log.info(
+            "%d blocks of size %d (%s), mapped %d blocks (%s or %.1f%%)"
+            % (
+                writer.blocks_cnt,
+                writer.block_size,
+                writer.image_size_human,
+                writer.mapped_cnt,
+                writer.mapped_size_human,
+                writer.mapped_percent,
+            )
+        )
+        log.info(
+            "copying image '%s' to %s using bmap file '%s'"
+            % (os.path.basename(args.image), dest_str, os.path.basename(bmap_path))
+        )
 
     if args.psplash_pipe:
         writer.set_psplash_pipe(args.psplash_pipe)
@@ -508,9 +548,10 @@ def copy_command(args):
 
     copying_time = time.time() - start_time
     copying_speed = writer.mapped_size // copying_time
-    log.info("copying time: %s, copying speed %s/sec"
-             % (BmapHelpers.human_time(copying_time),
-                BmapHelpers.human_size(copying_speed)))
+    log.info(
+        "copying time: %s, copying speed %s/sec"
+        % (BmapHelpers.human_time(copying_time), BmapHelpers.human_size(copying_speed))
+    )
 
     dest_obj.close()
     if bmap_obj:
@@ -568,20 +609,22 @@ def create_command(args):
         sys.stdout.write(output.read())
 
     if creator.mapped_cnt == creator.blocks_cnt:
-        log.warning("all %s are mapped, no holes in '%s'"
-                    % (creator.image_size_human, args.image))
-        log.warning("was the image handled incorrectly and holes "
-                    "were expanded?")
+        log.warning(
+            "all %s are mapped, no holes in '%s'"
+            % (creator.image_size_human, args.image)
+        )
+        log.warning("was the image handled incorrectly and holes " "were expanded?")
 
 
 def parse_arguments():
     """A helper function which parses the input arguments."""
     text = sys.modules[__name__].__doc__
-    parser = argparse.ArgumentParser(description=text, prog='bmaptool')
+    parser = argparse.ArgumentParser(description=text, prog="bmaptool")
 
     # The --version option
-    parser.add_argument("--version", action="version",
-                        version="%(prog)s " + "%s" % VERSION)
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s " + "%s" % VERSION
+    )
 
     # The --quiet option
     text = "be quiet"
@@ -621,8 +664,9 @@ def parse_arguments():
     parser_copy.set_defaults(func=copy_command)
 
     # The first positional argument - image file
-    text = "the image file to copy. Supported formats: uncompressed, " + \
-           ", ".join(TransRead.SUPPORTED_COMPRESSION_TYPES)
+    text = "the image file to copy. Supported formats: uncompressed, " + ", ".join(
+        TransRead.SUPPORTED_COMPRESSION_TYPES
+    )
     parser_copy.add_argument("image", help=text)
 
     # The second positional argument - block device node
@@ -663,10 +707,10 @@ def setup_logger(loglevel):
     """
 
     # Esc-sequences for coloured output
-    esc_red = '\033[91m'     # pylint: disable=W1401
-    esc_yellow = '\033[93m'  # pylint: disable=W1401
-    esc_green = '\033[92m'   # pylint: disable=W1401
-    esc_end = '\033[0m'      # pylint: disable=W1401
+    esc_red = "\033[91m"  # pylint: disable=W1401
+    esc_yellow = "\033[93m"  # pylint: disable=W1401
+    esc_green = "\033[92m"  # pylint: disable=W1401
+    esc_end = "\033[0m"  # pylint: disable=W1401
 
     class MyFormatter(logging.Formatter):
         """
@@ -681,8 +725,14 @@ def setup_logger(loglevel):
             self._orig_fmt = self._fmt
             # Prefix with green-colored time-stamp, as well as with module name
             # and line number
-            self._dbg_fmt = "[" + esc_green + "%(asctime)s" + esc_end + \
-                            "] [%(module)s,%(lineno)d] " + self._fmt
+            self._dbg_fmt = (
+                "["
+                + esc_green
+                + "%(asctime)s"
+                + esc_end
+                + "] [%(module)s,%(lineno)d] "
+                + self._fmt
+            )
 
         def format(self, record):
             """
@@ -734,14 +784,15 @@ def main():
         traceback.print_exc()
 
         log.info("The contents of /proc/meminfo:")
-        with open('/proc/meminfo', 'rt') as file_obj:
+        with open("/proc/meminfo", "rt") as file_obj:
             for line in file_obj:
                 print(line.strip())
 
         log.info("The contents of /proc/self/status:")
-        with open('/proc/self/status', 'rt') as file_obj:
+        with open("/proc/self/status", "rt") as file_obj:
             for line in file_obj:
                 print(line.strip())
+
 
 if __name__ == "__main__":
     sys.exit(main())

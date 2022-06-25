@@ -129,34 +129,34 @@ def generate_test_files(max_size=4 * 1024 * 1024, directory=None, delete=True):
     #
 
     # A block-sized hole
-    file_obj = tempfile.NamedTemporaryFile("wb+", prefix="4Khole_",
-                                           delete=delete, dir=directory,
-                                           suffix=".img")
+    file_obj = tempfile.NamedTemporaryFile(
+        "wb+", prefix="4Khole_", delete=delete, dir=directory, suffix=".img"
+    )
     block_size = BmapHelpers.get_block_size(file_obj)
     file_obj.truncate(block_size)
     yield (file_obj, block_size, [], [(0, 0)])
     file_obj.close()
 
     # A block size + 1 byte hole
-    file_obj = tempfile.NamedTemporaryFile("wb+", prefix="4Khole_plus_1_",
-                                           delete=delete, dir=directory,
-                                           suffix=".img")
+    file_obj = tempfile.NamedTemporaryFile(
+        "wb+", prefix="4Khole_plus_1_", delete=delete, dir=directory, suffix=".img"
+    )
     file_obj.truncate(block_size + 1)
     yield (file_obj, block_size + 1, [], [(0, 1)])
     file_obj.close()
 
     # A block size - 1 byte hole
-    file_obj = tempfile.NamedTemporaryFile("wb+", prefix="4Khole_minus_1_",
-                                           delete=delete, dir=directory,
-                                           suffix=".img")
+    file_obj = tempfile.NamedTemporaryFile(
+        "wb+", prefix="4Khole_minus_1_", delete=delete, dir=directory, suffix=".img"
+    )
     file_obj.truncate(block_size - 1)
     yield (file_obj, block_size - 1, [], [(0, 0)])
     file_obj.close()
 
     # A 1-byte hole
-    file_obj = tempfile.NamedTemporaryFile("wb+", prefix="1byte_hole_",
-                                           delete=delete, dir=directory,
-                                           suffix=".img")
+    file_obj = tempfile.NamedTemporaryFile(
+        "wb+", prefix="1byte_hole_", delete=delete, dir=directory, suffix=".img"
+    )
     file_obj.truncate(1)
     yield (file_obj, 1, [], [(0, 0)])
     file_obj.close()
@@ -164,9 +164,13 @@ def generate_test_files(max_size=4 * 1024 * 1024, directory=None, delete=True):
     # And 10 holes of random size
     for i in range(10):
         size = random.randint(1, max_size)
-        file_obj = tempfile.NamedTemporaryFile("wb+", suffix=".img",
-                                               delete=delete, dir=directory,
-                                               prefix="rand_hole_%d_" % i)
+        file_obj = tempfile.NamedTemporaryFile(
+            "wb+",
+            suffix=".img",
+            delete=delete,
+            dir=directory,
+            prefix="rand_hole_%d_" % i,
+        )
         file_obj.truncate(size)
         blocks_cnt = (size + block_size - 1) // block_size
         yield (file_obj, size, [], [(0, blocks_cnt - 1)])
@@ -177,25 +181,25 @@ def generate_test_files(max_size=4 * 1024 * 1024, directory=None, delete=True):
     #
 
     # The maximum size
-    file_obj = tempfile.NamedTemporaryFile("wb+", prefix="sparse_",
-                                           delete=delete, dir=directory,
-                                           suffix=".img")
+    file_obj = tempfile.NamedTemporaryFile(
+        "wb+", prefix="sparse_", delete=delete, dir=directory, suffix=".img"
+    )
     mapped, unmapped = _create_random_sparse_file(file_obj, max_size)
     yield (file_obj, max_size, mapped, unmapped)
     file_obj.close()
 
     # The maximum size + 1 byte
-    file_obj = tempfile.NamedTemporaryFile("wb+", prefix="sparse_plus_1_",
-                                           delete=delete, dir=directory,
-                                           suffix=".img")
+    file_obj = tempfile.NamedTemporaryFile(
+        "wb+", prefix="sparse_plus_1_", delete=delete, dir=directory, suffix=".img"
+    )
     mapped, unmapped = _create_random_sparse_file(file_obj, max_size + 1)
     yield (file_obj, max_size + 1, mapped, unmapped)
     file_obj.close()
 
     # The maximum size - 1 byte
-    file_obj = tempfile.NamedTemporaryFile("wb+", prefix="sparse_minus_1_",
-                                           delete=delete, dir=directory,
-                                           suffix=".img")
+    file_obj = tempfile.NamedTemporaryFile(
+        "wb+", prefix="sparse_minus_1_", delete=delete, dir=directory, suffix=".img"
+    )
     mapped, unmapped = _create_random_sparse_file(file_obj, max_size - 1)
     yield (file_obj, max_size - 1, mapped, unmapped)
     file_obj.close()
@@ -203,9 +207,9 @@ def generate_test_files(max_size=4 * 1024 * 1024, directory=None, delete=True):
     # And 10 files of random size
     for i in range(10):
         size = random.randint(1, max_size)
-        file_obj = tempfile.NamedTemporaryFile("wb+", suffix=".img",
-                                               delete=delete, dir=directory,
-                                               prefix="sparse_%d_" % i)
+        file_obj = tempfile.NamedTemporaryFile(
+            "wb+", suffix=".img", delete=delete, dir=directory, prefix="sparse_%d_" % i
+        )
         mapped, unmapped = _create_random_sparse_file(file_obj, size)
         yield (file_obj, size, mapped, unmapped)
         file_obj.close()
@@ -215,33 +219,33 @@ def generate_test_files(max_size=4 * 1024 * 1024, directory=None, delete=True):
     #
 
     # A block-sized file
-    file_obj = tempfile.NamedTemporaryFile("wb+", prefix="4Kmapped_",
-                                           delete=delete, dir=directory,
-                                           suffix=".img")
+    file_obj = tempfile.NamedTemporaryFile(
+        "wb+", prefix="4Kmapped_", delete=delete, dir=directory, suffix=".img"
+    )
     _create_random_file(file_obj, block_size)
     yield (file_obj, block_size, [(0, 0)], [])
     file_obj.close()
 
     # A block size + 1 byte file
-    file_obj = tempfile.NamedTemporaryFile("wb+", prefix="4Kmapped_plus_1_",
-                                           delete=delete, dir=directory,
-                                           suffix=".img")
+    file_obj = tempfile.NamedTemporaryFile(
+        "wb+", prefix="4Kmapped_plus_1_", delete=delete, dir=directory, suffix=".img"
+    )
     _create_random_file(file_obj, block_size + 1)
     yield (file_obj, block_size + 1, [(0, 1)], [])
     file_obj.close()
 
     # A block size - 1 byte file
-    file_obj = tempfile.NamedTemporaryFile("wb+", prefix="4Kmapped_minus_1_",
-                                           delete=delete, dir=directory,
-                                           suffix=".img")
+    file_obj = tempfile.NamedTemporaryFile(
+        "wb+", prefix="4Kmapped_minus_1_", delete=delete, dir=directory, suffix=".img"
+    )
     _create_random_file(file_obj, block_size - 1)
     yield (file_obj, block_size - 1, [(0, 0)], [])
     file_obj.close()
 
     # A 1-byte file
-    file_obj = tempfile.NamedTemporaryFile("wb+", prefix="1byte_mapped_",
-                                           delete=delete, dir=directory,
-                                           suffix=".img")
+    file_obj = tempfile.NamedTemporaryFile(
+        "wb+", prefix="1byte_mapped_", delete=delete, dir=directory, suffix=".img"
+    )
     _create_random_file(file_obj, 1)
     yield (file_obj, 1, [(0, 0)], [])
     file_obj.close()
@@ -249,9 +253,13 @@ def generate_test_files(max_size=4 * 1024 * 1024, directory=None, delete=True):
     # And 10 mapped files of random size
     for i in range(10):
         size = random.randint(1, max_size)
-        file_obj = tempfile.NamedTemporaryFile("wb+", suffix=".img",
-                                               delete=delete, dir=directory,
-                                               prefix="rand_mapped_%d_" % i)
+        file_obj = tempfile.NamedTemporaryFile(
+            "wb+",
+            suffix=".img",
+            delete=delete,
+            dir=directory,
+            prefix="rand_mapped_%d_" % i,
+        )
         _create_random_file(file_obj, size)
         blocks_cnt = (size + block_size - 1) // block_size
         yield (file_obj, size, [(0, blocks_cnt - 1)], [])
@@ -284,7 +292,7 @@ def copy_and_verify_image(image, dest, bmap, image_chksum, image_size):
 
     f_image = TransRead.TransRead(image)
     f_dest = open(dest, "w+b")
-    if (bmap):
+    if bmap:
         f_bmap = open(bmap, "r")
     else:
         f_bmap = None

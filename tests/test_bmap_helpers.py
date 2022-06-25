@@ -21,13 +21,14 @@ This test verifies 'BmapHelpers' module functionality.
 import os
 import sys
 import tempfile
+
 try:
     from unittest.mock import patch
-except ImportError:     # for Python < 3.3
+except ImportError:  # for Python < 3.3
     from mock import patch
 try:
     from tempfile import TemporaryDirectory
-except ImportError:     # for Python < 3.2
+except ImportError:  # for Python < 3.2
     from backports.tempfile import TemporaryDirectory
 from bmaptools import BmapHelpers
 
@@ -45,8 +46,9 @@ class TestBmapHelpers(unittest.TestCase):
     def test_get_file_system_type(self):
         """Check a file system type is returned when used with a file"""
 
-        with tempfile.NamedTemporaryFile("r", prefix="testfile_",
-                                         delete=True, dir=".", suffix=".img") as fobj:
+        with tempfile.NamedTemporaryFile(
+            "r", prefix="testfile_", delete=True, dir=".", suffix=".img"
+        ) as fobj:
             fstype = BmapHelpers.get_file_system_type(fobj.name)
             self.assertTrue(fstype)
 
@@ -62,8 +64,9 @@ class TestBmapHelpers(unittest.TestCase):
         """Check a file system type is returned when used with a symlink"""
 
         with TemporaryDirectory(prefix="testdir_", dir=".") as directory:
-            fobj = tempfile.NamedTemporaryFile("r", prefix="testfile_", delete=False,
-                                            dir=directory, suffix=".img")
+            fobj = tempfile.NamedTemporaryFile(
+                "r", prefix="testfile_", delete=False, dir=directory, suffix=".img"
+            )
             lnk = os.path.join(directory, "test_symlink")
             os.symlink(fobj.name, lnk)
             fstype = BmapHelpers.get_file_system_type(lnk)
@@ -72,20 +75,21 @@ class TestBmapHelpers(unittest.TestCase):
     def test_is_zfs_configuration_compatible_enabled(self):
         """Check compatiblilty check is true when zfs param is set correctly"""
 
-        with tempfile.NamedTemporaryFile("w+", prefix="testfile_",
-                                         delete=True, dir=".", suffix=".txt") as fobj:
+        with tempfile.NamedTemporaryFile(
+            "w+", prefix="testfile_", delete=True, dir=".", suffix=".txt"
+        ) as fobj:
             fobj.write("1")
             fobj.flush()
             mockobj = patch.object(BmapHelpers, "ZFS_COMPAT_PARAM_PATH", fobj.name)
             with mockobj:
                 self.assertTrue(BmapHelpers.is_zfs_configuration_compatible())
 
-
     def test_is_zfs_configuration_compatible_disabled(self):
         """Check compatiblilty check is false when zfs param is set incorrectly"""
 
-        with tempfile.NamedTemporaryFile("w+", prefix="testfile_",
-                                         delete=True, dir=".", suffix=".txt") as fobj:
+        with tempfile.NamedTemporaryFile(
+            "w+", prefix="testfile_", delete=True, dir=".", suffix=".txt"
+        ) as fobj:
             fobj.write("0")
             fobj.flush()
             mockobj = patch.object(BmapHelpers, "ZFS_COMPAT_PARAM_PATH", fobj.name)
@@ -95,8 +99,9 @@ class TestBmapHelpers(unittest.TestCase):
     def test_is_zfs_configuration_compatible_invalid_read_value(self):
         """Check error raised if any content of zfs config file invalid"""
 
-        with tempfile.NamedTemporaryFile("a", prefix="testfile_",
-                                         delete=True, dir=".", suffix=".txt") as fobj:
+        with tempfile.NamedTemporaryFile(
+            "a", prefix="testfile_", delete=True, dir=".", suffix=".txt"
+        ) as fobj:
             mockobj = patch.object(BmapHelpers, "ZFS_COMPAT_PARAM_PATH", fobj.name)
             with self.assertRaises(BmapHelpers.Error):
                 with mockobj:
@@ -121,11 +126,14 @@ class TestBmapHelpers(unittest.TestCase):
             self.assertFalse(BmapHelpers.is_zfs_configuration_compatible())
 
     @patch.object(BmapHelpers, "get_file_system_type", return_value="zfs")
-    def test_is_compatible_file_system_zfs_valid(self, mock_get_fs_type): #pylint: disable=unused-argument
+    def test_is_compatible_file_system_zfs_valid(
+        self, mock_get_fs_type
+    ):  # pylint: disable=unused-argument
         """Check compatiblilty check passes when zfs param is set correctly"""
 
-        with tempfile.NamedTemporaryFile("w+", prefix="testfile_",
-                                         delete=True, dir=".", suffix=".img") as fobj:
+        with tempfile.NamedTemporaryFile(
+            "w+", prefix="testfile_", delete=True, dir=".", suffix=".img"
+        ) as fobj:
             fobj.write("1")
             fobj.flush()
             mockobj = patch.object(BmapHelpers, "ZFS_COMPAT_PARAM_PATH", fobj.name)
@@ -133,11 +141,14 @@ class TestBmapHelpers(unittest.TestCase):
                 self.assertTrue(BmapHelpers.is_compatible_file_system(fobj.name))
 
     @patch.object(BmapHelpers, "get_file_system_type", return_value="zfs")
-    def test_is_compatible_file_system_zfs_invalid(self, mock_get_fs_type): #pylint: disable=unused-argument
+    def test_is_compatible_file_system_zfs_invalid(
+        self, mock_get_fs_type
+    ):  # pylint: disable=unused-argument
         """Check compatiblilty check fails when zfs param is set incorrectly"""
 
-        with tempfile.NamedTemporaryFile("w+", prefix="testfile_",
-                                         delete=True, dir=".", suffix=".img") as fobj:
+        with tempfile.NamedTemporaryFile(
+            "w+", prefix="testfile_", delete=True, dir=".", suffix=".img"
+        ) as fobj:
             fobj.write("0")
             fobj.flush()
             mockobj = patch.object(BmapHelpers, "ZFS_COMPAT_PARAM_PATH", fobj.name)
@@ -145,9 +156,12 @@ class TestBmapHelpers(unittest.TestCase):
                 self.assertFalse(BmapHelpers.is_compatible_file_system(fobj.name))
 
     @patch.object(BmapHelpers, "get_file_system_type", return_value="ext4")
-    def test_is_compatible_file_system_ext4(self, mock_get_fs_type): #pylint: disable=unused-argument
+    def test_is_compatible_file_system_ext4(
+        self, mock_get_fs_type
+    ):  # pylint: disable=unused-argument
         """Check non-zfs file systems pass compatiblilty checks"""
 
-        with tempfile.NamedTemporaryFile("w+", prefix="testfile_",
-                                         delete=True, dir=".", suffix=".img") as fobj:
+        with tempfile.NamedTemporaryFile(
+            "w+", prefix="testfile_", delete=True, dir=".", suffix=".img"
+        ) as fobj:
             self.assertTrue(BmapHelpers.is_compatible_file_system(fobj.name))
