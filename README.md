@@ -1,23 +1,16 @@
-# Summary
+# `bmap-tools`
 
-The bmap-tools project implements bmap-related tools and API modules. The
-entire project is written in python and supports python 2.7 and python 3.x.
+> The better `dd` for embedded projects, based on block maps.
 
-The project author and maintainer is Artem Bityutskiy (dedekind1@gmail.com)
-Please, feel free to contact me if you have questions.
+## Introduction
 
-Project git repository is here:
-https://github.com/intel/bmap-tools.git
-
-# Introduction
-
-Bmaptool is a generic tool for creating the block map (bmap) for a file and
+`bmaptool` is a generic tool for creating the block map (bmap) for a file and
 copying files using the block map. The idea is that large files, like raw
 system image files, can be copied or flashed a lot faster and more reliably
-with bmaptool than with traditional tools, like `dd` or `cp`.
+with `bmaptool` than with traditional tools, like `dd` or `cp`.
 
-Bmaptool was originally created for the "Tizen IVI" project and it was used for
-flashing system images to USB sticks and other block devices. Bmaptool can also
+`bmaptool` was originally created for the "Tizen IVI" project and it was used for
+flashing system images to USB sticks and other block devices. `bmaptool` can also
 be used for general image flashing purposes, for example, flashing Fedora Linux
 OS distribution images to USB sticks.
 
@@ -25,53 +18,51 @@ Originally Tizen IVI images had been flashed using the `dd` tool, but bmaptool
 brought a number of advantages.
 
 * Faster. Depending on various factors, like write speed, image size, how full
-  is the image, and so on, bmaptool was 5-7 times faster than `dd` in the Tizen
+  is the image, and so on, `bmaptool` was 5-7 times faster than `dd` in the Tizen
   IVI project.
-* Integrity. Bmaptool verifies data integrity while flashing, which means that
+* Integrity. `bmaptool` verifies data integrity while flashing, which means that
   possible data corruptions will be noticed immediately.
-* Usability. Bmaptool can read images directly from the remote server, so users
+* Usability. `bmaptool` can read images directly from the remote server, so users
   do not have to download images and save them locally.
 * Protects user's data. Unlike `dd`, if you make a mistake and specify a wrong
-  block device name, bmaptool will less likely destroy your data because it has
-  protection mechanisms which, for example, prevent bmaptool from writing to a
+  block device name, `bmaptool` will less likely destroy your data because it has
+  protection mechanisms which, for example, prevent `bmaptool` from writing to a
   mounted block device.
 
+## Usage
 
-# Usage
-
-Bmaptool supports 2 subcommands:
-* "copy" - copy a file to another file using bmap or flash an image to a block
+`bmaptool` supports 2 subcommands:
+* `copy` - copy a file to another file using bmap or flash an image to a block
   device
-* "create" - create a bmap for a file
+* `create` - create a bmap for a file
 
-You can get usage reference for bmaptool and all the supported command using
+You can get usage reference for `bmaptool` and all the supported command using
 the `-h` or `--help` options:
 
 ```bash
-$ bmaptool -h # General bmaptool help
-$ bmaptool cmd -h # Help on the "cmd" sub-command
+$ `bmaptool` -h # General `bmaptool` help
+$ `bmaptool` cmd -h # Help on the "cmd" sub-command
 ```
 
-You can also refer to the bmaptool manual page:
+You can also refer to the `bmaptool` manual page:
 ```bash
 $ man bmaptool
 ```
 
-
-# Concept
+## Concept
 
 This section provides general information about the block map (bmap) necessary
-for understanding how bmaptool works. The structure of the section is:
+for understanding how `bmaptool` works. The structure of the section is:
 
 * "Sparse files" - the bmap ideas are based on sparse files, so it is important
   to understand what sparse files are.
 * "The block map" - explains what bmap is.
-* "Raw images" - the main usage scenario for bmaptool is flashing raw images,
+* "Raw images" - the main usage scenario for `bmaptool` is flashing raw images,
   which this section discusses.
-* "Usage scenarios" - describes various possible bmap and bmaptool usage
+* "Usage scenarios" - describes various possible bmap and `bmaptool` usage
   scenarios.
 
-## Sparse files
+### Sparse files
 
 One of the main roles of a filesystem, generally speaking, is to map blocks of
 file data to disk sectors. Different file-systems do this mapping differently,
@@ -148,7 +139,7 @@ meaning that it is possible to unmap any aligned area and turn it into a hole.
 This is implemented using the `FALLOC_FL_PUNCH_HOLE` `mode` of the
 `fallocate()` system call.
 
-## The bmap
+### The bmap
 
 The bmap is an XML file, which contains a list of mapped areas, plus some
 additional information about the file it was created for, for example:
@@ -166,7 +157,7 @@ and in MiB or GiB.
 So, the best way to understand bmap is to just to read it. Here is an 
 [example of a bmap file](tests/test-data/test.image.bmap.v2.0). 
 
-## Raw images
+### Raw images
 
 Raw images are the simplest type of system images which may be flashed to the
 target block device, block-by-block, without any further processing. Raw images
@@ -211,14 +202,14 @@ Raw images compress extremely well because the holes are essentially zeroes,
 which compress perfectly. This is why 3.7GiB Tizen IVI raw images, which
 contain about 1.1GiB of mapped blocks, take only 300MiB in a compressed form.
 And the important point is that you  need to decompress them only while
-flashing. The bmaptool does this "on-the-fly".
+flashing. The `bmaptool` does this "on-the-fly".
 
 Therefore:
 * raw images are distributed in a compressed form, and they are almost as small
   as a tarball (that includes all the data the image would take)
-* the bmap file and the bmaptool make it possible to quickly flash the
+* the bmap file and the `bmaptool` make it possible to quickly flash the
   compressed raw image to the target block device
-* optionally, the bmaptool can reconstruct the original uncompressed sparse raw
+* optionally, the `bmaptool` can reconstruct the original uncompressed sparse raw
   image file
 
 And, what is even more important, is that flashing raw images is extremely fast
@@ -229,9 +220,9 @@ all you need to do is to put the image on your device "as-is". You do not have
 to know the image format, which partitions and filesystems it contains, etc.
 This is simple and robust.
 
-## Usage scenarios
+### Usage scenarios
 
-Flashing or copying large images is the main bmaptool use case. The idea is
+Flashing or copying large images is the main `bmaptool` use case. The idea is
 that if you have a raw image file and its bmap, you can flash it to a device by
 writing only the mapped blocks and skipping the unmapped blocks.
 
@@ -242,14 +233,14 @@ the target device requires. The image will then be a huge sparse file, with
 little mapped data. And because unmapped areas "contain" zeroes, the huge image
 will compress extremely well, so the huge image will be very small in
 compressed form. It can then be distributed in compressed form, and flashed
-very quickly with bmaptool and the bmap file, because bmaptool will decompress
+very quickly with `bmaptool` and the bmap file, because `bmaptool` will decompress
 the image on-the-fly and write only mapped areas.
 
 The additional benefit of using bmap for flashing is the checksum verification.
 Indeed, the `bmaptool create` command generates SHA256 checksums for all mapped
 block ranges, and the `bmaptool copy` command verifies the checksums while
 writing. Integrity of the bmap file itself is also protected by a SHA256
-checksum and bmaptool verifies it before starting flashing.
+checksum and `bmaptool` verifies it before starting flashing.
 
 On top of this, the bmap file can be signed using OpenPGP (gpg) and bmaptool
 automatically verifies the signature if it is present. This allows for
@@ -280,16 +271,16 @@ image is essential because zero-filled blocks are the required blocks which are
 expected to contain zeroes, while holes are just unneeded blocks with no
 expectations regarding the contents.
 
-Bmaptool may be helpful for reconstructing sparse files properly. Before the
+`bmaptool` may be helpful for reconstructing sparse files properly. Before the
 sparse file is expanded, you should generate its bmap (for example, by using
 the `bmaptool create` command). Then you may compress your file or, otherwise,
 expand it. Later on, you may reconstruct it using the `bmaptool copy` command.
 
-# Project structure
+## Project structure
 
 ```bash
 ------------------------------------------------------------------------------------
-| - bmaptool                 | A tools to create bmap and copy with bmap. Based    |
+| - `bmaptool`                 | A tools to create bmap and copy with bmap. Based    |
 |                            | on the 'BmapCreate.py' and 'BmapCopy.py' modules.   |
 | - setup.py                 | A script to turn the entire bmap-tools project      |
 |                            | into a python egg.                                  |
@@ -326,15 +317,15 @@ expand it. Later on, you may reconstruct it using the `bmaptool copy` command.
 ------------------------------------------------------------------------------------
 ```
 
-# How to run unit tests
+## How to run unit tests
 
 Just install the `nose` python test framework and run the `nosetests` command in
 the project root directory. If you want to see tests coverage report, run
 `nosetests --with-coverage`.
 
-# Known Issues
+## Known Issues
 
-## ZFS File System
+### ZFS File System
 
 If running on the ZFS file system, the Linux ZFS kernel driver parameters
 configuration can cause the finding of mapped and unmapped areas to fail.
@@ -366,7 +357,18 @@ $ cat /sys/module/zfs/parameters/zfs_dmu_offset_next_sync
 
 More details can be found [in the OpenZFS documentation](https://openzfs.github.io/openzfs-docs/Performance%20and%20Tuning/Module%20Parameters.html).
 
-# Credits
+## Project and maintainer
+
+The bmap-tools project implements bmap-related tools and API modules. The
+entire project is written in python and supports python 2.7 and python 3.x.
+
+The project author and maintainer is Artem Bityutskiy (dedekind1@gmail.com)
+Please, feel free to contact me if you have questions.
+
+Project git repository is here:
+https://github.com/intel/bmap-tools.git
+
+## Credits
 
 * Ed Bartosh (eduard.bartosh@intel.com) for helping me with learning python
   (this is my first python project) and working with the Tizen IVI
