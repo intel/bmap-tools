@@ -80,6 +80,7 @@ class Error(Exception):
     support only one type of exceptions, and we basically throw human-readable
     problem description in case of errors.
     """
+
     pass
 
 
@@ -189,9 +190,11 @@ class BmapCopy(object):
         self._bmap_cs_attrib_name = None
 
         # Special quirk for /dev/null which does not support fsync()
-        if stat.S_ISCHR(st_data.st_mode) and \
-           os.major(st_data.st_rdev) == 1 and \
-           os.minor(st_data.st_rdev) == 3:
+        if (
+            stat.S_ISCHR(st_data.st_mode)
+            and os.major(st_data.st_rdev) == 1
+            and os.minor(st_data.st_rdev) == 3
+        ):
             self._dest_supports_fsync = False
         else:
             self._dest_supports_fsync = True
@@ -231,8 +234,9 @@ class BmapCopy(object):
         if os.path.exists(path) and stat.S_ISFIFO(os.stat(path).st_mode):
             self._psplash_pipe = path
         else:
-            _log.warning("'%s' is not a pipe, so psplash progress will not be "
-                         "updated" % path)
+            _log.warning(
+                "'%s' is not a pipe, so psplash progress will not be " "updated" % path
+            )
 
     def set_progress_indicator(self, file_obj, format_string):
         """
@@ -259,9 +263,11 @@ class BmapCopy(object):
         """
 
         if self.image_size is not None and self.image_size != image_size:
-            raise Error("cannot set image size to %d bytes, it is known to "
-                        "be %d bytes (%s)" % (image_size, self.image_size,
-                                              self.image_size_human))
+            raise Error(
+                "cannot set image size to %d bytes, it is known to "
+                "be %d bytes (%s)"
+                % (image_size, self.image_size, self.image_size_human)
+            )
 
         self.image_size = image_size
         self.image_size_human = human_size(image_size)
@@ -284,13 +290,12 @@ class BmapCopy(object):
         # Before verifying the shecksum, we have to substitute the checksum
         # value stored in the file with all zeroes. For these purposes we
         # create private memory mapping of the bmap file.
-        mapped_bmap = mmap.mmap(self._f_bmap.fileno(), 0,
-                                access=mmap.ACCESS_COPY)
+        mapped_bmap = mmap.mmap(self._f_bmap.fileno(), 0, access=mmap.ACCESS_COPY)
 
         chksum_pos = mapped_bmap.find(correct_chksum.encode())
         assert chksum_pos != -1
 
-        mapped_bmap[chksum_pos:chksum_pos + self._cs_len] = b'0' * self._cs_len
+        mapped_bmap[chksum_pos : chksum_pos + self._cs_len] = b"0" * self._cs_len
 
         hash_obj = hashlib.new(self._cs_type)
         hash_obj.update(mapped_bmap)
@@ -299,9 +304,11 @@ class BmapCopy(object):
         mapped_bmap.close()
 
         if calculated_chksum != correct_chksum:
-            raise Error("checksum mismatch for bmap file '%s': calculated "
-                        "'%s', should be '%s'"
-                        % (self._bmap_path, calculated_chksum, correct_chksum))
+            raise Error(
+                "checksum mismatch for bmap file '%s': calculated "
+                "'%s', should be '%s'"
+                % (self._bmap_path, calculated_chksum, correct_chksum)
+            )
 
     def _parse_bmap(self):
         """
@@ -318,20 +325,24 @@ class BmapCopy(object):
                 if num >= err.position[0] - 4 and num <= err.position[0] + 4:
                     xml_extract += "Line %d: %s" % (num, line)
 
-            raise Error("cannot parse the bmap file '%s' which should be a "
-                        "proper XML file: %s, the XML extract:\n%s" %
-                        (self._bmap_path, err, xml_extract))
+            raise Error(
+                "cannot parse the bmap file '%s' which should be a "
+                "proper XML file: %s, the XML extract:\n%s"
+                % (self._bmap_path, err, xml_extract)
+            )
 
         xml = self._xml
-        self.bmap_version = str(xml.getroot().attrib.get('version'))
+        self.bmap_version = str(xml.getroot().attrib.get("version"))
 
         # Make sure we support this version
-        self.bmap_version_major = int(self.bmap_version.split('.', 1)[0])
-        self.bmap_version_minor = int(self.bmap_version.split('.', 1)[1])
-        if self.bmap_version_major > int(SUPPORTED_BMAP_VERSION.split('.', 1)[0]):
-            raise Error("only bmap format version up to %d is supported, "
-                        "version %d is not supported"
-                        % (SUPPORTED_BMAP_VERSION, self.bmap_version_major))
+        self.bmap_version_major = int(self.bmap_version.split(".", 1)[0])
+        self.bmap_version_minor = int(self.bmap_version.split(".", 1)[1])
+        if self.bmap_version_major > int(SUPPORTED_BMAP_VERSION.split(".", 1)[0]):
+            raise Error(
+                "only bmap format version up to %d is supported, "
+                "version %d is not supported"
+                % (SUPPORTED_BMAP_VERSION, self.bmap_version_major)
+            )
 
         # Fetch interesting data from the bmap XML file
         self.block_size = int(xml.find("BlockSize").text.strip())
@@ -345,12 +356,15 @@ class BmapCopy(object):
 
         blocks_cnt = (self.image_size + self.block_size - 1) // self.block_size
         if self.blocks_cnt != blocks_cnt:
-            raise Error("Inconsistent bmap - image size does not match "
-                        "blocks count (%d bytes != %d blocks * %d bytes)"
-                        % (self.image_size, self.blocks_cnt, self.block_size))
+            raise Error(
+                "Inconsistent bmap - image size does not match "
+                "blocks count (%d bytes != %d blocks * %d bytes)"
+                % (self.image_size, self.blocks_cnt, self.block_size)
+            )
 
-        if self.bmap_version_major > 1 or \
-           (self.bmap_version_major == 1 and self.bmap_version_minor == 4):
+        if self.bmap_version_major > 1 or (
+            self.bmap_version_major == 1 and self.bmap_version_minor == 4
+        ):
             # In bmap format version 1.0-1.3 the only supported checksum type
             # was SHA1. Version 2.0 started supporting arbitrary checksum
             # types. A new "ChecksumType" tag was introduce to specify the
@@ -377,8 +391,9 @@ class BmapCopy(object):
             try:
                 self._cs_len = len(hashlib.new(self._cs_type).hexdigest())
             except ValueError as err:
-                raise Error("cannot initialize hash function \"%s\": %s" %
-                            (self._cs_type, err))
+                raise Error(
+                    'cannot initialize hash function "%s": %s' % (self._cs_type, err)
+                )
             self._verify_bmap_checksum()
 
     def _update_progress(self, blocks_written):
@@ -391,14 +406,16 @@ class BmapCopy(object):
         if self.mapped_cnt:
             assert blocks_written <= self.mapped_cnt
             percent = int((float(blocks_written) / self.mapped_cnt) * 100)
-            _log.debug("wrote %d blocks out of %d (%d%%)" %
-                       (blocks_written, self.mapped_cnt, percent))
+            _log.debug(
+                "wrote %d blocks out of %d (%d%%)"
+                % (blocks_written, self.mapped_cnt, percent)
+            )
         else:
             _log.debug("wrote %d blocks" % blocks_written)
 
         if self._progress_file:
             if self.mapped_cnt:
-                progress = '\r' + self._progress_format % percent + '\n'
+                progress = "\r" + self._progress_format % percent + "\n"
             else:
                 # Do not rotate the wheel too fast
                 now = datetime.datetime.now()
@@ -407,8 +424,8 @@ class BmapCopy(object):
                     return
                 self._progress_time = now
 
-                progress_wheel = ('-', '\\', '|', '/')
-                progress = '\r' + progress_wheel[self._progress_index % 4] + '\n'
+                progress_wheel = ("-", "\\", "|", "/")
+                progress = "\r" + progress_wheel[self._progress_index % 4] + "\n"
                 self._progress_index += 1
 
             # This is a little trick we do in order to make sure that the next
@@ -418,7 +435,7 @@ class BmapCopy(object):
             # exception - the error message will start form new line.
             if self._progress_started:
                 # The "move cursor up" escape sequence
-                self._progress_file.write('\033[1A')  # pylint: disable=W1401
+                self._progress_file.write("\033[1A")  # pylint: disable=W1401
             else:
                 self._progress_started = True
 
@@ -431,7 +448,7 @@ class BmapCopy(object):
         if self._psplash_pipe and self.mapped_cnt:
             try:
                 mode = os.O_WRONLY | os.O_NONBLOCK
-                with os.fdopen(os.open(self._psplash_pipe, mode), 'w') as p_fo:
+                with os.fdopen(os.open(self._psplash_pipe, mode), "w") as p_fo:
                     p_fo.write("PROGRESS %d\n" % percent)
             except:
                 pass
@@ -473,7 +490,7 @@ class BmapCopy(object):
             # The range of blocks has the "X - Y" format, or it can be just "X"
             # in old bmap format versions. First, split the blocks range string
             # and strip white-spaces.
-            split = [x.strip() for x in blocks_range.split('-', 1)]
+            split = [x.strip() for x in blocks_range.split("-", 1)]
 
             first = int(split[0])
             if len(split) > 1:
@@ -536,13 +553,15 @@ class BmapCopy(object):
                     try:
                         buf = self._f_image.read(length * self.block_size)
                     except IOError as err:
-                        raise Error("error while reading blocks %d-%d of the "
-                                    "image file '%s': %s"
-                                    % (start, end, self._image_path, err))
+                        raise Error(
+                            "error while reading blocks %d-%d of the "
+                            "image file '%s': %s" % (start, end, self._image_path, err)
+                        )
 
                     if not buf:
-                        _log.debug("no more data to read from file '%s'",
-                                   self._image_path)
+                        _log.debug(
+                            "no more data to read from file '%s'", self._image_path
+                        )
                         self._batch_queue.put(None)
                         return
 
@@ -550,17 +569,19 @@ class BmapCopy(object):
                         hash_obj.update(buf)
 
                     blocks = (len(buf) + self.block_size - 1) // self.block_size
-                    _log.debug("queueing %d blocks, queue length is %d" %
-                               (blocks, self._batch_queue.qsize()))
+                    _log.debug(
+                        "queueing %d blocks, queue length is %d"
+                        % (blocks, self._batch_queue.qsize())
+                    )
 
-                    self._batch_queue.put(("range", start, start + blocks - 1,
-                                           buf))
+                    self._batch_queue.put(("range", start, start + blocks - 1, buf))
 
                 if verify and chksum and hash_obj.hexdigest() != chksum:
-                    raise Error("checksum mismatch for blocks range %d-%d: "
-                                "calculated %s, should be %s (image file %s)"
-                                % (first, last, hash_obj.hexdigest(),
-                                   chksum, self._image_path))
+                    raise Error(
+                        "checksum mismatch for blocks range %d-%d: "
+                        "calculated %s, should be %s (image file %s)"
+                        % (first, last, hash_obj.hexdigest(), chksum, self._image_path)
+                    )
         # Silence pylint warning about catching too general exception
         # pylint: disable=W0703
         except Exception:
@@ -582,7 +603,7 @@ class BmapCopy(object):
         # Create the queue for block batches and start the reader thread, which
         # will read the image in batches and put the results to '_batch_queue'.
         self._batch_queue = Queue.Queue(self._batch_queue_len)
-        thread.start_new_thread(self._get_data, (verify, ))
+        thread.start_new_thread(self._get_data, (verify,))
 
         blocks_written = 0
         bytes_written = 0
@@ -598,8 +619,7 @@ class BmapCopy(object):
             try:
                 os.ftruncate(self._f_dest.fileno(), self.image_size)
             except OSError as err:
-                raise Error("cannot truncate file '%s': %s"
-                            % (self._dest_path, err))
+                raise Error("cannot truncate file '%s': %s" % (self._dest_path, err))
 
         # Read the image in '_batch_blocks' chunks and write them to the
         # destination file
@@ -630,11 +650,13 @@ class BmapCopy(object):
             try:
                 self._f_dest.write(buf)
             except IOError as err:
-                raise Error("error while writing blocks %d-%d of '%s': %s"
-                            % (start, end, self._dest_path, err))
+                raise Error(
+                    "error while writing blocks %d-%d of '%s': %s"
+                    % (start, end, self._dest_path, err)
+                )
 
             self._batch_queue.task_done()
-            blocks_written += (end - start + 1)
+            blocks_written += end - start + 1
             bytes_written += len(buf)
 
             self._update_progress(blocks_written)
@@ -646,19 +668,25 @@ class BmapCopy(object):
         # This is just a sanity check - we should have written exactly
         # 'mapped_cnt' blocks.
         if blocks_written != self.mapped_cnt:
-            raise Error("wrote %u blocks from image '%s' to '%s', but should "
-                        "have %u - bmap file '%s' does not belong to this "
-                        "image"
-                        % (blocks_written, self._image_path, self._dest_path,
-                           self.mapped_cnt, self._bmap_path))
+            raise Error(
+                "wrote %u blocks from image '%s' to '%s', but should "
+                "have %u - bmap file '%s' does not belong to this "
+                "image"
+                % (
+                    blocks_written,
+                    self._image_path,
+                    self._dest_path,
+                    self.mapped_cnt,
+                    self._bmap_path,
+                )
+            )
 
         if self._dest_is_regfile:
             # Make sure the destination file has the same size as the image
             try:
                 os.ftruncate(self._f_dest.fileno(), self.image_size)
             except OSError as err:
-                raise Error("cannot truncate file '%s': %s"
-                            % (self._dest_path, err))
+                raise Error("cannot truncate file '%s': %s" % (self._dest_path, err))
 
         try:
             self._f_dest.flush()
@@ -678,8 +706,9 @@ class BmapCopy(object):
             try:
                 os.fsync(self._f_dest.fileno()),
             except OSError as err:
-                raise Error("cannot synchronize '%s': %s "
-                            % (self._dest_path, err.strerror))
+                raise Error(
+                    "cannot synchronize '%s': %s " % (self._dest_path, err.strerror)
+                )
 
 
 class BmapBdevCopy(BmapCopy):
@@ -713,19 +742,29 @@ class BmapBdevCopy(BmapCopy):
                 bdev_size = os.lseek(self._f_dest.fileno(), 0, os.SEEK_END)
                 os.lseek(self._f_dest.fileno(), 0, os.SEEK_SET)
             except OSError as err:
-                raise Error("cannot seed block device '%s': %s "
-                            % (self._dest_path, err.strerror))
+                raise Error(
+                    "cannot seed block device '%s': %s "
+                    % (self._dest_path, err.strerror)
+                )
 
             if bdev_size < self.image_size:
-                raise Error("the image file '%s' has size %s and it will not "
-                            "fit the block device '%s' which has %s capacity"
-                            % (self._image_path, self.image_size_human,
-                               self._dest_path, human_size(bdev_size)))
+                raise Error(
+                    "the image file '%s' has size %s and it will not "
+                    "fit the block device '%s' which has %s capacity"
+                    % (
+                        self._image_path,
+                        self.image_size_human,
+                        self._dest_path,
+                        human_size(bdev_size),
+                    )
+                )
 
         # Construct the path to the sysfs directory of our block device
         st_rdev = os.fstat(self._f_dest.fileno()).st_rdev
-        self._sysfs_base = "/sys/dev/block/%s:%s/" % \
-                           (os.major(st_rdev), os.minor(st_rdev))
+        self._sysfs_base = "/sys/dev/block/%s:%s/" % (
+            os.major(st_rdev),
+            os.minor(st_rdev),
+        )
 
         # Check if the 'queue' sub-directory exists. If yes, then our block
         # device is entire disk. Otherwise, it is a partition, in which case we
@@ -754,16 +793,18 @@ class BmapBdevCopy(BmapCopy):
                 f_scheduler.seek(0)
                 f_scheduler.write("noop")
         except IOError as err:
-            _log.debug("failed to enable I/O optimization, expect "
-                         "suboptimal speed (reason: cannot switch to the "
-                         "'noop' I/O scheduler: %s or blk-mq in use)" % err)
+            _log.debug(
+                "failed to enable I/O optimization, expect "
+                "suboptimal speed (reason: cannot switch to the "
+                "'noop' I/O scheduler: %s or blk-mq in use)" % err
+            )
         else:
             # The file contains a list of schedulers with the current
             # scheduler in square brackets, e.g., "noop deadline [cfq]".
             # Fetch the name of the current scheduler.
             import re
 
-            match = re.match(r'.*\[(.+)\].*', contents)
+            match = re.match(r".*\[(.+)\].*", contents)
             if match:
                 self._old_scheduler_value = match.group(1)
 
@@ -776,9 +817,11 @@ class BmapBdevCopy(BmapCopy):
                 f_ratio.seek(0)
                 f_ratio.write("1")
         except IOError as err:
-            _log.warning("failed to disable excessive buffering, expect "
-                         "worse system responsiveness (reason: cannot set "
-                         "max. I/O ratio to 1: %s)" % err)
+            _log.warning(
+                "failed to disable excessive buffering, expect "
+                "worse system responsiveness (reason: cannot set "
+                "max. I/O ratio to 1: %s)" % err
+            )
 
     def _restore_bdev_settings(self):
         """
@@ -791,16 +834,20 @@ class BmapBdevCopy(BmapCopy):
                 with open(self._sysfs_scheduler_path, "w") as f_scheduler:
                     f_scheduler.write(self._old_scheduler_value)
             except IOError as err:
-                raise Error("cannot restore the '%s' I/O scheduler: %s"
-                            % (self._old_scheduler_value, err))
+                raise Error(
+                    "cannot restore the '%s' I/O scheduler: %s"
+                    % (self._old_scheduler_value, err)
+                )
 
         if self._old_max_ratio_value is not None:
             try:
                 with open(self._sysfs_max_ratio_path, "w") as f_ratio:
                     f_ratio.write(self._old_max_ratio_value)
             except IOError as err:
-                raise Error("cannot set the max. I/O ratio back to '%s': %s"
-                            % (self._old_max_ratio_value, err))
+                raise Error(
+                    "cannot set the max. I/O ratio back to '%s': %s"
+                    % (self._old_max_ratio_value, err)
+                )
 
     def copy(self, sync=True, verify=True):
         """

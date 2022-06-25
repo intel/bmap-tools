@@ -65,8 +65,7 @@ from bmaptools import Filemap
 #   3.0, and was only fixed in bmap-tools v3.1.
 SUPPORTED_BMAP_VERSION = "2.0"
 
-_BMAP_START_TEMPLATE = \
-    """<?xml version="1.0" ?>
+_BMAP_START_TEMPLATE = """<?xml version="1.0" ?>
 <!-- This file contains the block map for an image file, which is basically
      a list of useful (mapped) block numbers in the image file. In other words,
      it lists only those blocks which contain data (boot sector, partition
@@ -108,6 +107,7 @@ class Error(Exception):
     one type of exceptions, and we basically throw human-readable problem
     description in case of errors.
     """
+
     pass
 
 
@@ -155,8 +155,9 @@ class BmapCreate(object):
         try:
             self._cs_len = len(hashlib.new(self._cs_type).hexdigest())
         except ValueError as err:
-            raise Error("cannot initialize hash function \"%s\": %s" %
-                        (self._cs_type, err))
+            raise Error(
+                'cannot initialize hash function "%s": %s' % (self._cs_type, err)
+            )
 
         if hasattr(image, "read"):
             self._f_image = image
@@ -175,14 +176,16 @@ class BmapCreate(object):
         try:
             self.filemap = Filemap.filemap(self._f_image)
         except (Filemap.Error, Filemap.ErrorNotSupp) as err:
-            raise Error("cannot generate bmap for file '%s': %s"
-                        % (self._image_path, err))
+            raise Error(
+                "cannot generate bmap for file '%s': %s" % (self._image_path, err)
+            )
 
         self.image_size = self.filemap.image_size
         self.image_size_human = human_size(self.image_size)
         if self.image_size == 0:
-            raise Error("cannot generate bmap for zero-sized image file '%s'"
-                        % self._image_path)
+            raise Error(
+                "cannot generate bmap for zero-sized image file '%s'" % self._image_path
+            )
 
         self.block_size = self.filemap.block_size
         self.blocks_cnt = self.filemap.blocks_cnt
@@ -197,20 +200,18 @@ class BmapCreate(object):
     def _open_image_file(self):
         """Open the image file."""
         try:
-            self._f_image = open(self._image_path, 'rb')
+            self._f_image = open(self._image_path, "rb")
         except IOError as err:
-            raise Error("cannot open image file '%s': %s"
-                        % (self._image_path, err))
+            raise Error("cannot open image file '%s': %s" % (self._image_path, err))
 
         self._f_image_needs_close = True
 
     def _open_bmap_file(self):
         """Open the bmap file."""
         try:
-            self._f_bmap = open(self._bmap_path, 'w+')
+            self._f_bmap = open(self._bmap_path, "w+")
         except IOError as err:
-            raise Error("cannot open bmap file '%s': %s"
-                        % (self._bmap_path, err))
+            raise Error("cannot open bmap file '%s': %s" % (self._bmap_path, err))
 
         self._f_bmap_needs_close = True
 
@@ -224,36 +225,44 @@ class BmapCreate(object):
         # whitespaces instead of real numbers. Assume the longest possible
         # numbers.
 
-        xml = _BMAP_START_TEMPLATE \
-            % (SUPPORTED_BMAP_VERSION, self.image_size_human,
-               self.image_size, self.block_size, self.blocks_cnt)
+        xml = _BMAP_START_TEMPLATE % (
+            SUPPORTED_BMAP_VERSION,
+            self.image_size_human,
+            self.image_size,
+            self.block_size,
+            self.blocks_cnt,
+        )
         xml += "    <!-- Count of mapped blocks: "
 
         self._f_bmap.write(xml)
         self._mapped_count_pos1 = self._f_bmap.tell()
 
-        xml = "%s or %s   -->\n" % (' ' * len(self.image_size_human),
-                                    ' ' * len("100.0%"))
+        xml = "%s or %s   -->\n" % (
+            " " * len(self.image_size_human),
+            " " * len("100.0%"),
+        )
         xml += "    <MappedBlocksCount> "
 
         self._f_bmap.write(xml)
         self._mapped_count_pos2 = self._f_bmap.tell()
 
-        xml = "%s </MappedBlocksCount>\n\n" % (' ' * len(str(self.blocks_cnt)))
+        xml = "%s </MappedBlocksCount>\n\n" % (" " * len(str(self.blocks_cnt)))
 
         # pylint: disable=C0301
         xml += "    <!-- Type of checksum used in this file -->\n"
         xml += "    <ChecksumType> %s </ChecksumType>\n\n" % self._cs_type
 
         xml += "    <!-- The checksum of this bmap file. When it is calculated, the value of\n"
-        xml += "         the checksum has be zero (all ASCII \"0\" symbols).  -->\n"
+        xml += '         the checksum has be zero (all ASCII "0" symbols).  -->\n'
         xml += "    <BmapFileChecksum> "
 
         self._f_bmap.write(xml)
         self._chksum_pos = self._f_bmap.tell()
 
         xml = "0" * self._cs_len + " </BmapFileChecksum>\n\n"
-        xml += "    <!-- The block map which consists of elements which may either be a\n"
+        xml += (
+            "    <!-- The block map which consists of elements which may either be a\n"
+        )
         xml += "         range of blocks or a single block. The 'chksum' attribute\n"
         xml += "         (if present) is the checksum of this blocks range. -->\n"
         xml += "    <BlockMap>\n"
@@ -274,8 +283,9 @@ class BmapCreate(object):
         self._f_bmap.write(xml)
 
         self._f_bmap.seek(self._mapped_count_pos1)
-        self._f_bmap.write("%s or %.1f%%"
-                           % (self.mapped_size_human, self.mapped_percent))
+        self._f_bmap.write(
+            "%s or %.1f%%" % (self.mapped_size_human, self.mapped_percent)
+        )
 
         self._f_bmap.seek(self._mapped_count_pos2)
         self._f_bmap.write("%u" % self.mapped_cnt)
@@ -330,16 +340,16 @@ class BmapCreate(object):
             self.mapped_cnt += last - first + 1
             if include_checksums:
                 chksum = self._calculate_chksum(first, last)
-                chksum = " chksum=\"%s\"" % chksum
+                chksum = ' chksum="%s"' % chksum
             else:
                 chksum = ""
 
             if first != last:
-                self._f_bmap.write("        <Range%s> %s-%s </Range>\n"
-                                   % (chksum, first, last))
+                self._f_bmap.write(
+                    "        <Range%s> %s-%s </Range>\n" % (chksum, first, last)
+                )
             else:
-                self._f_bmap.write("        <Range%s> %s </Range>\n"
-                                   % (chksum, first))
+                self._f_bmap.write("        <Range%s> %s </Range>\n" % (chksum, first))
 
         self.mapped_size = self.mapped_cnt * self.block_size
         self.mapped_size_human = human_size(self.mapped_size)
@@ -350,7 +360,6 @@ class BmapCreate(object):
         try:
             self._f_bmap.flush()
         except IOError as err:
-            raise Error("cannot flush the bmap file '%s': %s"
-                        % (self._bmap_path, err))
+            raise Error("cannot flush the bmap file '%s': %s" % (self._bmap_path, err))
 
         self._f_image.seek(image_pos)
