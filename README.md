@@ -7,7 +7,7 @@ The project author and maintainer is Artem Bityutskiy (dedekind1@gmail.com)
 Please, feel free to contact me if you have questions.
 
 Project git repository is here:
-https://github.com/01org/bmap-tools.git
+https://github.com/intel/bmap-tools.git
 
 # Introduction
 
@@ -163,9 +163,8 @@ The human-oriented information is in XML comments, which explain the meaning of
 XML tags and provide useful information like amount of mapped data in percent
 and in MiB or GiB.
 
-So, the best way to understand bmap is to just to read it. Here is an example
-of a Tizen IVI 2.0 alpha snapshot bmap file. The vast amount of block ranges
-have been removed, though, to keep it shorter.
+So, the best way to understand bmap is to just to read it. Here is an 
+[example of a bmap file](tests/test-data/test.image.bmap.v2.0). 
 
 ## Raw images
 
