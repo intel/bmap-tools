@@ -1,12 +1,29 @@
-Release 3.6
-~~~~~~~~~~~
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+
+- Use GitHub Actions for CI (#109)
+- Add `poetry` for dependency management and `black` for code formatting (#104)
+- Add functionality for copying from standard input (#99)
+
+### Changed
+
+- Switch from gpg to gpgme module (#103)
+
+## [3.6.0] 
 
 1. Improve ZFS compatibility.
 2. Added the 'zstd' compression type support.
 3. Add '--psplash-pipe' option for interacting with psplash.
 
-Release 3.5
-~~~~~~~~~~~
+## [3.5.0]
 
 1. Fixed copying of compressed files from URLs, it was a regression introduced
    in bmap-tools 3.4.
@@ -14,8 +31,7 @@ Release 3.5
 3. RPM packaging fixes.
 4. Improved help and error messages.
 
-Release 3.4
-~~~~~~~~~~~
+## [3.4.0]
 
 1. bmap-tools has now new home: https://github.com/01org/bmap-tools
 
@@ -36,8 +52,7 @@ Release 3.4
 7. Fixed detection of block size on file systems that do not report it
    correctly via ioctl FIGETBSZ.
 
-Release 3.2
-~~~~~~~~~~~
+## [3.2.0]
 
 1. Multi-stream bzip2 archives are now supported. These are usually created
    with the 'pbzip2' compressor.
@@ -74,9 +89,8 @@ Release 3.2
    IVI images from 'tizen.org' showed 10% read speed improvement, but this
    depends a lot on where the bottle-neck is: the USB stick, the network, or
    the CPU load.
-
-Bug-fix release 3.1
-~~~~~~~~~~~~~~~~~~~
+   
+## [3.1.0]
 
 This bug-fix release is about fixing a small screw-up in version 3.0, where we
 introduced incompatible bmap format changes, but did not properly increase the
@@ -94,9 +108,8 @@ Thus, the situation as follows:
                      nicely exit with 2.0
   * bmap-tools v3.0: handles all 1.x bmap format versions, exits nicely with 2.0
   * bmap-tools v3.1: handles all bmap format versions
-
-Release 3.0
-~~~~~~~~~~~
+  
+## [3.0.0]
 
 1. Switch from using SHA1 checksums in the bmap file to SHA256. This required
    bmap format change. The new format version is 1.4. BmapCopy (and thus,
@@ -120,14 +133,14 @@ Release 3.0
    The reason for synchronizing the file is bugs in early implementations of
    FIEMAP in the kernel and file-systems, and synchronizing the image is a
    known way to work around the bugs.
+   
+## [2.6.0]
 
-Bug-fix release 2.6
-~~~~~~~~~~~~~~~~~~~
+### Added
 
-1. Add on-the-fly decompression support for '.xz' and '.tar.xz' files.
+- On-the-fly decompression support for '.xz' and '.tar.xz' files.
 
-Bug-fix release 2.5
-~~~~~~~~~~~~~~~~~~~
+## [2.5.0]
 
 1. bmaptool (or more precisely, the BmapCopy class) has an optimization where
    we switch to the "noop" I/O scheduler when writing directly to block
@@ -142,12 +155,10 @@ Bug-fix release 2.5
    do not have enough permissions for changing sysfs files, simply because this
    is an optimization, although a quite important one. However, we do print a
    warning message.
-
 2. Many improvements and fixes in the Debian packaging, which should make it
    simpler for distributions to package bmap-tools.
-
-Bug-fix release 2.4
-~~~~~~~~~~~~~~~~~~~
+   
+## 2.4.0
 
 1. Add SSH URLs support. These URLs start with "ssh://" and have the following
    format: ssh://user:password@host:path, where
@@ -158,9 +169,8 @@ Bug-fix release 2.4
 
    If the password was given in the URL, bmaptool will use password-based SSH
    authentication, otherwise key-based SSH authentication will be used.
-
-Bug-fix release 2.3
-~~~~~~~~~~~~~~~~~~~
+   
+## 2.3.0
 
 1. Add bmap file SHA1 checksum into the bmap file itself in order to improve
    robustness of bmaptool. Now we verify bmap file integrity before using it,
@@ -185,23 +195,17 @@ Bug-fix release 2.3
 
 2. Make the test-suite work on btrfs.
 
-
-Bug-fix release 2.2
-~~~~~~~~~~~~~~~~~~~
+## 2.2.0
 
 1. Made bmaptool understand URLs which include user name and password
    (the format is: https://user:password@server.com)
-
-
-Bug-fix release 2.1
-~~~~~~~~~~~~~~~~~~~
+   
+## 2.1.0
 
 1. Fixed the out of memory problems when copying .bz2 files.
 2. Added CentOS 6 support in packaging.
 
-
-Release 2.0
-~~~~~~~~~~~
+## 2.0.0
 
 There are several user-visible changes in 'bmaptool copy':
 
@@ -237,9 +241,7 @@ There are several user-visible changes in 'bmaptool copy':
 
 'bmaptool create' has no changes comparing to release v1.0.
 
-
-Release 1.0
-~~~~~~~~~~~
+## 1.0.0
 
 The first bmap-tools release. All the planned features are implemented,
 automated tests are implemented. We provide nice API modules for bmap creation
@@ -294,3 +296,13 @@ copying to block device:
 We support bmap format versioning. The current format is 1.2. The minor version
 number must not break backward compatibility, while the major numbers indicates
 some incompatibility.
+
+[Unreleased]: https://github.com/intel/bmap-tools/compare/v3.6..HEAD
+[3.6.0]: https://github.com/intel/bmap-tools/releases/tag/v3.6
+[3.5.0]: https://github.com/intel/bmap-tools/releases/tag/v3.5
+[3.4.0]: https://github.com/intel/bmap-tools/releases/tag/v3.4
+[3.2.0]: https://github.com/intel/bmap-tools/releases/tag/v3.2
+[3.1.0]: https://github.com/intel/bmap-tools/releases/tag/v3.1
+[3.0.0]: https://github.com/intel/bmap-tools/releases/tag/v3.0
+[2.6.0]: https://github.com/intel/bmap-tools/releases/tag/v2.6
+[2.5.0]: https://github.com/intel/bmap-tools/releases/tag/v2.5
