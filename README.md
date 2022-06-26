@@ -40,8 +40,8 @@ You can get usage reference for `bmaptool` and all the supported command using
 the `-h` or `--help` options:
 
 ```bash
-$ `bmaptool` -h # General `bmaptool` help
-$ `bmaptool` cmd -h # Help on the "cmd" sub-command
+$ bmaptool -h # General bmaptool help
+$ bmaptool <cmd> -h # Help on the <cmd> sub-command
 ```
 
 You can also refer to the `bmaptool` manual page:
@@ -280,7 +280,7 @@ expand it. Later on, you may reconstruct it using the `bmaptool copy` command.
 
 ```bash
 ------------------------------------------------------------------------------------
-| - `bmaptool`                 | A tools to create bmap and copy with bmap. Based    |
+| - bmaptool                 | A tools to create bmap and copy with bmap. Based    |
 |                            | on the 'BmapCreate.py' and 'BmapCopy.py' modules.   |
 | - setup.py                 | A script to turn the entire bmap-tools project      |
 |                            | into a python egg.                                  |
