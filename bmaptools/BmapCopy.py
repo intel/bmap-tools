@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# vim: ts=4 sw=4 et ai si
+# vim: ts=4 sw=4 tw=88 et ai si
 #
 # Copyright (c) 2012-2014 Intel, Inc.
 # License: GPLv2
