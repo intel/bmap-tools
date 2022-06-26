@@ -154,8 +154,8 @@ The human-oriented information is in XML comments, which explain the meaning of
 XML tags and provide useful information like amount of mapped data in percent
 and in MiB or GiB.
 
-So, the best way to understand bmap is to just to read it. Here is an 
-[example of a bmap file](tests/test-data/test.image.bmap.v2.0). 
+So, the best way to understand bmap is to just to read it. Here is an
+[example of a bmap file](tests/test-data/test.image.bmap.v2.0).
 
 ### Raw images
 
@@ -362,8 +362,9 @@ More details can be found [in the OpenZFS documentation](https://openzfs.github.
 The bmap-tools project implements bmap-related tools and API modules. The
 entire project is written in python and supports python 2.7 and python 3.x.
 
-The project author and maintainer is Artem Bityutskiy (dedekind1@gmail.com)
-Please, feel free to contact me if you have questions.
+The project author is Artem Bityutskiy (dedekind1@gmail.com). Artem is looking
+for a new maintainer for the project. Anyone actively contributing may become a
+maintainer. Please, let Artem know if you volunteer to be one.
 
 Project git repository is here:
 https://github.com/intel/bmap-tools.git
