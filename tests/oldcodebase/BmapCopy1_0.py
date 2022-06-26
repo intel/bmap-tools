@@ -124,7 +124,7 @@ class BmapCopy:
         self.mapped_size_human = self.image_size_human
 
     def _parse_bmap(self):
-        """ Parse the bmap file and initialize the 'bmap_*' attributes. """
+        """Parse the bmap file and initialize the 'bmap_*' attributes."""
 
         bmap_pos = self._f_bmap.tell()
         self._f_bmap.seek(0)
@@ -221,7 +221,7 @@ class BmapCopy:
         self._f_image_needs_close = True
 
     def _validate_image_size(self):
-        """ Make sure that image size from bmap matches real image size. """
+        """Make sure that image size from bmap matches real image size."""
 
         image_size = os.fstat(self._f_image.fileno()).st_size
         if image_size != self.image_size:
@@ -232,7 +232,7 @@ class BmapCopy:
             )
 
     def _open_destination_file(self):
-        """ Open the destination file. """
+        """Open the destination file."""
 
         try:
             self._f_dest = open(self._dest_path, "w")
@@ -244,7 +244,7 @@ class BmapCopy:
         self._f_dest_needs_close = True
 
     def _open_bmap_file(self):
-        """ Open the bmap file. """
+        """Open the bmap file."""
 
         try:
             self._f_bmap = open(self._bmap_path, "r")
@@ -333,7 +333,7 @@ class BmapCopy:
         self._batch_blocks = self._batch_bytes / self.block_size
 
     def __del__(self):
-        """ The class destructor which closes the opened files. """
+        """The class destructor which closes the opened files."""
 
         if self._f_image_needs_close:
             self._f_image.close()
@@ -580,7 +580,7 @@ class BmapBdevCopy(BmapCopy):
     'noop' I/O scheduler."""
 
     def _open_destination_file(self):
-        """ Open the block device in exclusive mode. """
+        """Open the block device in exclusive mode."""
 
         try:
             self._f_dest = os.open(self._dest_path, os.O_WRONLY | os.O_EXCL)
