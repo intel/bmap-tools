@@ -590,11 +590,17 @@ class TransRead(object):
         username = parsed_url.username
         password = parsed_url.password
 
-        if not username and not password:
-            auth = netrc.netrc().authenticators(parsed_url.hostname)
-            if auth:
-                username = auth[0]
-                password = auth[2]
+        if not username and not password and parsed_url.scheme in ("http", "https"):
+            try:
+                n = netrc.netrc()
+                auth = n.authenticators(parsed_url.hostname)
+                if auth:
+                    username = auth[0]
+                    password = auth[2]
+            except FileNotFoundError:
+                pass
+            except netc.NetrcParseError as e:
+                _log.error(f"Error parsing line {e.lineno} of {e.filename}: {e.msg}")
 
         if username and password:
             # Unfortunately, in order to handle URLs which contain user name
