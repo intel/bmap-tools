@@ -32,6 +32,7 @@ import sys
 import logging
 import threading
 import subprocess
+import netrc
 from six.moves.urllib import parse as urlparse
 from bmaptools import BmapHelpers
 
@@ -588,6 +589,12 @@ class TransRead(object):
 
         username = parsed_url.username
         password = parsed_url.password
+
+        if not username and not password:
+            auth = netrc.netrc().authenticators(parsed_url.hostname)
+            if auth:
+                username = auth[0]
+                password = auth[2]
 
         if username and password:
             # Unfortunately, in order to handle URLs which contain user name
