@@ -27,7 +27,7 @@ class TestCLI(unittest.TestCase):
     def test_valid_signature(self):
         completed_process = subprocess.run(
             [
-                "./bmaptool",
+                "bmaptool",
                 "copy",
                 "--bmap",
                 "tests/test-data/test.image.bmap.v2.0",
@@ -45,7 +45,7 @@ class TestCLI(unittest.TestCase):
     def test_unknown_signer(self):
         completed_process = subprocess.run(
             [
-                "./bmaptool",
+                "bmaptool",
                 "copy",
                 "--bmap",
                 "tests/test-data/test.image.bmap.v2.0",
@@ -63,7 +63,7 @@ class TestCLI(unittest.TestCase):
     def test_wrong_signature(self):
         completed_process = subprocess.run(
             [
-                "./bmaptool",
+                "bmaptool",
                 "copy",
                 "--bmap",
                 "tests/test-data/test.image.bmap.v1.4",
@@ -81,7 +81,7 @@ class TestCLI(unittest.TestCase):
     def test_wrong_signature_uknown_signer(self):
         completed_process = subprocess.run(
             [
-                "./bmaptool",
+                "bmaptool",
                 "copy",
                 "--bmap",
                 "tests/test-data/test.image.bmap.v1.4",
@@ -99,7 +99,7 @@ class TestCLI(unittest.TestCase):
     def test_clearsign(self):
         completed_process = subprocess.run(
             [
-                "./bmaptool",
+                "bmaptool",
                 "copy",
                 "--bmap",
                 "tests/test-data/signatures/test.image.bmap.v2.0.asc",
