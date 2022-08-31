@@ -18,9 +18,8 @@ jobs:
         python-version: '3.x'
     - name: Install dependencies
       run: |
-        curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
-        source $HOME/.poetry/env
-        poetry install
+        curl -sSL https://install.python-poetry.org | python3 -
+        poetry install -n
     - name: Check code
       run: poetry run black bmaptools/* tests/* --check
 
@@ -43,6 +42,5 @@ jobs:
         # Installs compression deps
         sudo apt-get install -y pbzip2 pigz lzop liblz4-tool
         # Installs poetry
-        curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
-        source $HOME/.poetry/env
-        poetry install
+        curl -sSL https://install.python-poetry.org | python3 -
+        poetry install -n
