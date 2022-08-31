@@ -44,3 +44,5 @@ jobs:
         # Installs poetry
         curl -sSL https://install.python-poetry.org | python3 -
         poetry install -n
+    - name: Run tests
+      run: poetry run python -m unittest -bv
