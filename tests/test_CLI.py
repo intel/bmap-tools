@@ -36,9 +36,11 @@ class TestCLI(unittest.TestCase):
                 "tests/test-data/test.image.gz",
                 self.tmpfile,
             ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             check=False,
         )
-        self.assertEqual(completed_process.returncode, 0)
+        self.assertEqual(completed_process.returncode, 0, completed_process.stdout)
 
     def test_unknown_signer(self):
         completed_process = subprocess.run(
@@ -52,9 +54,11 @@ class TestCLI(unittest.TestCase):
                 "tests/test-data/test.image.gz",
                 self.tmpfile,
             ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             check=False,
         )
-        self.assertEqual(completed_process.returncode, 1)
+        self.assertEqual(completed_process.returncode, 1, completed_process.stdout)
 
     def test_wrong_signature(self):
         completed_process = subprocess.run(
@@ -68,9 +72,11 @@ class TestCLI(unittest.TestCase):
                 "tests/test-data/test.image.gz",
                 self.tmpfile,
             ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             check=False,
         )
-        self.assertEqual(completed_process.returncode, 1)
+        self.assertEqual(completed_process.returncode, 1, completed_process.stdout)
 
     def test_wrong_signature_uknown_signer(self):
         completed_process = subprocess.run(
@@ -84,9 +90,11 @@ class TestCLI(unittest.TestCase):
                 "tests/test-data/test.image.gz",
                 self.tmpfile,
             ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             check=False,
         )
-        self.assertEqual(completed_process.returncode, 1)
+        self.assertEqual(completed_process.returncode, 1, completed_process.stdout)
 
     def test_clearsign(self):
         completed_process = subprocess.run(
@@ -98,9 +106,11 @@ class TestCLI(unittest.TestCase):
                 "tests/test-data/test.image.gz",
                 self.tmpfile,
             ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             check=False,
         )
-        self.assertEqual(completed_process.returncode, 1)
+        self.assertEqual(completed_process.returncode, 1, completed_process.stdout)
 
     def setUp(self):
         os.environ["GNUPGHOME"] = "tests/test-data/gnupg/"
