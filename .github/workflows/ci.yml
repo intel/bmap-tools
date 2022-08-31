@@ -18,6 +18,7 @@ jobs:
         python-version: '3.x'
     - name: Install dependencies
       run: |
+        sudo apt-get install -y libgpgme11-dev
         curl -sSL https://install.python-poetry.org | python3 -
         poetry install -n
     - name: Check code
@@ -40,7 +41,7 @@ jobs:
     - name: Install dependencies
       run: |
         # Installs compression deps
-        sudo apt-get install -y pbzip2 pigz lzop liblz4-tool
+        sudo apt-get install -y pbzip2 pigz lzop liblz4-tool libgpgme11-dev
         # Installs poetry
         curl -sSL https://install.python-poetry.org | python3 -
         poetry install -n
