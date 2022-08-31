@@ -88,6 +88,20 @@ class TestCLI(unittest.TestCase):
         )
         self.assertEqual(completed_process.returncode, 1)
 
+    def test_clearsign(self):
+        completed_process = subprocess.run(
+            [
+                "./bmaptool",
+                "copy",
+                "--bmap",
+                "tests/test-data/test.image.bmap.v2.0.asc",
+                "tests/test-data/test.image.gz",
+                self.tmpfile,
+            ],
+            check=False,
+        )
+        self.assertEqual(completed_process.returncode, 1)
+
     def setUp(self):
         os.environ["GNUPGHOME"] = "tests/test-data/gnupg/"
         self.tmpfile = tempfile.mkstemp(prefix="testfile_", dir=".")[1]
