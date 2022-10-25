@@ -57,6 +57,7 @@ also contribute to the mapped blocks and are also copied.
 # pylint: disable=R0915
 
 import os
+import re
 import stat
 import sys
 import hashlib
@@ -65,6 +66,7 @@ import datetime
 from six import reraise
 from six.moves import queue as Queue
 from six.moves import _thread as thread
+from typing import Optional
 from xml.etree import ElementTree
 from bmaptools.BmapHelpers import human_size
 
@@ -82,6 +84,86 @@ class Error(Exception):
     """
 
     pass
+
+
+class SysfsChange:
+    """Context manager for temporary sysfs changes
+    Writes a temporary value to a sysfs file and restores the original value upon exit.
+    Does a read access first to see if the requested value is already set. In that case,
+    no write access is made to not cause unnecessary errors when running as a non-root
+    user.
+    Can deal with sysfs files that return their plain current value upon reading, as
+    well as those that return all possible values with the current one in square
+    brackets. In this case, all possible values are stored in the `options` attribute.
+    """
+
+    re_current_selection = re.compile(r"([^\[\]]*)\[([^ \]]+)\]([^\[\]]*)")
+
+    def __init__(self, path: str, temp_value: str, suppress_ioerrors=True) -> None:
+        """The class constructor. The parameters are:
+        path       - The sysfs file to change
+        temp_value - The value to set upon entering the context manager
+        suppress_ioerrors - When True, an IOError during __enter__ is stored to the
+                            `error` attribute. When False, the exception is raised
+                            directly.
+        """
+        self.path = path
+        self.temp_value = temp_value
+        self.suppress_ioerrors = suppress_ioerrors
+        self.old_value = ""
+        self.modified = False
+        self.options = []
+        self.error: Optional[IOError] = None
+
+    def _read(self):
+        with open(self.path, "r") as f:
+            contents = f.read().strip()
+
+        # Some sysfs files return a list of options with the current selection
+        # in square brackets, e.g. "[mq-deadline] none" for the I/O scheduler.
+        # Return only the current option in that case.
+        match = self.re_current_selection.match(contents)
+        if match:
+            self.options = "".join(match.groups()[0:3]).split(" ")
+            return match.group(2)
+        else:
+            return contents
+
+    def _write(self, value):
+        with open(self.path, "w") as f:
+            f.write(value)
+
+    def __enter__(self):
+        try:
+            self.old_value = self._read()
+            _log.debug(f"found {self.path} to be '{self.old_value}'")
+        except IOError as exc:
+            if self.suppress_ioerrors:
+                self.error = exc
+                return self
+            else:
+                raise
+
+        if self.old_value != self.temp_value:
+            try:
+                _log.debug(f"setting {self.path} to '{self.temp_value}'")
+                self._write(self.temp_value)
+                self.modified = True
+            except IOError as exc:
+                if self.suppress_ioerrors:
+                    self.error = exc
+                else:
+                    raise
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        if self.modified:
+            try:
+                _log.debug(f"setting {self.path} back to '{self.old_value}'")
+                self._write(self.old_value)
+            except IOError as exc:
+                raise Error(f"cannot restore {self.path} to '{self.old_value}': {exc}")
+        return False
 
 
 class BmapCopy(object):
@@ -715,7 +797,7 @@ class BmapBdevCopy(BmapCopy):
     """
     This class is a specialized version of 'BmapCopy' which copies the image to
     a block device. Unlike the base 'BmapCopy' class, this class does various
-    optimizations specific to block devices, e.g., switching to the 'noop' I/O
+    optimizations specific to block devices, e.g., switching to the 'none' I/O
     scheduler.
     """
 
@@ -733,8 +815,6 @@ class BmapBdevCopy(BmapCopy):
         self._sysfs_base = None
         self._sysfs_scheduler_path = None
         self._sysfs_max_ratio_path = None
-        self._old_scheduler_value = None
-        self._old_max_ratio_value = None
 
         # If the image size is known, check that it fits the block device
         if self.image_size:
@@ -775,80 +855,6 @@ class BmapBdevCopy(BmapCopy):
         self._sysfs_scheduler_path = self._sysfs_base + "queue/scheduler"
         self._sysfs_max_ratio_path = self._sysfs_base + "bdi/max_ratio"
 
-    def _tune_block_device(self):
-        """
-        Tune the block device for better performance:
-        1. Switch to the 'noop' I/O scheduler if it is available - sequential
-           write to the block device becomes a lot faster comparing to CFQ.
-        2. Limit the write buffering - we do not need the kernel to buffer a
-           lot of the data we send to the block device, because we write
-           sequentially. Limit the buffering.
-
-        The old settings are saved in order to be able to restore them later.
-        """
-        # Switch to the 'noop' I/O scheduler
-        try:
-            with open(self._sysfs_scheduler_path, "r+") as f_scheduler:
-                contents = f_scheduler.read()
-                f_scheduler.seek(0)
-                f_scheduler.write("noop")
-        except IOError as err:
-            _log.debug(
-                "failed to enable I/O optimization, expect "
-                "suboptimal speed (reason: cannot switch to the "
-                "'noop' I/O scheduler: %s or blk-mq in use)" % err
-            )
-        else:
-            # The file contains a list of schedulers with the current
-            # scheduler in square brackets, e.g., "noop deadline [cfq]".
-            # Fetch the name of the current scheduler.
-            import re
-
-            match = re.match(r".*\[(.+)\].*", contents)
-            if match:
-                self._old_scheduler_value = match.group(1)
-
-        # Limit the write buffering, because we do not need too much of it when
-        # writing sequntially. Excessive buffering makes some systems not very
-        # responsive, e.g., this was observed in Fedora 17.
-        try:
-            with open(self._sysfs_max_ratio_path, "r+") as f_ratio:
-                self._old_max_ratio_value = f_ratio.read()
-                f_ratio.seek(0)
-                f_ratio.write("1")
-        except IOError as err:
-            _log.warning(
-                "failed to disable excessive buffering, expect "
-                "worse system responsiveness (reason: cannot set "
-                "max. I/O ratio to 1: %s)" % err
-            )
-
-    def _restore_bdev_settings(self):
-        """
-        Restore old block device settings which we changed in
-        '_tune_block_device()'.
-        """
-
-        if self._old_scheduler_value is not None:
-            try:
-                with open(self._sysfs_scheduler_path, "w") as f_scheduler:
-                    f_scheduler.write(self._old_scheduler_value)
-            except IOError as err:
-                raise Error(
-                    "cannot restore the '%s' I/O scheduler: %s"
-                    % (self._old_scheduler_value, err)
-                )
-
-        if self._old_max_ratio_value is not None:
-            try:
-                with open(self._sysfs_max_ratio_path, "w") as f_ratio:
-                    f_ratio.write(self._old_max_ratio_value)
-            except IOError as err:
-                raise Error(
-                    "cannot set the max. I/O ratio back to '%s': %s"
-                    % (self._old_max_ratio_value, err)
-                )
-
     def copy(self, sync=True, verify=True):
         """
         The same as in the base class but tunes the block device for better
@@ -863,11 +869,51 @@ class BmapBdevCopy(BmapCopy):
         synchronizing from time to time.
         """
 
-        self._tune_block_device()
+        # Tune the block device for better performance:
+        # 1. Switch to the 'none' (the successor of 'noop' since the switch to
+        #    multiqueue schedulers) I/O scheduler if it is available - sequential
+        #    write to the block device becomes a lot faster comparing to CFQ.
+        # 2. Limit the write buffering - we do not need the kernel to buffer a lot of
+        #    the data we send to the block device, because we write sequentially.
+        #    Excessive buffering would make some systems quite unresponsive.
+        #    This was observed e.g. in Fedora 17.
+        # The old settings are saved and restored by the context managers.
 
-        try:
-            BmapCopy.copy(self, sync, verify)
-        except:
-            raise
-        finally:
-            self._restore_bdev_settings()
+        with SysfsChange(self._sysfs_max_ratio_path, "1") as max_ratio_chg, SysfsChange(
+            self._sysfs_scheduler_path, "none"
+        ) as scheduler_chg:
+            if max_ratio_chg.error:
+                _log.warning(
+                    "failed to disable excessive buffering, expect "
+                    "worse system responsiveness (reason: cannot set "
+                    f"max. I/O ratio to 1: {max_ratio_chg.error})"
+                )
+            if scheduler_chg.error:
+                _log.info(
+                    "failed to enable I/O optimization, expect "
+                    "suboptimal speed (reason: cannot switch to the "
+                    f"{max_ratio_chg.temp_value} I/O scheduler: "
+                    f"{max_ratio_chg.old_value or 'unknown scheduler'} in use. "
+                    f"{max_ratio_chg.error})"
+                )
+            if max_ratio_chg.error or scheduler_chg.error:
+                _log.info(
+                    "You may want to set these I/O optimizations through a udev rule "
+                    "like this:\n"
+                    "#/etc/udev/rules.d/60-bmaptool-optimizations.rules\n"
+                    'SUBSYSTEM!="block", GOTO="bmaptool_optimizations_end"\n'
+                    'ACTION!="add|change", GOTO="bmaptool_optimizations_end"\n'
+                    "\n"
+                    'ACTION=="add", SUBSYSTEMS=="usb", ATTRS{idVendor}=="xxxx", '
+                    'ATTRS{idProduct}=="xxxx", TAG+="uaccess"\n'
+                    'SUBSYSTEMS=="usb", ATTRS{idVendor}=="xxxx", '
+                    'ATTRS{idProduct}=="xxxx", ATTR{bdi/min_ratio}="0", '
+                    'ATTR{bdi/max_ratio}="1", ATTR{queue/scheduler}="none"\n'
+                    "\n"
+                    'LABEL="bmaptool_optimizations_end"\n'
+                    "\n"
+                    "For attributes to match, try\n"
+                    f"udevadm info -a {self._dest_path}"
+                )
+
+            super().copy(sync, verify)
