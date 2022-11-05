@@ -502,6 +502,8 @@ class TransRead(object):
                 "-p" + password,
                 "ssh",
                 "-o StrictHostKeyChecking=no",
+                "-o ClearAllForwardings=yes",
+                "-o ForwardX11=no",
                 "-o PubkeyAuthentication=no",
                 "-o PasswordAuthentication=yes",
                 hostname,
@@ -517,6 +519,8 @@ class TransRead(object):
             popen_args = [
                 "ssh",
                 "-o StrictHostKeyChecking=no",
+                "-o ClearAllForwardings=yes",
+                "-o ForwardX11=no",
                 "-o PubkeyAuthentication=yes",
                 "-o PasswordAuthentication=no",
                 "-o BatchMode=yes",
