@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Switch from gpg to gpgme module (#103)
 
-## [3.6.0] 
+## [3.6.0]
 
 1. Improve ZFS compatibility.
 2. Added the 'zstd' compression type support.
