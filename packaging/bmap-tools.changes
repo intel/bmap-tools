@@ -1,3 +1,9 @@
+Wed Aug  2 11:51:45 AM UTC 2023 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 3.7-1
+- Use GitHub Actions for CI (#109)
+- Add `poetry` for dependency management and `black` for code formatting (#104)
+- Add functionality for copying from standard input (#99)
+- Switch from gpg to gpgme module (#103)
+
 Wed Aug  2 11:49:52 AM UTC 2023 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 3.7-1
 
 Tue 02 Feb 2021 12:08:41 PM UTC - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 3.6-1
