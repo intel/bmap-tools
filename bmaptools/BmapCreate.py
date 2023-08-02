@@ -74,8 +74,8 @@ _BMAP_START_TEMPLATE = """<?xml version="1.0" ?>
      contain any useful data and do not have to be copied to the target
      device.
 
-     The block map an optimization which allows to copy or flash the image to
-     the image quicker than copying of flashing the entire image. This is
+     The block map is an optimization which allows to copy or flash the image
+     to the image quicker than copying of flashing the entire image. This is
      because with bmap less data is copied: <MappedBlocksCount> blocks instead
      of <BlocksCount> blocks.
 
@@ -253,7 +253,7 @@ class BmapCreate(object):
         xml += "    <ChecksumType> %s </ChecksumType>\n\n" % self._cs_type
 
         xml += "    <!-- The checksum of this bmap file. When it is calculated, the value of\n"
-        xml += '         the checksum has be zero (all ASCII "0" symbols).  -->\n'
+        xml += '         the checksum has to be zero (all ASCII "0" symbols).  -->\n'
         xml += "    <BmapFileChecksum> "
 
         self._f_bmap.write(xml)
