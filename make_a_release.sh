@@ -78,10 +78,10 @@ new_ver="$1"; shift
 printf "%s" "$new_ver" | egrep -q -x '[[:digit:]]+\.[[:digit:]]+' ||
         fatal "please, provide new version in X.Y format"
 
-# Make sure that the current branch is 'master'
+# Make sure that the current branch is 'main'
 current_branch="$(git branch | sed -n -e '/^*/ s/^* //p')"
-if [ "$current_branch" != "master" ]; then
-	fatal "current branch is '$current_branch' but must be 'master'"
+if [ "$current_branch" != "main" ]; then
+	fatal "current branch is '$current_branch' but must be 'main'"
 fi
 
 # Make sure the git index is up-to-date
@@ -153,17 +153,17 @@ release_branch="release-$(printf "%s" "$new_ver" | sed -e 's/\(.*\)\..*/\1.0/')"
 cat <<EOF
 To finish the release:
   1. push the $tag_name tag out
-  2. update the $release_branch with the contents of the 'master' branch
-  3. point the master branch to the updated $release_branch branch
-  4. push the master and $release_branch branches out
+  2. update the $release_branch with the contents of the 'main' branch
+  3. point the main branch to the updated $release_branch branch
+  4. push the main and $release_branch branches out
 
 The commands would be:
 
 #1
 git push origin $tag_name
 #2
-git branch -f $release_branch master
+git branch -f $release_branch main
 #3
-git push origin master:master
+git push origin main:main
 git push origin $release_branch:$release_branch
 EOF
