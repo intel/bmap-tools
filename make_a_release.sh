@@ -88,8 +88,6 @@ fi
 [ -z "$(git status --porcelain)" ] || fatal "git index is not up-to-date"
 
 # Remind the maintainer about various important things
-ask_question "Did you update the docs/RELEASE_NOTES file"
-ask_question "Did you update the docs/README file"
 ask_question "Did you update the man page"
 ask_question "Did you update tests: test-data and oldcodebase"
 
