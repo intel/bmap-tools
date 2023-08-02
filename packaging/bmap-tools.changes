@@ -1,3 +1,5 @@
+Wed Aug  2 12:08:21 PM UTC 2023 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 3.7-1
+
 Wed Aug  2 11:51:45 AM UTC 2023 - Artem Bityutskiy <artem.bityutskiy@linux.intel.com> 3.7-1
 - Use GitHub Actions for CI (#109)
 - Add `poetry` for dependency management and `black` for code formatting (#104)

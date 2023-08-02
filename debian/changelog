@@ -1,5 +1,10 @@
 bmap-tools (3.7) unstable; urgency=low
 
+
+ -- Artem Bityutskiy <artem.bityutskiy@linux.intel.com> Wed, 02 Aug 2023 15:08:21 +0300
+
+bmap-tools (3.7) unstable; urgency=low
+
   * Use GitHub Actions for CI (#109)
   * Add `poetry` for dependency management and `black` for code formatting
     (#104)
