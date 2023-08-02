@@ -6,15 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-
 ### Added
+### Changed
 
+## [3.7.0]
+### Added
 - Use GitHub Actions for CI (#109)
 - Add `poetry` for dependency management and `black` for code formatting (#104)
 - Add functionality for copying from standard input (#99)
-
 ### Changed
-
 - Switch from gpg to gpgme module (#103)
 
 ## [3.6.0]
