@@ -38,9 +38,17 @@ import tempfile
 import traceback
 import shutil
 import io
-from bmaptools import BmapCreate, BmapCopy, BmapHelpers, TransRead
 
-VERSION = "3.7"
+import gpg
+
+from . import BmapCreate, BmapCopy, BmapHelpers, TransRead
+
+if sys.version_info < (3, 8):
+    from importlib_metadata import version
+else:
+    from importlib.metadata import version
+
+VERSION = version('bmaptools')
 
 log = logging.getLogger()  # pylint: disable=C0103
 
@@ -135,8 +143,6 @@ def report_verification_results(context, sigs):
     argument contains the results of the 'gpg.verify()' function.
     """
 
-    import gpg
-
     for sig in sigs:
         if (sig.summary & gpg.constants.SIGSUM_VALID) != 0:
             key = context.get_key(sig.fpr)
@@ -198,15 +204,6 @@ def verify_detached_bmap_signature(args, bmap_obj, bmap_path):
         sig_obj = tmp_obj
 
     try:
-        import gpg
-    except ImportError:
-        error_out(
-            'cannot verify the signature because the python "gpg" '
-            "module is not installed on your system\nPlease, either "
-            "install the module or use --no-sig-verify"
-        )
-
-    try:
         context = gpg.Context()
         signature = io.FileIO(sig_obj.name)
         signed_data = io.FileIO(bmap_obj.name)
@@ -244,16 +241,6 @@ def verify_clearsign_bmap_signature(args, bmap_obj):
         error_out(
             "the bmap file has clearsign format and already contains "
             "the signature, so --bmap-sig option should not be used"
-        )
-
-    try:
-        import gpg
-    except ImportError:
-        error_out(
-            'cannot verify the signature because the python "gpg"'
-            "module is not installed on your system\nCannot extract "
-            "block map from the bmap file which has clearsign format, "
-            "please, install the module"
         )
 
     try:
@@ -621,9 +608,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description=text, prog="bmaptool")
 
     # The --version option
-    parser.add_argument(
-        "--version", action="version", version="%(prog)s " + "%s" % VERSION
-    )
+    parser.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
 
     # The --quiet option
     text = "be quiet"

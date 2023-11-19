@@ -1,0 +1,7 @@
+graft docs
+graft debian
+graft contrib
+graft packaging
+graft tests
+
+include tox.ini README.md CHANGELOG.md

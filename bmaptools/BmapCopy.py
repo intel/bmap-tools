@@ -63,12 +63,14 @@ import sys
 import hashlib
 import logging
 import datetime
+from typing import List, Optional
+
 from six import reraise
 from six.moves import queue as Queue
 from six.moves import _thread as thread
-from typing import Optional
 from xml.etree import ElementTree
-from bmaptools.BmapHelpers import human_size
+
+from .BmapHelpers import human_size
 
 _log = logging.getLogger(__name__)  # pylint: disable=C0103
 
@@ -112,7 +114,7 @@ class SysfsChange:
         self.suppress_ioerrors = suppress_ioerrors
         self.old_value = ""
         self.modified = False
-        self.options = []
+        self.options: List[str] = []
         self.error: Optional[IOError] = None
 
     def _read(self):

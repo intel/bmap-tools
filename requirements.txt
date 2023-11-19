@@ -1,0 +1,11 @@
+six
+gpg
+# dev tasks
+pytest
+pytest-cov
+pytest-skip-slow
+pylint
+mypy
+isort
+flake8
+black
