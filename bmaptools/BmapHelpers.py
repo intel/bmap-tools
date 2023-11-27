@@ -104,7 +104,7 @@ def get_file_system_type(path):
     """Return the file system type for 'path'."""
 
     abspath = os.path.realpath(path)
-    proc = subprocess.Popen(["df", "-T", "--", abspath], stdout=PIPE, stderr=PIPE)
+    proc = subprocess.Popen(["df", "-PT", "--", abspath], stdout=PIPE, stderr=PIPE)
     stdout, stderr = proc.communicate()
 
     # Parse the output of subprocess, for example:
@@ -121,7 +121,7 @@ def get_file_system_type(path):
     if not ftype:
         raise Error(
             "failed to find file system type for path at '%s'\n"
-            "Here is the 'df -T' output\nstdout:\n%s\nstderr:\n%s"
+            "Here is the 'df -PT' output\nstdout:\n%s\nstderr:\n%s"
             % (path, stdout, stderr)
         )
     return ftype
