@@ -900,20 +900,33 @@ class BmapBdevCopy(BmapCopy):
                 _log.info(
                     "You may want to set these I/O optimizations through a udev rule "
                     "like this:\n"
+                    "\n"
                     "#/etc/udev/rules.d/60-bmaptool-optimizations.rules\n"
-                    'SUBSYSTEM!="block", GOTO="bmaptool_optimizations_end"\n'
+                    'SUBSYSTEM!="block|scsi_disk", GOTO="bmaptool_optimizations_end"\n'
                     'ACTION!="add|change", GOTO="bmaptool_optimizations_end"\n'
                     "\n"
-                    'ACTION=="add", SUBSYSTEMS=="usb", ATTRS{idVendor}=="xxxx", '
-                    'ATTRS{idProduct}=="xxxx", TAG+="uaccess"\n'
+                    "# Add device matches here\n"
                     'SUBSYSTEMS=="usb", ATTRS{idVendor}=="xxxx", '
-                    'ATTRS{idProduct}=="xxxx", ATTR{bdi/min_ratio}="0", '
+                    'ATTRS{idProduct}=="xxxx", GOTO="bmaptool_optimizations_start"\n'
+                    "\n"
+                    'GOTO="bmaptool_optimizations_end"\n'
+                    'LABEL="bmaptool_optimizations_start"\n'
+                    "\n"
+                    "# Allow user access\n"
+                    f'ACTION=="add", SUBSYSTEM=="block", TAG+="uaccess"\n'
+                    "\n"
+                    "# Set I/O ratio and scheduler\n"
+                    'SUBSYSTEM=="block", ATTR{bdi/min_ratio}="0", '
                     'ATTR{bdi/max_ratio}="1", ATTR{queue/scheduler}="none"\n'
                     "\n"
-                    'LABEL="bmaptool_optimizations_end"\n'
+                    "# Enable TRIM\n"
+                    'ACTION=="add", SUBSYSTEM=="scsi_disk", '
+                    'ATTR{provisioning_mode}="unmap"\n'
                     "\n"
-                    "For attributes to match, try\n"
-                    f"udevadm info -a {self._dest_path}"
+                    'LABEL="bmaptool_optimizations_end"\n'
+                )
+                _log.info(
+                    f"For attributes to match, try udevadm info -a {self._dest_path}"
                 )
 
             super().copy(sync, verify)
