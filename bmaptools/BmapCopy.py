@@ -892,9 +892,9 @@ class BmapBdevCopy(BmapCopy):
                 _log.info(
                     "failed to enable I/O optimization, expect "
                     "suboptimal speed (reason: cannot switch to the "
-                    f"{max_ratio_chg.temp_value} I/O scheduler: "
-                    f"{max_ratio_chg.old_value or 'unknown scheduler'} in use. "
-                    f"{max_ratio_chg.error})"
+                    f"{scheduler_chg.temp_value} I/O scheduler: "
+                    f"{scheduler_chg.old_value or 'unknown scheduler'} in use. "
+                    f"{scheduler_chg.error})"
                 )
             if max_ratio_chg.error or scheduler_chg.error:
                 _log.info(
