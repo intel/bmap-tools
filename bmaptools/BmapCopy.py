@@ -906,7 +906,8 @@ class BmapBdevCopy(BmapCopy):
                     "\n"
                     'ACTION=="add", SUBSYSTEMS=="usb", ATTRS{idVendor}=="xxxx", '
                     'ATTRS{idProduct}=="xxxx", TAG+="uaccess"\n'
-                    'SUBSYSTEMS=="usb", ATTRS{idVendor}=="xxxx", '
+                    'SUBSYSTEMS=="usb", ENV{DEVTYPE}!="partition", '
+                    'ATTRS{idVendor}=="xxxx", '
                     'ATTRS{idProduct}=="xxxx", ATTR{bdi/min_ratio}="0", '
                     'ATTR{bdi/max_ratio}="1", ATTR{queue/scheduler}="none"\n'
                     "\n"
