@@ -38,6 +38,7 @@ import tempfile
 import traceback
 import shutil
 import io
+import pathlib
 from bmaptools import BmapCreate, BmapCopy, BmapHelpers, TransRead
 
 VERSION = "3.7"
@@ -440,16 +441,15 @@ def open_files(args):
     # Try to open the destination file. If it does not exist, a new regular
     # file will be created. If it exists and it is a regular file - it'll be
     # truncated. If this is a block device, it'll just be opened.
+    dest_is_blkdev = False
     try:
-        dest_obj = open(args.dest, "wb+")
+        if pathlib.Path(args.dest).is_block_device():
+            dest_is_blkdev = True
+            dest_obj = open_block_device(args.dest)
+        else:
+            dest_obj = open(args.dest, "wb+")
     except IOError as err:
         error_out("cannot open destination file '%s':\n%s", args.dest, err)
-
-    # Check whether the destination file is a block device
-    dest_is_blkdev = stat.S_ISBLK(os.fstat(dest_obj.fileno()).st_mode)
-    if dest_is_blkdev:
-        dest_obj.close()
-        dest_obj = open_block_device(args.dest)
 
     return (image_obj, dest_obj, bmap_obj, bmap_path, image_obj.size, dest_is_blkdev)
 
