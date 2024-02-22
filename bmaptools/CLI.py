@@ -280,7 +280,7 @@ def verify_clearsign_bmap_signature(args, bmap_obj):
             report_verification_results(context, sigs)
 
     try:
-        tmp_obj = tempfile.TemporaryFile("w+")
+        tmp_obj = tempfile.TemporaryFile("wb+")
     except IOError as err:
         error_out("cannot create a temporary file for bmap:\n%s", err)
 
@@ -315,7 +315,7 @@ def verify_bmap_signature(args, bmap_obj, bmap_path):
     if not bmap_obj:
         return None
 
-    clearsign_marker = "-----BEGIN PGP SIGNED MESSAGE-----"
+    clearsign_marker = b"-----BEGIN PGP SIGNED MESSAGE-----"
     buf = bmap_obj.read(len(clearsign_marker))
     bmap_obj.seek(0)
 
